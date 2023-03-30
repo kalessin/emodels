@@ -16,7 +16,7 @@ setup(
     install_requires=(
         "scrapy",
         "html2text",
-    )
+    ),
     scripts = [],
     classifiers = [
         'Development Status :: 3 - Alpha',
