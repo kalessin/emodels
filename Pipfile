@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 scrapy = "*"
 html2text = "*"
+markdown2 = "*"
+dateparser = "*"
 
 [dev-packages]
 flake8 = "*"

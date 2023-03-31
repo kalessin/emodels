@@ -2,6 +2,8 @@ import re
 from typing import NewType, Dict, Tuple, List
 
 import html2text
+from markdown2 import Markdown
+
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
 from scrapy import Item, Field
@@ -90,12 +92,20 @@ class ExtractItemLoader(ItemLoader):
         super().__init__(*args, **kwargs)
         assert "response" in self.context, '"response" is required.'
         self.extract_indexes: ExtractDict = ExtractDict({})
+        self._mconverter = Markdown()
 
     def add_text_re(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
         extracted = self.context["response"].text_re(reg, flags)
         if extracted:
             t, s, e = extracted[0]
             self.add_value(attr, t, *processors, **kw)
+            self.extract_indexes[attr] = (s, e)
+
+    def add_text_re_as_html(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
+        extracted = self.context["response"].text_re(reg, flags)
+        if extracted:
+            t, s, e = extracted[0]
+            self.add_value(attr, self._mconverter.convert(t), *processors, **kw)
             self.extract_indexes[attr] = (s, e)
 
     def load_item(self) -> ExtractItem:

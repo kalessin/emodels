@@ -16,6 +16,7 @@ setup(
     install_requires=(
         "scrapy",
         "html2text",
+        "markdown2",
     ),
     scripts = [],
     classifiers = [
