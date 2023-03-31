@@ -54,6 +54,24 @@ class ExtractTextResponse(TextResponse):
                 shrink += len(link_orig) - len(link)
         return md
 
+    def text_re(self, reg: str, flags: int = 0):
+        result = []
+        for m in re.finditer(reg, self.markdown, flags):
+            if m.groups():
+                extracted = m.groups()[0]
+                start = m.start(1)
+                end = m.end(1)
+            else:
+                extracted = m.group()
+                start = m.start()
+                end = m.end()
+            start += len(extracted) - len(extracted.lstrip())
+            end -= len(extracted) - len(extracted.rstrip())
+            extracted = extracted.strip()
+            if extracted:
+                result.append((extracted, start, end))
+        return result
+
 
 ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
@@ -74,23 +92,11 @@ class ExtractItemLoader(ItemLoader):
         self.extract_indexes: ExtractDict = ExtractDict({})
 
     def add_text_re(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
-        text = self.context["response"].markdown
-        for m in re.finditer(reg, text, flags):
-            if m.groups():
-                extracted = m.groups()[0]
-                start = m.start(1)
-                end = m.end(1)
-            else:
-                extracted = m.group()
-                start = m.start()
-                end = m.end()
-            start += len(extracted) - len(extracted.lstrip())
-            end -= len(extracted) - len(extracted.rstrip())
-            extracted = extracted.strip()
-            if extracted:
-                self.add_value(attr, extracted, *processors, **kw)
-                self.extract_indexes[attr] = (start, end)
-                break
+        extracted = self.context["response"].text_re(reg, flags)
+        if extracted:
+            t, s, e = extracted[0]
+            self.add_value(attr, t, *processors, **kw)
+            self.extract_indexes[attr] = (s, e)
 
     def load_item(self) -> ExtractItem:
         item = super().load_item()
