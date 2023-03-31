@@ -89,15 +89,17 @@ class ExtractItemLoader(ItemLoader):
         extracted = self.context["response"].text_re(reg, flags)
         if extracted:
             t, s, e = extracted[0]
-            self.add_value(attr, t, *processors, **kw)
-            self.extract_indexes[attr] = (s, e)
+            if attr not in self.extract_indexes:
+                self.extract_indexes[attr] = (s, e)
+                self.add_value(attr, t, *processors, **kw)
 
     def add_text_re_as_html(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
         extracted = self.context["response"].text_re(reg, flags)
         if extracted:
             t, s, e = extracted[0]
-            self.add_value(attr, self._mconverter.convert(t), *processors, **kw)
-            self.extract_indexes[attr] = (s, e)
+            if attr not in self.extract_indexes:
+                self.extract_indexes[attr] = (s, e)
+                self.add_value(attr, self._mconverter.convert(t), *processors, **kw)
 
     def load_item(self) -> Item:
         item = super().load_item()
