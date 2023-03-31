@@ -78,17 +78,8 @@ class ExtractTextResponse(TextResponse):
 ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
 
-class ExtractItem(Item):
-
-    _markdown = Field()
-    _extract_indexes = Field()
-
-
 class ExtractItemLoader(ItemLoader):
     def __init__(self, *args, **kwargs):
-        assert issubclass(
-            self.default_item_class, ExtractItem
-        ), "Loader item class must be a subclass of ExtractItem"
         super().__init__(*args, **kwargs)
         assert "response" in self.context, '"response" is required.'
         self.extract_indexes: ExtractDict = ExtractDict({})
@@ -108,8 +99,8 @@ class ExtractItemLoader(ItemLoader):
             self.add_value(attr, self._mconverter.convert(t), *processors, **kw)
             self.extract_indexes[attr] = (s, e)
 
-    def load_item(self) -> ExtractItem:
+    def load_item(self) -> Item:
         item = super().load_item()
-        item["_extract_indexes"] = self.extract_indexes
-        item["_markdown"] = self.context["response"].markdown
+        item._extract_indexes: ExtractDict = self.extract_indexes
+        item._markdown: str = self.context["response"].markdown
         return item
