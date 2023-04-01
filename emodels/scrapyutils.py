@@ -1,4 +1,7 @@
 import re
+import os
+import json
+import gzip
 from typing import NewType, Dict, Tuple, List
 
 import html2text
@@ -6,7 +9,9 @@ from markdown2 import Markdown
 
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
-from scrapy import Item, Field
+from scrapy import Item
+
+from emodels.config import EMODELS_ITEMS_DIR, EMODELS_ENABLED
 
 
 MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
@@ -103,6 +108,14 @@ class ExtractItemLoader(ItemLoader):
 
     def load_item(self) -> Item:
         item = super().load_item()
-        item._extract_indexes: ExtractDict = self.extract_indexes
-        item._markdown: str = self.context["response"].markdown
+        self._save_extract_sample(item.__class__.__name__)
         return item
+
+    def _save_extract_sample(self, clsname: str):
+        if EMODELS_ENABLED and self.extract_indexes:
+            sample = {
+                "Markdown": self.context["response"].markdown,
+                "indexes": self.extract_indexes,
+            }
+            with gzip.open(os.path.join(EMODELS_ITEMS_DIR, f"{clsname}.jl.gz"), "at") as fz:
+                print(json.dumps(sample), file=fz)
