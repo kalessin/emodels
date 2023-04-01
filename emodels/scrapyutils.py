@@ -4,7 +4,6 @@ import json
 import gzip
 from typing import NewType, Dict, Tuple, List
 
-import html2text
 from markdown2 import Markdown
 
 from scrapy.loader import ItemLoader
@@ -12,6 +11,7 @@ from scrapy.http import TextResponse
 from scrapy import Item
 
 from emodels.config import EMODELS_ITEMS_DIR, EMODELS_ENABLED
+from emodels import html2text
 
 
 MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")

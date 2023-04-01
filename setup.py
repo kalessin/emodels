@@ -15,7 +15,6 @@ setup(
     packages     = find_packages(),
     install_requires=(
         "scrapy",
-        "html2text",
         "markdown2",
     ),
     scripts = [],
