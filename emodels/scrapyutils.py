@@ -77,8 +77,9 @@ class ExtractTextResponse(TextResponse):
             end -= len(extracted) - len(extracted.rstrip())
             extracted = extracted.strip()
             if extracted:
-                extracted = COMMENT_RE.sub("", extracted)
-                result.append((extracted, start, end))
+                new_extracted = COMMENT_RE.sub("", extracted)
+                end -= len(extracted) - len(new_extracted)
+                result.append((new_extracted, start, end))
         return result
 
     def text_id(self, tid: str, skip_prefix: Optional[str]=None):
@@ -120,8 +121,9 @@ class ExtractItemLoader(ItemLoader):
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
+                cleaned = self._mconverter.convert(t).strip()
+                self.add_value(attr, cleaned, *processors, **kw)
                 self.extract_indexes[attr] = (s, e)
-                self.add_value(attr, self._mconverter.convert(t).strip(), *processors, **kw)
 
     def load_item(self) -> Item:
         item = super().load_item()

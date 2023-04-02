@@ -81,3 +81,6 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(data["markdown"][slice(*data["indexes"]["job_title"])], 'Student Athlete Support Services Coord')
         self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], '492556')
         self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], 'Full-time Staff')
+
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
