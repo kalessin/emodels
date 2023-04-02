@@ -79,6 +79,10 @@ class ExtractTextResponse(TextResponse):
                 result.append((extracted, start, end))
         return result
 
+    def text_id(self, tid: str):
+        reg = f"\W*(.+?)<!--{tid}-->"
+        return self.text_re(reg)
+
 
 ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
@@ -92,6 +96,14 @@ class ExtractItemLoader(ItemLoader):
 
     def add_text_re(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
         extracted = self.context["response"].text_re(reg, flags)
+        if extracted:
+            t, s, e = extracted[0]
+            if attr not in self.extract_indexes:
+                self.extract_indexes[attr] = (s, e)
+                self.add_value(attr, t, *processors, **kw)
+
+    def add_text_id(self, attr: str, reg: str, *processors, **kw):
+        extracted = self.context["response"].text_id(reg)
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
@@ -114,7 +126,7 @@ class ExtractItemLoader(ItemLoader):
     def _save_extract_sample(self, clsname: str):
         if EMODELS_ENABLED and self.extract_indexes:
             sample = {
-                "Markdown": self.context["response"].markdown,
+                "markdown": self.context["response"].markdown,
                 "indexes": self.extract_indexes,
             }
             with gzip.open(os.path.join(EMODELS_ITEMS_DIR, f"{clsname}.jl.gz"), "at") as fz:
