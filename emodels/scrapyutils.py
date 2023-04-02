@@ -2,7 +2,7 @@ import re
 import os
 import json
 import gzip
-from typing import NewType, Dict, Tuple, List
+from typing import NewType, Dict, Tuple, List, Optional
 
 from markdown2 import Markdown
 
@@ -80,7 +80,9 @@ class ExtractTextResponse(TextResponse):
                 result.append((extracted, start, end))
         return result
 
-    def text_id(self, tid: str, skip_prefix="[^a-zA-Z0-9$]*"):
+    def text_id(self, tid: str, skip_prefix: Optional[str]=None):
+        if skip_prefix is None:
+            skip_prefix = "[^a-zA-Z0-9$]*"
         reg = f"{skip_prefix}(.+?)<!--{tid}-->"
         return self.text_re(reg)
 
@@ -103,8 +105,9 @@ class ExtractItemLoader(ItemLoader):
                 self.extract_indexes[attr] = (s, e)
                 self.add_value(attr, t, *processors, **kw)
 
-    def add_text_id(self, attr: str, reg: str, *processors, **kw):
-        extracted = self.context["response"].text_id(reg)
+    def add_text_id(self, attr: str, tid: str, *processors, **kw):
+        skip_prefix = kw.pop("skip_prefix", None)
+        extracted = self.context["response"].text_id(tid, skip_prefix)
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
