@@ -17,6 +17,7 @@ from emodels import html2text
 MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
 LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
+COMMENT_RE = re.compile("<!--.+?-->")
 
 
 class ExtractTextResponse(TextResponse):
@@ -125,9 +126,25 @@ class ExtractItemLoader(ItemLoader):
 
     def _save_extract_sample(self, clsname: str):
         if EMODELS_ENABLED and self.extract_indexes:
+            markdown = self.context["response"].markdown
+            new_indexes = ExtractDict({})
+            sorted_indexes: List[Tuple[int, int, str]] = [(s, e, attr) for attr, (s, e) in sorted(self.extract_indexes.items(), key=lambda x: x[1][0])]
+            accum = 0
+            for m in COMMENT_RE.finditer(self.context["response"].markdown):
+                comment_len = m.end() - m.start()
+                markdown = markdown[:m.start() - accum] + markdown[m.end() - accum:]
+                while sorted_indexes and m.start() > sorted_indexes[0][0]:
+                    s, e, attr = sorted_indexes.pop(0)
+                    new_indexes[attr] = (s - accum, e - accum)
+                accum += comment_len
+
+            while sorted_indexes:
+                s, e, attr = sorted_indexes.pop(0)
+                new_indexes[attr] = (s - accum, e - accum)
+
             sample = {
-                "markdown": self.context["response"].markdown,
-                "indexes": self.extract_indexes,
+                "indexes": new_indexes,
+                "markdown": markdown,
             }
             with gzip.open(os.path.join(EMODELS_ITEMS_DIR, f"{clsname}.jl.gz"), "at") as fz:
                 print(json.dumps(sample), file=fz)
