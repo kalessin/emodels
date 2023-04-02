@@ -129,6 +129,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.preceding_stressed = False
         self.preceding_data = ""
         self.current_tag = ""
+        self.current_id = []
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
 
@@ -186,9 +187,13 @@ class HTML2Text(html.parser.HTMLParser):
             self.handle_data(ref, True)
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+        attrid = dict(attrs).get("id", "")
+        self.current_id.append(attrid)
         self.handle_tag(tag, dict(attrs), start=True)
 
     def handle_endtag(self, tag: str) -> None:
+        if self.current_id:
+            self.current_id.pop()
         self.handle_tag(tag, {}, start=False)
 
     def previousIndex(self, attrs: Dict[str, Optional[str]]) -> Optional[int]:
@@ -802,6 +807,7 @@ class HTML2Text(html.parser.HTMLParser):
             # LEFT-TO-RIGHT MARK.
             return
 
+        rawdata = data.strip()
         if self.stressed:
             data = data.strip()
             self.stressed = False
@@ -838,6 +844,10 @@ class HTML2Text(html.parser.HTMLParser):
             data = escape_md_section(data, snob=self.escape_snob)
         self.preceding_data = data
         self.o(data, puredata=True)
+        if rawdata and self.current_id and not self.cdata_elem:
+            attrid = self.current_id[-1]
+            if attrid:
+                self.out(f" <!--{attrid}-->\n")
 
     def charref(self, name: str) -> str:
         if name[0] in ["x", "X"]:
