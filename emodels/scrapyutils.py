@@ -77,6 +77,7 @@ class ExtractTextResponse(TextResponse):
             end -= len(extracted) - len(extracted.rstrip())
             extracted = extracted.strip()
             if extracted:
+                extracted = COMMENT_RE.sub("", extracted)
                 result.append((extracted, start, end))
         return result
 
@@ -120,7 +121,7 @@ class ExtractItemLoader(ItemLoader):
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
                 self.extract_indexes[attr] = (s, e)
-                self.add_value(attr, self._mconverter.convert(t), *processors, **kw)
+                self.add_value(attr, self._mconverter.convert(t).strip(), *processors, **kw)
 
     def load_item(self) -> Item:
         item = super().load_item()

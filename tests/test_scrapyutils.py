@@ -1,4 +1,5 @@
 import os
+import re
 import gzip
 import json
 from unittest import TestCase
@@ -18,6 +19,7 @@ SAMPLES_DIR = os.path.join(os.path.dirname(__file__), 'samples')
 class JobItem(Item):
     job_title = Field()
     description = Field()
+    description_as_html = Field()
     url = Field()
     employment_type = Field()
     apply_url = Field()
@@ -54,18 +56,28 @@ class ScrapyUtilsTests(TestCase):
         loader.add_text_id("job_title", "job_title_2_2")
         loader.add_text_id("employment_type", "employment_type_2_2_0_0")
         loader.add_text_id("job_id", "requisition_identifier_2_2_0")
+        loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
+        loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
 
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], '492556')
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], 'Full-time Staff')
+
+        item = loader.load_item()
         
-        loader.load_item()
+        self.assertFalse(COMMENT_RE.findall(item["description"]))
+        self.assertFalse(COMMENT_RE.findall(item["description_as_html"]))
+
+        self.assertEqual(item["description"][:80], "###  Student Athlete Support Services Coord  \n\n\n  * __ 492556  \n\n\n\n\n  * __ Grand")
+        self.assertEqual(item["description"][-80:], "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**")
+        self.assertEqual(item["description_as_html"][:80], "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556  </p></li")
+        self.assertEqual(item["description_as_html"][-80:], "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>")
 
         with gzip.open(self.jobs_result_file, "rt") as fz:
             data = json.loads(next(fz))
-        
+
         self.assertFalse(COMMENT_RE.findall(data["markdown"]))
-        
+
         self.assertEqual(data["markdown"][slice(*data["indexes"]["job_title"])], 'Student Athlete Support Services Coord')
         self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], '492556')
         self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], 'Full-time Staff')
