@@ -6,12 +6,13 @@ from unittest import TestCase
 
 from itemloaders.processors import TakeFirst
 from scrapy import Item, Field
+from scrapy.http import TextResponse
 
 os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 
 from emodels import config
-from emodels.scrapyutils import ExtractItemLoader, ExtractTextResponse, COMMENT_RE
+from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), 'samples')
 
@@ -51,14 +52,15 @@ class ScrapyUtilsTests(TestCase):
     def test_extract_job(self):
         sample_file = os.path.join(SAMPLES_DIR, "job21.html")
         body = open(sample_file).read().encode("utf8")
-        response = ExtractTextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
-        loader = JobItemLoader(response=response)
+        tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
+        loader = JobItemLoader(response=tresponse)
         loader.add_text_id("job_title", "job_title_2_2")
         loader.add_text_id("employment_type", "employment_type_2_2_0_0")
         loader.add_text_id("job_id", "requisition_identifier_2_2_0")
         loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
         loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
 
+        response = loader.context["response"]
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], '492556')
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], 'Full-time Staff')

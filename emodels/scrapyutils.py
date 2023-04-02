@@ -96,6 +96,8 @@ class ExtractItemLoader(ItemLoader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert "response" in self.context, '"response" is required.'
+        if not isinstance(self.context["response"], ExtractTextResponse):
+            self.context["response"] = self.context["response"].replace(cls=ExtractTextResponse)
         self.extract_indexes: ExtractDict = ExtractDict({})
         self._mconverter = Markdown()
 
