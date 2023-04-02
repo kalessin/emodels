@@ -10,7 +10,7 @@ from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
 from scrapy import Item
 
-from emodels.config import EMODELS_ITEMS_DIR, EMODELS_ENABLED
+from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
 from emodels import html2text
 
 
@@ -80,8 +80,8 @@ class ExtractTextResponse(TextResponse):
                 result.append((extracted, start, end))
         return result
 
-    def text_id(self, tid: str):
-        reg = f"\W*(.+?)<!--{tid}-->"
+    def text_id(self, tid: str, skip_prefix="[^a-zA-Z0-9$]*"):
+        reg = f"{skip_prefix}(.+?)<!--{tid}-->"
         return self.text_re(reg)
 
 
@@ -125,7 +125,7 @@ class ExtractItemLoader(ItemLoader):
         return item
 
     def _save_extract_sample(self, clsname: str):
-        if EMODELS_ENABLED and self.extract_indexes:
+        if EMODELS_SAVE_EXTRACT_ITEMS and self.extract_indexes:
             markdown = self.context["response"].markdown
             new_indexes = ExtractDict({})
             sorted_indexes: List[Tuple[int, int, str]] = [(s, e, attr) for attr, (s, e) in sorted(self.extract_indexes.items(), key=lambda x: x[1][0])]
