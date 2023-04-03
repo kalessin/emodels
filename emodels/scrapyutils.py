@@ -17,7 +17,7 @@ from emodels import html2text
 MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
 LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
-COMMENT_RE = re.compile("<!--.+?-->")
+COMMENT_RE = re.compile("\s<!--.+?-->")
 
 
 class ExtractTextResponse(TextResponse):
@@ -77,7 +77,7 @@ class ExtractTextResponse(TextResponse):
             end -= len(extracted) - len(extracted.rstrip())
             extracted = extracted.strip()
             if extracted:
-                new_extracted = COMMENT_RE.sub("", extracted)
+                new_extracted = COMMENT_RE.sub("", extracted).strip()
                 end -= len(extracted) - len(new_extracted)
                 result.append((new_extracted, start, end))
         return result

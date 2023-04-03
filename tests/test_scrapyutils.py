@@ -87,9 +87,9 @@ class ScrapyUtilsTests(TestCase):
         self.assertFalse(COMMENT_RE.findall(item["description"]))
         self.assertFalse(COMMENT_RE.findall(item["description_as_html"]))
 
-        self.assertEqual(item["description"][:80], "###  Student Athlete Support Services Coord  \n\n\n  * __ 492556  \n\n\n\n\n  * __ Grand")
+        self.assertEqual(item["description"][:80], "###  Student Athlete Support Services Coord \n\n  * __ 492556 \n\n\n\n  * __ Grand For")
         self.assertEqual(item["description"][-80:], "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**")
-        self.assertEqual(item["description_as_html"][:80], "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556  </p></li")
+        self.assertEqual(item["description_as_html"][:80], "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556 </p></li>")
         self.assertEqual(item["description_as_html"][-80:], "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>")
 
         with gzip.open(self.jobs_result_file, "rt") as fz:
@@ -130,10 +130,20 @@ class ScrapyUtilsTests(TestCase):
                 extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
         
         self.assertEqual(len(extracted), 25)
+        self.assertEqual(len([e for e in extracted if "name" in e]), 25)
+#         self.assertEqual(len([e for e in extracted if "category" in e]), 25)
+#         categories = [e["category"] for e in extracted if category in e]
+#         self.assertEqual(categories.count("Solicitors"), 24)
+#         self.assertEqual(categories.count("Personal Injury"), 1)
+        self.assertEqual(len([e for e in extracted if "phone" in e]), 25)
+        self.assertEqual(len([e for e in extracted if "website" in e]), 20)
+        self.assertEqual(len([e for e in extracted if "address" in e]), 24)
+        self.assertFalse("address" in extracted[1])
+        self.assertEqual(len([e for e in extracted if "profile_url" in e]), 25)
+
         self.assertEqual(extracted[0]["name"], "Craig Wood Solicitors")
         self.assertEqual(extracted[1]["category"], "Solicitors")
         self.assertEqual(extracted[2]["website"], "http://www.greyandcosolicitors.co.uk")
         self.assertEqual(extracted[3]["phone"], "01463 225544")
         self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace,  Inverness, IV2 3AE")
         self.assertEqual(extracted[5]["profile_url"], 'https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/')
-
