@@ -187,7 +187,9 @@ class HTML2Text(html.parser.HTMLParser):
             self.handle_data(ref, True)
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
-        attrid = dict(attrs).get("id", "")
+        attrid = dict(attrs).get("itemprop", "")
+        if not attrid:
+            attrid = dict(attrs).get("id", "")
         self.current_id.append(attrid)
         self.handle_tag(tag, dict(attrs), start=True)
 
@@ -847,7 +849,7 @@ class HTML2Text(html.parser.HTMLParser):
         if rawdata and self.current_id and not self.cdata_elem:
             attrid = self.current_id[-1]
             if attrid:
-                self.out(f" <!--{attrid}-->\n")
+                self.out(f" <!--{attrid}-->")
 
     def charref(self, name: str) -> str:
         if name[0] in ["x", "X"]:
