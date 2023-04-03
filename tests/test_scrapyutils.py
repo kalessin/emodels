@@ -12,7 +12,7 @@ os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 
 from emodels import config
-from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE
+from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE, ExtractTextResponse
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), 'samples')
 
@@ -41,15 +41,32 @@ class JobItemLoader(ExtractItemLoader):
     default_output_processor = TakeFirst()
 
 
+class BusinessSearchItem(Item):
+    name = Field()
+    phone = Field()
+    website = Field()
+    address = Field()
+    profile_url = Field()
+    category = Field()
+
+
+class BusinessSearchItemLoader(ExtractItemLoader):
+    default_item_class = BusinessSearchItem
+    default_output_processor = TakeFirst()
+
+
 class ScrapyUtilsTests(TestCase):
 
     jobs_result_file = os.path.join(config.EMODELS_DIR, "items/JobItem.jl.gz")
+    business_result_file = os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem.jl.gz")
 
     def tearDown(self):
-        if os.path.isfile(self.jobs_result_file):
-            os.remove(self.jobs_result_file)
+        for col in "jobs", "business":
+            fname = getattr(self, f"{col}_result_file")
+            if os.path.isfile(fname):
+                os.remove(fname)
 
-    def test_extract_job(self):
+    def test_itemloader_base(self):
         sample_file = os.path.join(SAMPLES_DIR, "job21.html")
         body = open(sample_file).read().encode("utf8")
         tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
@@ -86,3 +103,37 @@ class ScrapyUtilsTests(TestCase):
 
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
+
+    def test_split_text_re(self):
+        sample_file = os.path.join(SAMPLES_DIR, "yell.html")
+        body = open(sample_file).read().encode("utf8")
+        response = ExtractTextResponse(url="https://yell.com/result.html", body=body, status=200)
+
+        for r in response.css_split(".businessCapsule--mainRow"):
+            loader = BusinessSearchItemLoader(response=r)
+            loader.add_text_re("name", r"##(.+)")
+            loader.add_text_re("phone", r"Tel([\s\d]+)")
+            loader.add_text_re("website", r"Website\]\((.+?)\)")
+            loader.add_text_re("address", r"\[.+\|(.+)\]\(.+view=map", re.S)
+            loader.add_text_re("profile_url", r"\[More info .+\]\((http.+?\d+/)")
+            loader.add_text_re(
+                "category",
+                r"##.+\]\(.+\)(?:.+with Yell)?(.+?)(?:###.+)?\[ Website",
+                re.S,
+            )   
+            loader.load_item()
+
+        extracted = []
+        with gzip.open(self.business_result_file, "rt") as fz:
+            for l in fz:
+                d = json.loads(l)
+                extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
+        
+        self.assertEqual(len(extracted), 25)
+        self.assertEqual(extracted[0]["name"], "Craig Wood Solicitors")
+        self.assertEqual(extracted[1]["category"], "Solicitors")
+        self.assertEqual(extracted[2]["website"], "http://www.greyandcosolicitors.co.uk")
+        self.assertEqual(extracted[3]["phone"], "01463 225544")
+        self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace,  Inverness, IV2 3AE")
+        self.assertEqual(extracted[5]["profile_url"], 'https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/')
+
