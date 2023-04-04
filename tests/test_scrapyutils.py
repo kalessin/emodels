@@ -71,11 +71,11 @@ class ScrapyUtilsTests(TestCase):
         body = open(sample_file).read().encode("utf8")
         tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
         loader = JobItemLoader(response=tresponse)
-        loader.add_text_id("job_title", "job_title_2_2")
-        loader.add_text_id("employment_type", "employment_type_2_2_0_0")
-        loader.add_text_id("job_id", "requisition_identifier_2_2_0")
-        loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
-        loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", re.S | re.I)
+        loader.add_text_re("job_title", tid="job_title_2_2")
+        loader.add_text_re("employment_type", tid="employment_type_2_2_0_0")
+        loader.add_text_re("job_id", tid="requisition_identifier_2_2_0")
+        loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
+        loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 
         response = loader.context["response"]
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
@@ -114,12 +114,12 @@ class ScrapyUtilsTests(TestCase):
             loader.add_text_re("name", r"##(.+)")
             loader.add_text_re("phone", r"Tel([\s\d]+)")
             loader.add_text_re("website", r"Website\]\((.+?)\)")
-            loader.add_text_re("address", r"\[.+\|(.+)\]\(.+view=map", re.S)
+            loader.add_text_re("address", r"\[.+\|(.+)\]\(.+view=map", flags=re.S)
             loader.add_text_re("profile_url", r"\[More info .+\]\((http.+?\d+/)")
             loader.add_text_re(
                 "category",
                 r"##.+\]\(.+\)(?:.+with Yell)?(.+?)(?:###.+)?\[ Website",
-                re.S,
+                flags=re.S,
             )   
             loader.load_item()
 

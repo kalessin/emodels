@@ -18,6 +18,7 @@ MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
 LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
 COMMENT_RE = re.compile("\s<!--.+?-->")
+DEFAULT_SKIP_PREFIX = "[^a-zA-Z0-9$]*"
 
 
 class ExtractTextResponse(TextResponse):
@@ -62,7 +63,10 @@ class ExtractTextResponse(TextResponse):
                 shrink += len(link_orig) - len(link)
         return md
 
-    def text_re(self, reg: str, flags: int = 0):
+    def text_re(self, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX):
+        reg = f"{skip_prefix}{reg}"
+        if tid is not None:
+            reg += f"<!--{tid}-->"
         result = []
         for m in re.finditer(reg, self.markdown, flags):
             if m.groups():
@@ -82,12 +86,6 @@ class ExtractTextResponse(TextResponse):
                 result.append((new_extracted, start, end))
         return result
 
-    def text_id(self, tid: str, skip_prefix: Optional[str]=None):
-        if skip_prefix is None:
-            skip_prefix = "[^a-zA-Z0-9$]*"
-        reg = f"{skip_prefix}(.+?)<!--{tid}-->"
-        return self.text_re(reg)
-
 
 ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
@@ -101,17 +99,8 @@ class ExtractItemLoader(ItemLoader):
         self.extract_indexes: ExtractDict = ExtractDict({})
         self._mconverter = Markdown()
 
-    def add_text_re(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
-        extracted = self.context["response"].text_re(reg, flags)
-        if extracted:
-            t, s, e = extracted[0]
-            if attr not in self.extract_indexes:
-                self.extract_indexes[attr] = (s, e)
-                self.add_value(attr, t, *processors, **kw)
-
-    def add_text_id(self, attr: str, tid: str, *processors, **kw):
-        skip_prefix = kw.pop("skip_prefix", None)
-        extracted = self.context["response"].text_id(tid, skip_prefix)
+    def add_text_re(self, attr: str, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX, *processors, **kw):
+        extracted = self.context["response"].text_re(reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix)
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
@@ -119,7 +108,7 @@ class ExtractItemLoader(ItemLoader):
                 self.add_value(attr, t, *processors, **kw)
 
     def add_text_re_as_html(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
-        extracted = self.context["response"].text_re(reg, flags)
+        extracted = self.context["response"].text_re(reg, flags=flags)
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
