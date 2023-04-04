@@ -71,9 +71,9 @@ class ScrapyUtilsTests(TestCase):
         body = open(sample_file).read().encode("utf8")
         tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
         loader = JobItemLoader(response=tresponse)
-        loader.add_text_re("job_title", tid="job_title_2_2")
-        loader.add_text_re("employment_type", tid="employment_type_2_2_0_0")
-        loader.add_text_re("job_id", tid="requisition_identifier_2_2_0")
+        loader.add_text_re("job_title", tid="#job_title_2_2")
+        loader.add_text_re("employment_type", tid="#employment_type_2_2_0_0")
+        loader.add_text_re("job_id", tid="#requisition_identifier_2_2_0")
         loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
         loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 

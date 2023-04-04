@@ -849,7 +849,7 @@ class HTML2Text(html.parser.HTMLParser):
         if rawdata and self.current_id and not self.cdata_elem:
             attrid = self.current_id[-1]
             if attrid:
-                self.out(f" <!--{attrid}-->")
+                self.out(f" <!--#{attrid}-->")
 
     def charref(self, name: str) -> str:
         if name[0] in ["x", "X"]:
