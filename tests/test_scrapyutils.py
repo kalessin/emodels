@@ -77,11 +77,6 @@ class ScrapyUtilsTests(TestCase):
         loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
         loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 
-        response = loader.context["response"]
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], '492556')
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], 'Full-time Staff')
-
         item = loader.load_item()
         
         self.assertFalse(COMMENT_RE.findall(item["description"]))
@@ -91,6 +86,11 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(item["description"][-80:], "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**")
         self.assertEqual(item["description_as_html"][:80], "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556 </p></li>")
         self.assertEqual(item["description_as_html"][-80:], "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>")
+
+        response = loader.context["response"]
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], '492556')
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], 'Full-time Staff')
 
         with gzip.open(self.jobs_result_file, "rt") as fz:
             data = json.loads(next(fz))

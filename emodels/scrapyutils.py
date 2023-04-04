@@ -25,13 +25,21 @@ class ExtractTextResponse(TextResponse):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._markdown = None
+        self._markdown_ids = None
 
     @property
     def markdown(self):
         if self._markdown is None:
-            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True)
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0)
             self._markdown = self._clean_markdown(h2t.handle(self.text))
         return self._markdown
+
+    @property
+    def markdown_ids(self):
+        if self._markdown_ids is None:
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True)
+            self._markdown_ids = self._clean_markdown(h2t.handle(self.text))
+        return self._markdown_ids
 
     def css_split(self, selector: str) -> List[TextResponse]:
         """Generate multiple responses from provided css selector"""
@@ -68,7 +76,7 @@ class ExtractTextResponse(TextResponse):
         if tid is not None:
             reg += f"<!--{tid}-->"
         result = []
-        for m in re.finditer(reg, self.markdown, flags):
+        for m in re.finditer(reg, self.markdown_ids, flags):
             if m.groups():
                 extracted = m.groups()[0]
                 start = m.start(1)
@@ -83,6 +91,12 @@ class ExtractTextResponse(TextResponse):
             if extracted:
                 new_extracted = COMMENT_RE.sub("", extracted).strip()
                 end -= len(extracted) - len(new_extracted)
+                accum = 0
+                for m in COMMENT_RE.finditer(self.markdown_ids[:start]):
+                    comment_len = m.end() - m.start()
+                    accum += comment_len
+                start -= accum
+                end -= accum
                 result.append((new_extracted, start, end))
         return result
 
@@ -123,25 +137,9 @@ class ExtractItemLoader(ItemLoader):
 
     def _save_extract_sample(self, clsname: str):
         if EMODELS_SAVE_EXTRACT_ITEMS and self.extract_indexes:
-            markdown = self.context["response"].markdown
-            new_indexes = ExtractDict({})
-            sorted_indexes: List[Tuple[int, int, str]] = [(s, e, attr) for attr, (s, e) in sorted(self.extract_indexes.items(), key=lambda x: x[1][0])]
-            accum = 0
-            for m in COMMENT_RE.finditer(self.context["response"].markdown):
-                comment_len = m.end() - m.start()
-                markdown = markdown[:m.start() - accum] + markdown[m.end() - accum:]
-                while sorted_indexes and m.start() > sorted_indexes[0][0]:
-                    s, e, attr = sorted_indexes.pop(0)
-                    new_indexes[attr] = (s - accum, e - accum)
-                accum += comment_len
-
-            while sorted_indexes:
-                s, e, attr = sorted_indexes.pop(0)
-                new_indexes[attr] = (s - accum, e - accum)
-
             sample = {
-                "indexes": new_indexes,
-                "markdown": markdown,
+                "indexes": self.extract_indexes,
+                "markdown": self.context["response"].markdown,
             }
             with gzip.open(os.path.join(EMODELS_ITEMS_DIR, f"{clsname}.jl.gz"), "at") as fz:
                 print(json.dumps(sample), file=fz)
