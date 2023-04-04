@@ -29,7 +29,7 @@ class ExtractTextResponse(TextResponse):
     @property
     def markdown(self):
         if self._markdown is None:
-            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0)
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True)
             self._markdown = self._clean_markdown(h2t.handle(self.text))
         return self._markdown
 

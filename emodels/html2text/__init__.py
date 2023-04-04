@@ -37,6 +37,7 @@ class HTML2Text(html.parser.HTMLParser):
         out: Optional[OutCallback] = None,
         baseurl: str = "",
         bodywidth: int = config.BODY_WIDTH,
+        ids: bool = False,
     ) -> None:
         """
         Input parameters:
@@ -129,6 +130,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.preceding_stressed = False
         self.preceding_data = ""
         self.current_tag = ""
+        self.ids = ids
         self.current_id = []
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
@@ -846,7 +848,7 @@ class HTML2Text(html.parser.HTMLParser):
             data = escape_md_section(data, snob=self.escape_snob)
         self.preceding_data = data
         self.o(data, puredata=True)
-        if rawdata and self.current_id and not self.cdata_elem:
+        if self.ids and rawdata and self.current_id and not self.cdata_elem:
             attrid = self.current_id[-1]
             if attrid:
                 self.out(f" <!--#{attrid}-->")
