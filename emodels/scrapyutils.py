@@ -92,7 +92,7 @@ class ExtractTextResponse(TextResponse):
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
         if tid:
-            reg += f"\s+<!--{tid}-->"
+            reg += fr"\s+<!--{tid}-->"
             if tid.startswith("#"):
                 markdown = self.markdown_ids
             elif tid.startswith("."):

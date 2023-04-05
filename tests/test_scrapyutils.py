@@ -11,10 +11,10 @@ from scrapy.http import TextResponse
 os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 
-from emodels import config
-from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE, ExtractTextResponse
+from emodels import config  # noqa
+from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE, ExtractTextResponse  # noqa
 
-SAMPLES_DIR = os.path.join(os.path.dirname(__file__), 'samples')
+SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
 
 class JobItem(Item):
@@ -60,7 +60,6 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 
 
 class ScrapyUtilsTests(TestCase):
-
     jobs_result_file = os.path.join(config.EMODELS_DIR, "items/JobItem.jl.gz")
     business_result_file = os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem.jl.gz")
 
@@ -78,32 +77,48 @@ class ScrapyUtilsTests(TestCase):
         loader.add_text_re("job_title", tid="#job_title_2_2")
         loader.add_text_re("employment_type", tid="#employment_type_2_2_0_0")
         loader.add_text_re("job_id", tid="#requisition_identifier_2_2_0")
-        loader.add_text_re("description", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
-        loader.add_text_re_as_html("description_as_html", "(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
+        loader.add_text_re("description", r"(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
+        loader.add_text_re_as_html("description_as_html", r"(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 
         item = loader.load_item()
-        
+
         self.assertFalse(COMMENT_RE.findall(item["description"]))
         self.assertFalse(COMMENT_RE.findall(item["description_as_html"]))
 
-        self.assertEqual(item["description"][:80], "###  Student Athlete Support Services Coord \n\n  * __ 492556 \n\n\n\n  * __ Grand For")
-        self.assertEqual(item["description"][-80:], "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**")
-        self.assertEqual(item["description_as_html"][:80], "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556 </p></li>")
-        self.assertEqual(item["description_as_html"][-80:], "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>")
+        self.assertEqual(
+            item["description"][:80],
+            "###  Student Athlete Support Services Coord \n\n  * __ 492556 \n\n\n\n  * __ Grand For",
+        )
+        self.assertEqual(
+            item["description"][-80:],
+            "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**",
+        )
+        self.assertEqual(
+            item["description_as_html"][:80],
+            "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556 </p></li>",
+        )
+        self.assertEqual(
+            item["description_as_html"][-80:],
+            "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>",
+        )
 
         response = loader.context["response"]
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_title"])], 'Student Athlete Support Services Coord')
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], '492556')
-        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], 'Full-time Staff')
+        self.assertEqual(
+            response.markdown[slice(*loader.extract_indexes["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], "492556")
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], "Full-time Staff")
 
         with gzip.open(self.jobs_result_file, "rt") as fz:
             data = json.loads(next(fz))
 
         self.assertFalse(COMMENT_RE.findall(data["markdown"]))
 
-        self.assertEqual(data["markdown"][slice(*data["indexes"]["job_title"])], 'Student Athlete Support Services Coord')
-        self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], '492556')
-        self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], 'Full-time Staff')
+        self.assertEqual(
+            data["markdown"][slice(*data["indexes"]["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], "492556")
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], "Full-time Staff")
 
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
@@ -125,17 +140,17 @@ class ScrapyUtilsTests(TestCase):
                 tid=".businessCapsule--classification",
             )
             loader.add_text_re("locality", tid="#addressLocality", strict_tid=True)
-            loader.add_text_re("address_alt", reg="(?:.+\|)?(.+?),?", tid="#addressLocality")
-            loader.add_text_re("street", reg="(?:.+\|)?(.+?),?", tid="#streetAddress")
+            loader.add_text_re("address_alt", reg=r"(?:.+\|)?(.+?),?", tid="#addressLocality")
+            loader.add_text_re("street", reg=r"(?:.+\|)?(.+?),?", tid="#streetAddress")
             loader.add_text_re("postal_code", tid="#postalCode", strict_tid=True)
             loader.load_item()
 
         extracted = []
         with gzip.open(self.business_result_file, "rt") as fz:
-            for l in fz:
-                d = json.loads(l)
+            for line in fz:
+                d = json.loads(line)
                 extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
-        
+
         self.assertEqual(len(extracted), 25)
         self.assertEqual(len([e for e in extracted if "name" in e]), 25)
         self.assertEqual(len([e for e in extracted if "category" in e]), 25)
@@ -157,8 +172,9 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[3]["phone"], "01463 225544")
         self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace,  Inverness, IV2 3AE")
         self.assertEqual(extracted[4]["address_alt"], "3 Ardconnel Terrace,  Inverness")
-        self.assertEqual(extracted[5]["profile_url"], 'https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/')
+        self.assertEqual(
+            extracted[5]["profile_url"], "https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/"
+        )
         self.assertEqual(extracted[6]["locality"], "Inverness")
         self.assertEqual(extracted[7]["street"], "York House, 20, Church St")
         self.assertEqual(extracted[8]["postal_code"], "IV1 1DF")
-
