@@ -17,7 +17,7 @@ from emodels import html2text
 MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
 LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
-COMMENT_RE = re.compile("\s<!--.+?-->")
+COMMENT_RE = re.compile(r"\s<!--.+?-->")
 DEFAULT_SKIP_PREFIX = "[^a-zA-Z0-9$]*"
 
 
@@ -79,7 +79,9 @@ class ExtractTextResponse(TextResponse):
                 shrink += len(link_orig) - len(link)
         return md
 
-    def text_re(self, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX):
+    def text_re(
+        self, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX
+    ):
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
         if tid:
@@ -128,7 +130,16 @@ class ExtractItemLoader(ItemLoader):
         self.extract_indexes: ExtractDict = ExtractDict({})
         self._mconverter = Markdown()
 
-    def add_text_re(self, attr: str, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX, *processors, **kw):
+    def add_text_re(
+        self,
+        attr: str,
+        reg: str = "(.+?)",
+        tid: Optional[str] = None,
+        flags: int = 0,
+        skip_prefix: str = DEFAULT_SKIP_PREFIX,
+        *processors,
+        **kw,
+    ):
         extracted = self.context["response"].text_re(reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix)
         if extracted:
             t, s, e = extracted[0]
