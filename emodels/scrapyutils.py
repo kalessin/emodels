@@ -80,12 +80,19 @@ class ExtractTextResponse(TextResponse):
         return md
 
     def text_re(
-        self, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX
+        self,
+        reg: str = "(.+?)",
+        tid: Optional[str] = None,
+        flags: int = 0,
+        skip_prefix: str = DEFAULT_SKIP_PREFIX,
+        strict_tid: bool = False,
     ):
+        if strict_tid:
+            reg = f"(?:.*<!--.+-->)?{reg}"
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
         if tid:
-            reg += f"<!--{tid}-->"
+            reg += f"\s+<!--{tid}-->"
             if tid.startswith("#"):
                 markdown = self.markdown_ids
             elif tid.startswith("."):
@@ -137,10 +144,13 @@ class ExtractItemLoader(ItemLoader):
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
+        strict_tid: bool = False,
         *processors,
         **kw,
     ):
-        extracted = self.context["response"].text_re(reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix)
+        extracted = self.context["response"].text_re(
+            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid
+        )
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:

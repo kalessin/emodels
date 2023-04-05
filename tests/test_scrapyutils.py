@@ -48,6 +48,10 @@ class BusinessSearchItem(Item):
     address = Field()
     profile_url = Field()
     category = Field()
+    locality = Field()
+    street = Field()
+    postal_code = Field()
+    address_alt = Field()
 
 
 class BusinessSearchItemLoader(ExtractItemLoader):
@@ -66,7 +70,7 @@ class ScrapyUtilsTests(TestCase):
             if os.path.isfile(fname):
                 os.remove(fname)
 
-    def test_itemloader_base(self):
+    def test_example_one(self):
         sample_file = os.path.join(SAMPLES_DIR, "job21.html")
         body = open(sample_file).read().encode("utf8")
         tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
@@ -104,7 +108,7 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
 
-    def test_split_text_re(self):
+    def test_example_two(self):
         sample_file = os.path.join(SAMPLES_DIR, "yell.html")
         body = open(sample_file).read().encode("utf8")
         response = ExtractTextResponse(url="https://yell.com/result.html", body=body, status=200)
@@ -119,7 +123,11 @@ class ScrapyUtilsTests(TestCase):
             loader.add_text_re(
                 "category",
                 tid=".businessCapsule--classification",
-            )   
+            )
+            loader.add_text_re("locality", tid="#addressLocality", strict_tid=True)
+            loader.add_text_re("address_alt", reg="(?:.+\|)?(.+?),?", tid="#addressLocality")
+            loader.add_text_re("street", reg="(?:.+\|)?(.+?),?", tid="#streetAddress")
+            loader.add_text_re("postal_code", tid="#postalCode", strict_tid=True)
             loader.load_item()
 
         extracted = []
@@ -138,6 +146,9 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(len([e for e in extracted if "website" in e]), 20)
         self.assertEqual(len([e for e in extracted if "address" in e]), 24)
         self.assertFalse("address" in extracted[1])
+        self.assertEqual(len([e for e in extracted if "locality" in e]), 24)
+        self.assertEqual(len([e for e in extracted if "street" in e]), 24)
+        self.assertEqual(len([e for e in extracted if "postal_code" in e]), 24)
         self.assertEqual(len([e for e in extracted if "profile_url" in e]), 25)
 
         self.assertEqual(extracted[0]["name"], "Craig Wood Solicitors")
@@ -145,4 +156,9 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[2]["website"], "http://www.greyandcosolicitors.co.uk")
         self.assertEqual(extracted[3]["phone"], "01463 225544")
         self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace,  Inverness, IV2 3AE")
+        self.assertEqual(extracted[4]["address_alt"], "3 Ardconnel Terrace,  Inverness")
         self.assertEqual(extracted[5]["profile_url"], 'https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/')
+        self.assertEqual(extracted[6]["locality"], "Inverness")
+        self.assertEqual(extracted[7]["street"], "York House, 20, Church St")
+        self.assertEqual(extracted[8]["postal_code"], "IV1 1DF")
+
