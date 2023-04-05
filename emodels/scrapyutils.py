@@ -26,6 +26,7 @@ class ExtractTextResponse(TextResponse):
         super().__init__(*args, **kwargs)
         self._markdown = None
         self._markdown_ids = None
+        self._markdown_classes = None
 
     @property
     def markdown(self):
@@ -40,6 +41,13 @@ class ExtractTextResponse(TextResponse):
             h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True)
             self._markdown_ids = self._clean_markdown(h2t.handle(self.text))
         return self._markdown_ids
+
+    @property
+    def markdown_classes(self):
+        if self._markdown_classes is None:
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, classes=True)
+            self._markdown_classes = self._clean_markdown(h2t.handle(self.text))
+        return self._markdown_classes
 
     def css_split(self, selector: str) -> List[TextResponse]:
         """Generate multiple responses from provided css selector"""
@@ -73,10 +81,15 @@ class ExtractTextResponse(TextResponse):
 
     def text_re(self, reg: str = "(.+?)", tid: Optional[str] = None, flags: int = 0, skip_prefix: str = DEFAULT_SKIP_PREFIX):
         reg = f"{skip_prefix}{reg}"
-        if tid is not None:
+        markdown = self.markdown
+        if tid:
             reg += f"<!--{tid}-->"
+            if tid.startswith("#"):
+                markdown = self.markdown_ids
+            elif tid.startswith("."):
+                markdown = self.markdown_classes
         result = []
-        for m in re.finditer(reg, self.markdown_ids, flags):
+        for m in re.finditer(reg, markdown, flags):
             if m.groups():
                 extracted = m.groups()[0]
                 start = m.start(1)
@@ -89,15 +102,17 @@ class ExtractTextResponse(TextResponse):
             end -= len(extracted) - len(extracted.rstrip())
             extracted = extracted.strip()
             if extracted:
-                new_extracted = COMMENT_RE.sub("", extracted).strip()
-                end -= len(extracted) - len(new_extracted)
-                accum = 0
-                for m in COMMENT_RE.finditer(self.markdown_ids[:start]):
-                    comment_len = m.end() - m.start()
-                    accum += comment_len
-                start -= accum
-                end -= accum
-                result.append((new_extracted, start, end))
+                if tid is not None:
+                    new_extracted = COMMENT_RE.sub("", extracted).strip()
+                    end -= len(extracted) - len(new_extracted)
+                    extracted = new_extracted
+                    accum = 0
+                    for m in COMMENT_RE.finditer(markdown[:start]):
+                        comment_len = m.end() - m.start()
+                        accum += comment_len
+                    start -= accum
+                    end -= accum
+                result.append((extracted, start, end))
         return result
 
 

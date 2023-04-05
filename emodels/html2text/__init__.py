@@ -38,6 +38,7 @@ class HTML2Text(html.parser.HTMLParser):
         baseurl: str = "",
         bodywidth: int = config.BODY_WIDTH,
         ids: bool = False,
+        classes: bool = False,
     ) -> None:
         """
         Input parameters:
@@ -132,6 +133,8 @@ class HTML2Text(html.parser.HTMLParser):
         self.current_tag = ""
         self.ids = ids
         self.current_id = []
+        self.classes = classes
+        self.current_class = []
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
 
@@ -193,11 +196,17 @@ class HTML2Text(html.parser.HTMLParser):
         if not attrid:
             attrid = dict(attrs).get("id", "")
         self.current_id.append(attrid)
+
+        attrclass = dict(attrs).get("class", "")
+        self.current_class.append(attrclass)
+
         self.handle_tag(tag, dict(attrs), start=True)
 
     def handle_endtag(self, tag: str) -> None:
         if self.current_id:
             self.current_id.pop()
+        if self.current_class:
+            self.current_class.pop()
         self.handle_tag(tag, {}, start=False)
 
     def previousIndex(self, attrs: Dict[str, Optional[str]]) -> Optional[int]:
@@ -852,6 +861,10 @@ class HTML2Text(html.parser.HTMLParser):
             attrid = self.current_id[-1]
             if attrid:
                 self.out(f" <!--#{attrid}-->")
+        if self.classes and rawdata and self.current_class and not self.cdata_elem:
+            attrclass = self.current_class[-1]
+            if attrclass:
+                self.out(f" <!--.{attrclass}-->")
 
     def charref(self, name: str) -> str:
         if name[0] in ["x", "X"]:

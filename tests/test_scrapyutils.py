@@ -118,8 +118,7 @@ class ScrapyUtilsTests(TestCase):
             loader.add_text_re("profile_url", r"\[More info .+\]\((http.+?\d+/)")
             loader.add_text_re(
                 "category",
-                r"##.+\]\(.+\)(?:.+with Yell)?(.+?)(?:###.+)?\[ Website",
-                flags=re.S,
+                tid=".businessCapsule--classification",
             )   
             loader.load_item()
 
@@ -131,10 +130,10 @@ class ScrapyUtilsTests(TestCase):
         
         self.assertEqual(len(extracted), 25)
         self.assertEqual(len([e for e in extracted if "name" in e]), 25)
-#         self.assertEqual(len([e for e in extracted if "category" in e]), 25)
-#         categories = [e["category"] for e in extracted if category in e]
-#         self.assertEqual(categories.count("Solicitors"), 24)
-#         self.assertEqual(categories.count("Personal Injury"), 1)
+        self.assertEqual(len([e for e in extracted if "category" in e]), 25)
+        categories = [e["category"] for e in extracted if "category" in e]
+        self.assertEqual(categories.count("Solicitors"), 24)
+        self.assertEqual(categories.count("Personal Injury"), 1)
         self.assertEqual(len([e for e in extracted if "phone" in e]), 25)
         self.assertEqual(len([e for e in extracted if "website" in e]), 20)
         self.assertEqual(len([e for e in extracted if "address" in e]), 24)
