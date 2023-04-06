@@ -22,10 +22,16 @@ extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 
 Usage:
 
-Instead of subclass your item loaders from `scrapy.Item`, use `emodels.scrapyutils.ExtractItemLoader`. This action will not affect the working of itemloaders and will enable the properties just
+Instead of subclass your item loaders from `scrapy.loader.ItemLoader`, use `emodels.scrapyutils.ExtractItemLoader`. This action will not affect the working of itemloaders and will enable the properties just
 described above. In addition, in order to save the collected extraction data, it is required to set the environment variable `EMODELS_SAVE_EXTRACT_ITEMS` to 1. The collected
 extraction data will be incrementally stored at `<user home folder>/.datasets/items/<item class name>.jl.gz`. The base folder `<user home folder>/.datasets` is the default one. You can
 customize it via the environment variable `EMODELS_DIR`.
 
-So, in order to maintain dataset consistence you should choose the same item class name for same item schema, even accross multiple projects. And avoid to repeat it among items with different
-schema.
+So, in order to maintain dataset well ordered you should choose the same item class name for same item schema, even accross multiple projects. And avoid to repeat it among items with different
+schema. However, in general you will use extraction data from all classes of items at same time in order to train a transformer model, as this is the way how transformers generalize better. At
+the end you will have a transformer model that is suited to extract any kind of item, as they are trained not to extract "data from x item" but instead to recognize and extract based on fields.
+So, even if you didn't train the transformer to extract a specific item class, it will do great if you trained it to extract its fields, if it already learned to extract same fields from
+other item classes. You only need to ask the correct question. For example, given an html page as a context, you can ask the model: `which is the phone number?`. You don't need to specify
+which kind of data (a business? a person? an organization?) you expect to find there.
+
+(WIP...)
