@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name         = 'e-models',
-    version      = '0.4',
+    version      = '1.0',
     description  = 'Tools for helping build of extraction models with scrapy spiders.',
     long_description = open('README.md').read(),
     long_description_content_type = 'text/markdown',
