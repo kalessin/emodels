@@ -131,9 +131,9 @@ class ScrapyUtilsTests(TestCase):
         for r in response.css_split(".businessCapsule--mainRow"):
             loader = BusinessSearchItemLoader(response=r)
             loader.add_text_re("name", r"##(.+)")
-            loader.add_text_re("phone", r"Tel([\s\d]+)")
+            loader.add_text_re("phone", r"Tel([\s\d]+)", tid="#telephone")
             loader.add_text_re("website", r"Website\]\((.+?)\)")
-            loader.add_text_re("address", r"\[.+\|(.+)\]\(.+view=map", flags=re.S)
+            loader.add_text_re("address", r"\[(?:.+\|)?(.+)\]\(.+view=map")
             loader.add_text_re("profile_url", r"\[More info .+\]\((http.+?\d+/)")
             loader.add_text_re(
                 "category",
