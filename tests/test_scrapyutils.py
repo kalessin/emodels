@@ -60,8 +60,8 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 
 
 class ScrapyUtilsTests(TestCase):
-    jobs_result_file = os.path.join(config.EMODELS_DIR, "items/JobItem.jl.gz")
-    business_result_file = os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem.jl.gz")
+    jobs_result_file = os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz")
+    business_result_file = os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz")
 
     def tearDown(self):
         for col in "jobs", "business":

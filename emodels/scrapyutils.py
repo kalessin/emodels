@@ -129,6 +129,16 @@ ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
 
 class ExtractItemLoader(ItemLoader):
+
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls)
+        if not hasattr(cls, "savefile"):
+            folder = os.path.join(EMODELS_ITEMS_DIR, obj.default_item_class.__name__)
+            os.makedirs(folder, exist_ok=True)
+            findex = len(os.listdir(folder))
+            cls.savefile = os.path.join(folder, f"{findex}.jl.gz")
+        return obj
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert "response" in self.context, '"response" is required.'
@@ -168,14 +178,14 @@ class ExtractItemLoader(ItemLoader):
 
     def load_item(self) -> Item:
         item = super().load_item()
-        self._save_extract_sample(item.__class__.__name__)
+        self._save_extract_sample()
         return item
 
-    def _save_extract_sample(self, clsname: str):
+    def _save_extract_sample(self):
         if EMODELS_SAVE_EXTRACT_ITEMS and self.extract_indexes:
             sample = {
                 "indexes": self.extract_indexes,
                 "markdown": self.context["response"].markdown,
             }
-            with gzip.open(os.path.join(EMODELS_ITEMS_DIR, f"{clsname}.jl.gz"), "at") as fz:
+            with gzip.open(self.savefile, "at") as fz:
                 print(json.dumps(sample), file=fz)
