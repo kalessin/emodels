@@ -40,7 +40,4 @@ So, even if you didn't train the transformer to extract a specific item class, i
 other item classes. You only need to ask the correct question. For example, given an html page as a context, you can ask the model: `which is the phone number?`. You don't need to specify
 which kind of data (a business? a person? an organization?) you expect to find there.
 
-**Important Note**: Usage of the methods introduced by ExtractItemLoader (`add_text_re()` and `add_text_re_as_html()`) will have an impact in the performance of the spiders you use it, so the
-recommendation is to use them in spiders that don't extract more than few hundred items.
-
 (WIP...)
