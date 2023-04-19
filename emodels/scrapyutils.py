@@ -86,8 +86,9 @@ class ExtractTextResponse(TextResponse):
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
         strict_tid: bool = False,
+        optimize: bool = False,
     ):
-        if strict_tid:
+        if tid and strict_tid:
             reg = f"(?:.*<!--.+-->)?{reg}"
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
@@ -122,6 +123,8 @@ class ExtractTextResponse(TextResponse):
                     start -= accum
                     end -= accum
                 result.append((extracted, start, end))
+                if optimize:
+                    break
         return result
 
 
@@ -159,7 +162,7 @@ class ExtractItemLoader(ItemLoader):
         **kw,
     ):
         extracted = self.context["response"].text_re(
-            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid
+            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid, optimize=True
         )
         if extracted:
             t, s, e = extracted[0]
@@ -168,7 +171,7 @@ class ExtractItemLoader(ItemLoader):
                 self.add_value(attr, t, *processors, **kw)
 
     def add_text_re_as_html(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
-        extracted = self.context["response"].text_re(reg, flags=flags)
+        extracted = self.context["response"].text_re(reg, flags=flags, optimize=True)
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
