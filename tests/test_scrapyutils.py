@@ -123,6 +123,8 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
 
+        self.assertTrue(response.text_re(tid=".job-field job-title"))
+
     def test_example_two(self):
         sample_file = os.path.join(SAMPLES_DIR, "yell.html")
         body = open(sample_file).read().encode("utf8")

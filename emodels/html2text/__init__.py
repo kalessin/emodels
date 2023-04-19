@@ -195,7 +195,7 @@ class HTML2Text(html.parser.HTMLParser):
             attrid = dict(attrs).get("id", "")
         self.current_id.append(attrid)
 
-        attrclass = dict(attrs).get("class", "")
+        attrclass = dict(attrs).get("class", "").strip()
         self.current_class.append(attrclass)
 
         self.handle_tag(tag, dict(attrs), start=True)
