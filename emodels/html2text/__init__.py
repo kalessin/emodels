@@ -52,6 +52,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.split_next_td = False
         self.td_count = 0
         self.table_start = False
+        self.table_header = False
         self.unicode_snob = config.UNICODE_SNOB  # covered in cli
         self.escape_snob = config.ESCAPE_SNOB  # covered in cli
         self.links_each_paragraph = config.LINKS_EACH_PARAGRAPH
@@ -632,6 +633,8 @@ class HTML2Text(html.parser.HTMLParser):
                         if self.pad_tables:
                             self.o("</" + config.TABLE_MARKER_FOR_PAD + ">")
                             self.o("  \n")
+                if tag == "th" and self.table_start:
+                    self.table_header = True
                 if tag in ["td", "th"] and start:
                     if self.split_next_td:
                         self.o("| ")
@@ -639,14 +642,17 @@ class HTML2Text(html.parser.HTMLParser):
 
                 if tag == "tr" and start:
                     self.td_count = 0
+                    self.o("| ")
                 if tag == "tr" and not start:
                     self.split_next_td = False
+                    self.o("|")
                     self.soft_br()
-                if tag == "tr" and not start and self.table_start:
+                if tag == "tr" and not start and self.table_header:
                     # Underline table header
-                    self.o("|".join(["---"] * self.td_count))
+                    self.o("| " + "|".join(["---"] * self.td_count) + "|")
                     self.soft_br()
                     self.table_start = False
+                    self.table_header = False
                 if tag in ["td", "th"] and start:
                     self.td_count += 1
 
