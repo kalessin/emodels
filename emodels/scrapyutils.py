@@ -5,7 +5,6 @@ import gzip
 from typing import NewType, Dict, Tuple, List, Optional
 
 from markdown import Markdown
-
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
 from scrapy import Item

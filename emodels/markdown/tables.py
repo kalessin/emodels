@@ -14,11 +14,11 @@ All changes Copyright 2008-2014 The Python Markdown Project
 License: [BSD](https://opensource.org/licenses/bsd-license.php)
 
 """
+import re
+import xml.etree.ElementTree as etree
 
 from markdown.extensions import Extension
 from markdown.blockprocessors import BlockProcessor
-import xml.etree.ElementTree as etree
-import re
 PIPE_NONE = 0
 PIPE_LEFT = 1
 PIPE_RIGHT = 2
