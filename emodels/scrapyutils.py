@@ -11,6 +11,7 @@ from scrapy.http import TextResponse
 from scrapy import Item
 
 from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
+from emodels.markdown.tables import TableExtension
 from emodels import html2text
 
 
@@ -67,7 +68,7 @@ class ExtractTextResponse(TextResponse):
 
     def markdown_to_html(self, text: Optional[str] = None):
         text = text or self.markdown
-        return Markdown(extensions=["tables"]).convert(text).strip()
+        return Markdown(extensions=[TableExtension()]).convert(text).strip()
 
     @staticmethod
     def _clean_markdown(md: str):
