@@ -4,7 +4,7 @@ import json
 import gzip
 from typing import NewType, Dict, Tuple, List, Optional
 
-from markdown2 import Markdown
+from markdown import Markdown
 
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
@@ -64,6 +64,10 @@ class ExtractTextResponse(TextResponse):
             new = self.replace(body=html.encode("utf-8"))
             result.append(new)
         return result
+
+    def markdown_to_html(self, text: Optional[str] = None):
+        text = text or self.markdown
+        return Markdown(extensions=["tables"]).convert(text).strip()
 
     @staticmethod
     def _clean_markdown(md: str):
@@ -149,7 +153,6 @@ class ExtractItemLoader(ItemLoader):
         if not isinstance(self.context["response"], ExtractTextResponse):
             self.context["response"] = self.context["response"].replace(cls=ExtractTextResponse)
         self.extract_indexes: ExtractDict = ExtractDict({})
-        self._mconverter = Markdown()
 
     def add_text_re(
         self,
@@ -176,7 +179,7 @@ class ExtractItemLoader(ItemLoader):
         if extracted:
             t, s, e = extracted[0]
             if attr not in self.extract_indexes:
-                cleaned = self._mconverter.convert(t).strip()
+                cleaned = self.context["response"].markdown_to_html(t)
                 self.add_value(attr, cleaned, *processors, **kw)
                 self.extract_indexes[attr] = (s, e)
 

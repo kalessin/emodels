@@ -15,7 +15,7 @@ setup(
     packages     = find_packages(),
     install_requires=(
         "scrapy",
-        "markdown2",
+        "markdown",
     ),
     scripts = [],
     classifiers = [

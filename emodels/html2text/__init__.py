@@ -646,11 +646,11 @@ class HTML2Text(html.parser.HTMLParser):
                 if tag == "tr" and not start:
                     self.split_next_td = False
                     self.o("|")
-                    self.soft_br()
+                    self.pbr()
                 if tag == "tr" and not start and self.table_header:
                     # Underline table header
                     self.o("| " + "|".join(["---"] * self.td_count) + "|")
-                    self.soft_br()
+                    self.pbr()
                     self.table_start = False
                     self.table_header = False
                 if tag in ["td", "th"] and start:

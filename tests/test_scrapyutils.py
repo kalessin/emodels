@@ -95,7 +95,7 @@ class ScrapyUtilsTests(TestCase):
         )
         self.assertEqual(
             item["description_as_html"][:80],
-            "<h3>Student Athlete Support Services Coord</h3>\n\n<ul>\n<li><p>__ 492556 </p></li>",
+            "<h3>Student Athlete Support Services Coord</h3>\n<ul>\n<li>\n<p>__ 492556 </p>\n</li",
         )
         self.assertEqual(
             item["description_as_html"][-80:],
