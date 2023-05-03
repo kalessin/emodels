@@ -7,6 +7,7 @@ name = "pypi"
 scrapy = "*"
 dateparser = "*"
 markdown = "*"
+markdown-grid-tables = "*"
 
 [dev-packages]
 flake8 = "*"

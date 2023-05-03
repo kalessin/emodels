@@ -129,8 +129,8 @@ this is a line with id
 <tr><td>Data 7</td><td>Data 8</td></tr>
 </table>
 """
-        saved = html2text.config.ENABLE_BR_WITHIN_TABLE
-        html2text.config.ENABLE_BR_WITHIN_TABLE = True
+        saved = html2text.config.LINE_BREAK_WITHIN_TABLE
+        html2text.config.LINE_BREAK_WITHIN_TABLE = "<br>"
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
         expected = """| Data 1| Data 2|
 | Data 3| Data 4|
@@ -138,7 +138,7 @@ this is a line with id
 | Data 7| Data 8|
 """
         self.assertEqual(response.markdown, expected)
-        html2text.config.ENABLE_BR_WITHIN_TABLE = saved
+        html2text.config.LINE_BREAK_WITHIN_TABLE = saved
 
         expected_html = """<table>
 <tbody>
@@ -173,7 +173,11 @@ this is a line with id
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
         expected = """| Data 1| Data 2|
 | Data 3| Data 4|
-| Data 5| Data 6|
+| Data 5| 
+
+Data 6
+
+|
 | Data 7| Data 8|
 """
         self.assertEqual(response.markdown, expected)

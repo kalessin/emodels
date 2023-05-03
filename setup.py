@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name         = 'e-models',
-    version      = '1.2.1.3',
+    version      = '1.2.1.4',
     description  = 'Tools for helping build of extraction models with scrapy spiders.',
     long_description = open('README.md').read(),
     long_description_content_type = 'text/markdown',
@@ -16,6 +16,7 @@ setup(
     install_requires=(
         "scrapy",
         "markdown",
+        "markdown-grid-tables",
     ),
     scripts = [],
     classifiers = [
