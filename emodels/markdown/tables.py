@@ -15,6 +15,7 @@ License: [BSD](https://opensource.org/licenses/bsd-license.php)
 
 """
 import re
+from typing import List
 import xml.etree.ElementTree as etree
 
 from markdown.extensions import Extension
@@ -31,7 +32,7 @@ class TableProcessor(BlockProcessor):
     RE_END_BORDER = re.compile(r'(?<!\\)(?:\\\\)*\|$')
 
     def __init__(self, parser, config):
-        self.border = False
+        self.border = 0
         self.separator = ''
         self.config = config
 
@@ -84,7 +85,7 @@ class TableProcessor(BlockProcessor):
         rows = [] if len(block) < 3 else block[rows_start:]
 
         # Get alignment of columns
-        align = []
+        align: List[str | None] = []
         for c in self.separator:
             c = c.strip(' ')
             if c.startswith(':') and c.endswith(':'):
