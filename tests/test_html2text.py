@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from emodels.scrapyutils import ExtractTextResponse
+from emodels import html2text
 
 
 class Html2TextTests(TestCase):
@@ -120,7 +121,7 @@ this is a line with id
 </table>"""
         self.assertEqual(response.markdown_to_html(), expected_html)
 
-    def test_tables_with_line_breaks(self):
+    def test_tables_with_br_line_breaks(self):
         html = b"""
 <table><tr><td>Data 1</td><td>Data 2</td></tr>
 <tr><td>Data 3</td><td>Data 4</td></tr>
@@ -128,7 +129,8 @@ this is a line with id
 <tr><td>Data 7</td><td>Data 8</td></tr>
 </table>
 """
-
+        saved = html2text.config.ENABLE_BR_WITHIN_TABLE
+        html2text.config.ENABLE_BR_WITHIN_TABLE = True
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
         expected = """| Data 1| Data 2|
 | Data 3| Data 4|
@@ -136,6 +138,7 @@ this is a line with id
 | Data 7| Data 8|
 """
         self.assertEqual(response.markdown, expected)
+        html2text.config.ENABLE_BR_WITHIN_TABLE = saved
 
         expected_html = """<table>
 <tbody>
@@ -159,4 +162,22 @@ this is a line with id
 </table>"""
         self.assertEqual(response.markdown_to_html(), expected_html)
 
+    def test_tables_with_line_breaks_default(self):
+        html = b"""
+<table><tr><td>Data 1</td><td>Data 2</td></tr>
+<tr><td>Data 3</td><td>Data 4</td></tr>
+<tr><td>Data 5</td><td><p>Data 6</p></td></tr>
+<tr><td>Data 7</td><td>Data 8</td></tr>
+</table>
+"""
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        expected = """| Data 1| Data 2|
+| Data 3| Data 4|
+| Data 5| 
 
+Data 6
+
+|
+| Data 7| Data 8|
+"""
+        self.assertEqual(response.markdown, expected)

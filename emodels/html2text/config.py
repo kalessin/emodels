@@ -156,3 +156,5 @@ SINGLE_LINE_BREAK = False
 # Use double quotation marks when converting the <q> tag.
 OPEN_QUOTE = '"'
 CLOSE_QUOTE = '"'
+
+ENABLE_BR_WITHIN_TABLE = False

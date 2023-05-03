@@ -84,7 +84,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.tag_callback = None
         self.open_quote = config.OPEN_QUOTE  # covered in cli
         self.close_quote = config.CLOSE_QUOTE  # covered in cli
-        self.within_table_row = 0
+        self.enable_br_within_table = config.ENABLE_BR_WITHIN_TABLE
 
         if out is None:
             self.out = self.outtextf
@@ -135,6 +135,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.current_id: List[str | None] = []
         self.classes = classes
         self.current_class: List[str | None] = []
+        self.within_table_row = 0
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
 
@@ -754,7 +755,7 @@ class HTML2Text(html.parser.HTMLParser):
 
             if self.p_p:
                 if line_break is None:
-                    line_break = "<br>" if self.within_table_row > 0 else "\n"
+                    line_break = "<br>" if self.within_table_row > 0 and self.enable_br_within_table else "\n"
                 self.out((self.br_toggle + line_break + bq) * self.p_p)
                 self.space = False
                 self.br_toggle = ""
