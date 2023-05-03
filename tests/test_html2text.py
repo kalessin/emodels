@@ -173,11 +173,7 @@ this is a line with id
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
         expected = """| Data 1| Data 2|
 | Data 3| Data 4|
-| Data 5| 
-
-Data 6
-
-|
+| Data 5| Data 6|
 | Data 7| Data 8|
 """
         self.assertEqual(response.markdown, expected)

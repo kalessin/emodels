@@ -755,7 +755,13 @@ class HTML2Text(html.parser.HTMLParser):
 
             if self.p_p:
                 if line_break is None:
-                    line_break = "<br>" if self.within_table_row > 0 and self.enable_br_within_table else "\n"
+                    if self.within_table_row:
+                        if self.enable_br_within_table:
+                            line_break = "<br>"
+                        else:
+                            line_break = ""
+                    else:
+                        line_break = "\n"
                 self.out((self.br_toggle + line_break + bq) * self.p_p)
                 self.space = False
                 self.br_toggle = ""
