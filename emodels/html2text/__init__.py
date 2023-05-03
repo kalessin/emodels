@@ -84,6 +84,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.tag_callback = None
         self.open_quote = config.OPEN_QUOTE  # covered in cli
         self.close_quote = config.CLOSE_QUOTE  # covered in cli
+        self.within_table_row = 0
 
         if out is None:
             self.out = self.outtextf
@@ -641,11 +642,14 @@ class HTML2Text(html.parser.HTMLParser):
                     self.split_next_td = True
 
                 if tag == "tr" and start:
+                    self.within_table_row += 1
                     self.td_count = 0
-                    self.o("| ")
+                    self.o("| ", line_break="\n")
                 if tag == "tr" and not start:
                     self.split_next_td = False
                     self.o("|")
+                    if self.within_table_row > 0:
+                        self.within_table_row -= 1
                     self.pbr()
                 if tag == "tr" and not start and self.table_header:
                     # Underline table header
@@ -681,7 +685,9 @@ class HTML2Text(html.parser.HTMLParser):
         self.pbr()
         self.br_toggle = "  "
 
-    def o(self, data: str, puredata: bool = False, force: Union[bool, str] = False) -> None:
+    def o(
+        self, data: str, puredata: bool = False, force: Union[bool, str] = False, line_break: Optional[str] = None
+    ) -> None:
         """
         Deal with indentation and whitespace
         """
@@ -747,7 +753,9 @@ class HTML2Text(html.parser.HTMLParser):
                 self.space = False
 
             if self.p_p:
-                self.out((self.br_toggle + "\n" + bq) * self.p_p)
+                if line_break is None:
+                    line_break = "<br>" if self.within_table_row > 0 else "\n"
+                self.out((self.br_toggle + line_break + bq) * self.p_p)
                 self.space = False
                 self.br_toggle = ""
 

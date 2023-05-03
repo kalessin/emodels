@@ -50,7 +50,7 @@ this is a line with id
 <p>this is a line with id</p>"""
         self.assertEqual(response.markdown_to_html(), expected_html)
 
-    def test_tables(self):
+    def test_tables_plain(self):
         html = b"""
 <table><tr><td>Data 1</td><td>Data 2</td></tr>
 <tr><td>Data 3</td><td>Data 4</td></tr>
@@ -119,3 +119,44 @@ this is a line with id
 </tbody>
 </table>"""
         self.assertEqual(response.markdown_to_html(), expected_html)
+
+    def test_tables_with_line_breaks(self):
+        html = b"""
+<table><tr><td>Data 1</td><td>Data 2</td></tr>
+<tr><td>Data 3</td><td>Data 4</td></tr>
+<tr><td>Data 5</td><td><p>Data 6</p></td></tr>
+<tr><td>Data 7</td><td>Data 8</td></tr>
+</table>
+"""
+
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        expected = """| Data 1| Data 2|
+| Data 3| Data 4|
+| Data 5| <br><br>Data 6<br><br>|
+| Data 7| Data 8|
+"""
+        self.assertEqual(response.markdown, expected)
+
+        expected_html = """<table>
+<tbody>
+<tr>
+<td>Data 1</td>
+<td>Data 2</td>
+</tr>
+<tr>
+<td>Data 3</td>
+<td>Data 4</td>
+</tr>
+<tr>
+<td>Data 5</td>
+<td><br><br>Data 6<br><br></td>
+</tr>
+<tr>
+<td>Data 7</td>
+<td>Data 8</td>
+</tr>
+</tbody>
+</table>"""
+        self.assertEqual(response.markdown_to_html(), expected_html)
+
+
