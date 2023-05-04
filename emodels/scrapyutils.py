@@ -4,13 +4,11 @@ import json
 import gzip
 from typing import NewType, Dict, Tuple, List, Optional
 
-from markdown import Markdown
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
 from scrapy import Item
 
 from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
-from emodels.markdown.tables import TableExtension
 from emodels import html2text
 
 
@@ -64,10 +62,6 @@ class ExtractTextResponse(TextResponse):
             new = self.replace(body=html.encode("utf-8"))
             result.append(new)
         return result
-
-    def markdown_to_html(self, text: Optional[str] = None):
-        text = text or self.markdown
-        return Markdown(extensions=[TableExtension()]).convert(text).strip()
 
     @staticmethod
     def _clean_markdown(md: str):
@@ -173,15 +167,6 @@ class ExtractItemLoader(ItemLoader):
             if attr not in self.extract_indexes:
                 self.extract_indexes[attr] = (s, e)
                 self.add_value(attr, t, *processors, **kw)
-
-    def add_text_re_as_html(self, attr: str, reg: str, flags: int = 0, *processors, **kw):
-        extracted = self.context["response"].text_re(reg, flags=flags, optimize=True)
-        if extracted:
-            t, s, e = extracted[0]
-            if attr not in self.extract_indexes:
-                cleaned = self.context["response"].markdown_to_html(t)
-                self.add_value(attr, cleaned, *processors, **kw)
-                self.extract_indexes[attr] = (s, e)
 
     def load_item(self) -> Item:
         item = super().load_item()

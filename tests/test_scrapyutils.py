@@ -20,7 +20,6 @@ SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 class JobItem(Item):
     job_title = Field()
     description = Field()
-    description_as_html = Field()
     url = Field()
     employment_type = Field()
     apply_url = Field()
@@ -78,12 +77,14 @@ class ScrapyUtilsTests(TestCase):
         loader.add_text_re("employment_type", tid="#employment_type_2_2_0_0")
         loader.add_text_re("job_id", tid="#requisition_identifier_2_2_0")
         loader.add_text_re("description", r"(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
-        loader.add_text_re_as_html("description_as_html", r"(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 
         item = loader.load_item()
 
+        response = loader.context["response"]
+
         self.assertFalse(COMMENT_RE.findall(item["description"]))
-        self.assertFalse(COMMENT_RE.findall(item["description_as_html"]))
+        self.assertEqual(COMMENT_RE.sub("", response.markdown_ids), response.markdown)
+        self.assertEqual(COMMENT_RE.sub("", response.markdown_classes), response.markdown)
 
         self.assertEqual(
             item["description"][:80],
@@ -93,16 +94,7 @@ class ScrapyUtilsTests(TestCase):
             item["description"][-80:],
             "arning skills.\n\n\n\n**Please note, all employment postings close at 11:55pm CST.**",
         )
-        self.assertEqual(
-            item["description_as_html"][:80],
-            "<h3>Student Athlete Support Services Coord</h3>\n<ul>\n<li>\n<p>__ 492556 </p>\n</li",
-        )
-        self.assertEqual(
-            item["description_as_html"][-80:],
-            "><strong>Please note, all employment postings close at 11:55pm CST.</strong></p>",
-        )
 
-        response = loader.context["response"]
         self.assertEqual(
             response.markdown[slice(*loader.extract_indexes["job_title"])], "Student Athlete Support Services Coord"
         )
@@ -121,7 +113,6 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], "Full-time Staff")
 
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
-        self.assertEqual(data["markdown"][slice(*data["indexes"]["description_as_html"])], item["description"])
 
         self.assertTrue(response.text_re(tid=".job-field job-title"))
 

@@ -6,8 +6,6 @@ name = "pypi"
 [packages]
 scrapy = "*"
 dateparser = "*"
-markdown = "*"
-markdown-grid-tables = "*"
 
 [dev-packages]
 flake8 = "*"
@@ -16,7 +14,6 @@ ipython = "*"
 black = "==23.1.0"
 twine = "*"
 pytest = "*"
-types-markdown = "*"
 flake8-import-order = "*"
 
 [requires]
