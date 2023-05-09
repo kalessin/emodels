@@ -2,6 +2,7 @@ import re
 import os
 import json
 import gzip
+import logging
 from typing import NewType, Dict, Tuple, List, Optional
 
 from scrapy.loader import ItemLoader
@@ -17,6 +18,7 @@ LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
 COMMENT_RE = re.compile(r"\s<!--.+?-->")
 DEFAULT_SKIP_PREFIX = "[^a-zA-Z0-9$]*"
+LOG = logging.getLogger(__name__)
 
 
 class ExtractTextResponse(TextResponse):
@@ -141,10 +143,12 @@ class ExtractItemLoader(ItemLoader):
             cls.savefile = os.path.join(folder, f"{findex}.jl.gz")
         return obj
 
+    def _check_valid_response(self):
+        return isinstance(self.context.get("response"), TextResponse)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        assert "response" in self.context, '"response" is required.'
-        if not isinstance(self.context["response"], ExtractTextResponse):
+        if self._check_valid_response() and not isinstance(self.context["response"], ExtractTextResponse):
             self.context["response"] = self.context["response"].replace(cls=ExtractTextResponse)
         self.extract_indexes: ExtractDict = ExtractDict({})
 
@@ -159,6 +163,8 @@ class ExtractItemLoader(ItemLoader):
         *processors,
         **kw,
     ):
+        if not self._check_valid_response():
+            raise ValueError("context response type is not a valid TextResponse.")
         extracted = self.context["response"].text_re(
             reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid, optimize=True
         )
