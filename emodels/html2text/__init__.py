@@ -2,10 +2,12 @@
 
 import html.entities
 import html.parser
+from html import unescape as html_unescape
 import re
 import urllib.parse as urlparse
 from textwrap import wrap
 from typing import Dict, List, Optional, Tuple, Union
+from unicodedata import normalize as unormalize
 
 from . import config
 from .elements import AnchorElement, ListElement
@@ -181,16 +183,9 @@ class HTML2Text(html.parser.HTMLParser):
         self.handle_data(self.charref(c), True)
 
     def handle_entityref(self, c: str) -> None:
-        ref = self.entityref(c)
-
-        # ref may be an empty string (e.g. for &lrm;/&rlm; markers that should
-        # not contribute to the final output).
-        # self.handle_data cannot handle a zero-length string right after a
-        # stressed tag or mid-text within a stressed tag (text get split and
-        # self.stressed/self.preceding_stressed gets switched after the first
-        # part of that text).
-        if ref:
-            self.handle_data(ref, True)
+        result = unormalize("NFKC", html_unescape("&" + c))
+        if result:
+            return self.handle_data(result, True)
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
         attrid = dict(attrs).get("itemprop", "")
@@ -708,7 +703,6 @@ class HTML2Text(html.parser.HTMLParser):
             if puredata and not self.pre:
                 # This is a very dangerous call ... it could mess up
                 # all handling of &nbsp; when not handled properly
-                # (see entityref)
                 data = re.sub(r"\s+", r" ", data)
                 if data and data[0] == " ":
                     self.space = True
@@ -855,15 +849,6 @@ class HTML2Text(html.parser.HTMLParser):
                 return chr(c)
             except ValueError:  # invalid unicode
                 return ""
-
-    def entityref(self, c: str) -> str:
-        if not self.unicode_snob and c in config.UNIFIABLE:
-            return config.UNIFIABLE[c]
-        try:
-            ch = html.entities.html5[c + ";"]
-        except KeyError:
-            return "&" + c + ";"
-        return config.UNIFIABLE[c] if c == "nbsp" else ch
 
     def google_nest_count(self, style: Dict[str, str]) -> int:
         """

@@ -111,3 +111,18 @@ Data 6
 | Data 7| Data 8|
 """
         self.assertEqual(response.markdown, expected)
+
+    def test_entities(self):
+        html = b"""<div>There&nbsp;are&nbsp;spaces</div>"""
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        self.assertEqual(response.markdown, "There are spaces\n")
+
+        html = b"""<div>There&amp;nbsp;are&amp;nbsp;spaces</div>"""
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        self.assertEqual(response.markdown, "There&nbsp;are&nbsp;spaces\n")
+
+        html = b"""<div>There&nbspare&nbspspaces</div>"""
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        self.assertEqual(response.markdown, "There are spaces\n")
+
+
