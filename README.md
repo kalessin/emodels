@@ -19,6 +19,7 @@ extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 1. Allow to extract item data in the text (markdown) domain instead of the html source domain.
 2. The main purpose of this approach is the generation of datasets suitable for training transformer models for text extraction (aka extractive question answering, EQA)
 3. As a secondary objective, it provides an alternative approach to xpath and css selectors for extraction of data from the html source, that may be more suitable and readable for humans.
+4. In many situations, and specially when there is not an id or a class to spot accurately the text, the expresion in terms of regular expressions in the domain of markdown is usually much simpler.
 
 Usage:
 
