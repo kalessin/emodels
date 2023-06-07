@@ -134,9 +134,9 @@ class HTML2Text(html.parser.HTMLParser):
         self.preceding_data = ""
         self.current_tag = ""
         self.ids = ids
-        self.current_id: List[str | None] = []
+        self.current_id: List[str] = []
         self.classes = classes
-        self.current_class: List[str | None] = []
+        self.current_class: List[str] = []
         self.within_table_row = 0
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
@@ -188,12 +188,12 @@ class HTML2Text(html.parser.HTMLParser):
             return self.handle_data(result, True)
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
-        attrid = dict(attrs).get("itemprop", "")
+        attrid = (dict(attrs).get("itemprop") or "").strip()
         if not attrid:
-            attrid = dict(attrs).get("id", "")
+            attrid = (dict(attrs).get("id") or "").strip()
         self.current_id.append(attrid)
 
-        attrclass = dict(attrs).get("class", "").strip()
+        attrclass = (dict(attrs).get("class") or "").strip()
         self.current_class.append(attrclass)
 
         self.handle_tag(tag, dict(attrs), start=True)
