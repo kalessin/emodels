@@ -8,13 +8,37 @@ class Html2TextTests(TestCase):
     def test_ids(self):
         html = b"""
 <div id="did">
+<p>first line</p>
 <p class="pc0">this is a line</p>
 <p id="pid1">this is a line with id</p>
 <p id="pid2">this is another line with id</p>
 </div>
         """
         response = ExtractTextResponse(url="http://example.com/example1.html", status=200, body=html)
-        expected = """this is a line
+        expected = """first line <!--#did-->
+
+this is a line
+
+this is a line with id <!--#pid1-->
+
+this is another line with id <!--#pid2-->
+"""
+
+        self.assertEqual(response.markdown_ids, expected)
+
+    def test_ids_ii(self):
+        html = b"""
+<div class="did">
+<p>first line</p>
+<p class="pc0">this is a line</p>
+<p id="pid1">this is a line with id</p>
+<p id="pid2">this is another line with id</p>
+</div>
+        """
+        response = ExtractTextResponse(url="http://example.com/example1.html", status=200, body=html)
+        expected = """first line
+
+this is a line
 
 this is a line with id <!--#pid1-->
 
@@ -24,6 +48,24 @@ this is another line with id <!--#pid2-->
         self.assertEqual(response.markdown_ids, expected)
 
     def test_classes(self):
+        html = b"""
+<div class="did">
+<p>this is a line</p>
+<p class="pc1">this is a line with class</p>
+<p id="pid2">this is a line with id</p>
+</div>
+        """
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        expected = """this is a line <!--.did-->
+
+this is a line with class <!--.pc1-->
+
+this is a line with id
+"""
+
+        self.assertEqual(response.markdown_classes, expected)
+
+    def test_classes_ii(self):
         html = b"""
 <div id="did">
 <p>this is a line</p>

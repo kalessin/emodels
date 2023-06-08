@@ -134,9 +134,9 @@ class HTML2Text(html.parser.HTMLParser):
         self.preceding_data = ""
         self.current_tag = ""
         self.ids = ids
-        self.current_id: List[str] = []
+        self.current_id: List[Tuple[str, bool | None]] = []
         self.classes = classes
-        self.current_class: List[str] = []
+        self.current_class: List[Tuple[str, bool | None]] = []
         self.within_table_row = 0
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
@@ -191,10 +191,10 @@ class HTML2Text(html.parser.HTMLParser):
         attrid = (dict(attrs).get("itemprop") or "").strip()
         if not attrid:
             attrid = (dict(attrs).get("id") or "").strip()
-        self.current_id.append(attrid)
+        self.current_id.append((attrid, None))
 
         attrclass = (dict(attrs).get("class") or "").strip()
-        self.current_class.append(attrclass)
+        self.current_class.append((attrclass, None))
 
         self.handle_tag(tag, dict(attrs), start=True)
 
@@ -827,14 +827,35 @@ class HTML2Text(html.parser.HTMLParser):
             data = escape_md_section(data, snob=self.escape_snob)
         self.preceding_data = data
         self.o(data, puredata=True)
-        if self.ids and rawdata and self.current_id and not self.cdata_elem:
-            attrid = self.current_id[-1]
-            if attrid:
-                self.out(f" <!--#{attrid}-->")
-        if self.classes and rawdata and self.current_class and not self.cdata_elem:
-            attrclass = self.current_class[-1]
-            if attrclass:
-                self.out(f" <!--.{attrclass}-->")
+
+        if self.ids and self.current_id and not self.cdata_elem:
+            attrid, delayed_attrid = self.current_id[-1]
+            if rawdata:
+                if attrid:
+                    self.out(f" <!--#{attrid}-->")
+                elif len(self.current_id) > 1:
+                    a, d = self.current_id[-2]
+                    if d:
+                        self.out(f" <!--#{a}-->")
+                        self.current_id = self.current_id[:-2] + [(a, False), self.current_id[-1]]
+            elif attrid and delayed_attrid is None:
+
+                self.current_id.pop()
+                self.current_id.append((attrid, True))
+
+        if self.classes and self.current_class and not self.cdata_elem:
+            attrclass, delayed_attrclass = self.current_class[-1]
+            if rawdata:
+                if attrclass:
+                    self.out(f" <!--.{attrclass}-->")
+                elif len(self.current_class) > 1:
+                    a, d = self.current_class[-2]
+                    if d:
+                        self.out(f" <!--.{a}-->")
+                        self.current_class = self.current_class[:-2] + [(a, False), self.current_class[-1]]
+            elif attrclass and delayed_attrclass is None:
+                self.current_class.pop()
+                self.current_class.append((attrclass, True))
 
     def charref(self, name: str) -> str:
         if name[0] in ["x", "X"]:
