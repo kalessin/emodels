@@ -1,9 +1,11 @@
 import os
 import re
 from unittest import TestCase
+from typing import Dict
 
 from itemloaders.processors import TakeFirst
 from scrapy import Item, Field
+from scrapy.http import TextResponse
 
 os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
@@ -59,6 +61,7 @@ class ScrapyUtilsTests(TestCase):
     jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz"))
     business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz"))
     samples_file = DatasetFilename(os.path.join(os.path.dirname(__file__), "samples.jl.gz"))
+    samples: Dict[str, TextResponse]
 
     @classmethod
     def setUpClass(cls):
