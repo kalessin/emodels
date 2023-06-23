@@ -1,7 +1,5 @@
 import os
 import re
-import gzip
-import json
 from unittest import TestCase
 
 from itemloaders.processors import TakeFirst
@@ -13,6 +11,7 @@ os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 
 from emodels import config  # noqa
 from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE, ExtractTextResponse  # noqa
+from emodels.datasets.utils import DatasetFilename  # noqa
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
@@ -59,8 +58,8 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 
 
 class ScrapyUtilsTests(TestCase):
-    jobs_result_file = os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz")
-    business_result_file = os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz")
+    jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz"))
+    business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz"))
 
     def tearDown(self):
         for col in "jobs", "business":
@@ -101,8 +100,7 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], "492556")
         self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], "Full-time Staff")
 
-        with gzip.open(self.jobs_result_file, "rt") as fz:
-            data = json.loads(next(fz))
+        data = next(self.jobs_result_file)
 
         self.assertFalse(COMMENT_RE.findall(data["markdown"]))
 
@@ -139,10 +137,8 @@ class ScrapyUtilsTests(TestCase):
             loader.load_item()
 
         extracted = []
-        with gzip.open(self.business_result_file, "rt") as fz:
-            for line in fz:
-                d = json.loads(line)
-                extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
+        for d in self.business_result_file:
+            extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
 
         self.assertEqual(len(extracted), 25)
         self.assertEqual(len([e for e in extracted if "name" in e]), 25)

@@ -1,0 +1,62 @@
+"""
+Example of training:
+
+> from lexisnexis.utils.website_checker import WebsiiteCheckerHelper
+
+download samples:
+
+> WebsiiteCheckerHelper.download_labelled_samples("samples.jl")
+
+generate text for tokenizer training:
+
+> from lexisnexis.utils.website_checker.tokenizers import extract_dataset_text
+> extract_dataset_text("samples.jl", "tokenizer_training_text.txt")
+
+"""
+import os
+import json
+import shutil
+
+import sentencepiece as spm
+
+from .utils import (
+    DatasetFilename,
+    ResponseConverter,
+    build_response_from_sample_data,
+    WebsiteSampleData,
+    Filename,
+)
+
+
+def extract_dataset_text(
+    dataset_filename: DatasetFilename, output_filename: Filename, response_converter_cls: type[ResponseConverter]
+):
+    """
+    Extracts text from a dataset, suitable for usage in training tokenizer.
+    The text is extracted using the specified ResponseConverter class, and saved into an output file
+    for further tokenizer processing.
+    """
+    converter = response_converter_cls()
+    with output_filename.open("w") as output:
+        with dataset_filename.open("rt") as reader:
+            for line in reader:
+                data: WebsiteSampleData = json.loads(line)
+                response = build_response_from_sample_data(data)
+                text_pieces = converter.response_to_valid_text(response.text)
+                print(" ".join(text_pieces), file=output)
+
+
+def train_tokenizer(tokenizer_training_text: Filename, model_filename: Filename):
+    """
+    Train a tokenizer using tokenizer_training_text file as input.
+    Saves the model into the specified model_filename.
+    """
+    model_prefix = os.path.splitext(model_filename.basename)[0]
+    spm.SentencePieceTrainer.train(f"--input={tokenizer_training_text} --model_prefix={model_prefix} --vocab_size=2000")
+    shutil.move(f"{model_prefix}.model", "/tmp/")
+
+
+def load_tokenizer(model_filename: Filename):
+    sp = spm.SentencePieceProcessor()
+    sp.load(model_filename)
+    return sp
