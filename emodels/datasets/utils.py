@@ -6,13 +6,14 @@ import gzip
 import json
 import logging
 from random import random
-from typing import List, Literal, NewType, Tuple, Protocol, cast
+from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO
 
 from typing_extensions import TypedDict
+from scrapy.http import TextResponse
 import lxml.html
 
 from emodels.config import EMODELS_DIR
-from emodels.scrapyutils import ExtractTextResponse
+from emodels.scrapyutils.response import ExtractTextResponse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -43,7 +44,6 @@ class Filename(str):
     >>> with filename.open() as f:
     ...     contents = f.read()
     """
-
     @property
     def basename(self):
         return self.__class__(os.path.basename(self))
@@ -65,6 +65,12 @@ class DatasetFilename(Filename):
     A class that represents a dataset filename. Datasets are gzipped
     and have json lines format
     """
+    _file: None | IO
+
+    def __new__(cls, text):
+        obj = super().__new__(cls, text)
+        obj._file = None
+        return obj
 
     def open(self, mode="rt"):
         return gzip.open(self, mode)
@@ -73,22 +79,21 @@ class DatasetFilename(Filename):
         return self
 
     def __next__(self):
-        if not hasattr(self, "_file"):
+        if self._file is None:
             self._file = self.open()
         line = next(self._file)
         return json.loads(line)
 
-
-SiteId = NewType("SiteId", str)
+    def append(self, data: Dict[str, Any]):
+        assert not self._file, "Already opened."
+        with self.open("at") as fz:
+            print(json.dumps(data), file=fz)
 
 
 class WebsiteSampleData(TypedDict):
-    sid: SiteId
     url: str
     body: str
     status: int
-    manually_labelled: bool
-    dataset_bucket: DatasetBucket
 
 
 class WebsiteDatasetFilename(DatasetFilename):
@@ -158,3 +163,12 @@ def build_response_from_sample_data(sampledata: WebsiteSampleData) -> ExtractTex
         status=sampledata["status"],
     )
     return response
+
+
+def build_sample_data_from_response(response: TextResponse) -> WebsiteSampleData:
+    sampledata: WebsiteSampleData = {
+        "url": response.url,
+        "body": response.text,
+        "status": response.status,
+    }
+    return sampledata

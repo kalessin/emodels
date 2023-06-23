@@ -10,7 +10,8 @@ os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 
 from emodels import config  # noqa
-from emodels.scrapyutils import ExtractItemLoader, COMMENT_RE, ExtractTextResponse  # noqa
+from emodels.scrapyutils.loader import ExtractItemLoader  # noqa
+from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse  # noqa
 from emodels.datasets.utils import DatasetFilename  # noqa
 
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
@@ -64,8 +65,9 @@ class ScrapyUtilsTests(TestCase):
     def tearDown(self):
         for col in "jobs", "business":
             fname = getattr(self, f"{col}_result_file")
-            if os.path.isfile(fname):
-                os.remove(fname)
+            dname = os.path.dirname(fname)
+            for f in os.listdir(dname):
+                os.remove(os.path.join(dname, f))
 
     def test_example_one(self):
         sample_file = os.path.join(SAMPLES_DIR, "job21.html")

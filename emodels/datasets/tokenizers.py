@@ -14,7 +14,6 @@ generate text for tokenizer training:
 
 """
 import os
-import json
 import shutil
 
 import sentencepiece as spm
@@ -23,7 +22,6 @@ from .utils import (
     DatasetFilename,
     ResponseConverter,
     build_response_from_sample_data,
-    WebsiteSampleData,
     Filename,
 )
 
@@ -38,12 +36,10 @@ def extract_dataset_text(
     """
     converter = response_converter_cls()
     with output_filename.open("w") as output:
-        with dataset_filename.open("rt") as reader:
-            for line in reader:
-                data: WebsiteSampleData = json.loads(line)
-                response = build_response_from_sample_data(data)
-                text_pieces = converter.response_to_valid_text(response.text)
-                print(" ".join(text_pieces), file=output)
+        for data in dataset_filename:
+            response = build_response_from_sample_data(data)
+            text_pieces = converter.response_to_valid_text(response.text)
+            print(" ".join(text_pieces), file=output)
 
 
 def train_tokenizer(tokenizer_training_text: Filename, model_filename: Filename):
