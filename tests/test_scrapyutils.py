@@ -4,7 +4,6 @@ from unittest import TestCase
 
 from itemloaders.processors import TakeFirst
 from scrapy import Item, Field
-from scrapy.http import TextResponse
 
 os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
 os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
@@ -12,9 +11,7 @@ os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
 from emodels import config  # noqa
 from emodels.scrapyutils.loader import ExtractItemLoader  # noqa
 from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse  # noqa
-from emodels.datasets.utils import DatasetFilename  # noqa
-
-SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
+from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data  # noqa
 
 
 class JobItem(Item):
@@ -61,6 +58,11 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 class ScrapyUtilsTests(TestCase):
     jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz"))
     business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz"))
+    samples_file = DatasetFilename(os.path.join(os.path.dirname(__file__), "samples.jl.gz"))
+
+    @classmethod
+    def setUpClass(cls):
+        cls.samples = {d["url"]: build_response_from_sample_data(d) for d in cls.samples_file}
 
     def tearDown(self):
         for col in "jobs", "business":
@@ -70,9 +72,7 @@ class ScrapyUtilsTests(TestCase):
                 os.remove(os.path.join(dname, f))
 
     def test_example_one(self):
-        sample_file = os.path.join(SAMPLES_DIR, "job21.html")
-        body = open(sample_file).read().encode("utf8")
-        tresponse = TextResponse(url="https://careers.und.edu/jobs/job21.html", body=body, status=200)
+        tresponse = self.samples["https://careers.und.edu/jobs/job21.html"]
         loader = JobItemLoader(response=tresponse)
         loader.add_text_re("job_title", tid="#job_title_2_2")
         loader.add_text_re("employment_type", tid="#employment_type_2_2_0_0")
@@ -117,9 +117,7 @@ class ScrapyUtilsTests(TestCase):
         self.assertTrue(response.text_re(tid=".job-field job-title"))
 
     def test_example_two(self):
-        sample_file = os.path.join(SAMPLES_DIR, "yell.html")
-        body = open(sample_file).read().encode("utf8")
-        response = ExtractTextResponse(url="https://yell.com/result.html", body=body, status=200)
+        response = self.samples["https://yell.com/result.html"].replace(cls=ExtractTextResponse)
 
         for r in response.css_split(".businessCapsule--mainRow"):
             loader = BusinessSearchItemLoader(response=r)

@@ -13,7 +13,6 @@ from scrapy.http import TextResponse
 import lxml.html
 
 from emodels.config import EMODELS_DIR
-from emodels.scrapyutils.response import ExtractTextResponse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -156,8 +155,8 @@ class lxmlResponseConverter(ResponseConverter):
         return texts
 
 
-def build_response_from_sample_data(sampledata: WebsiteSampleData) -> ExtractTextResponse:
-    response = ExtractTextResponse(
+def build_response_from_sample_data(sampledata: WebsiteSampleData) -> TextResponse:
+    response = TextResponse(
         url=sampledata["url"],
         body=sampledata["body"].encode("utf8"),
         status=sampledata["status"],
