@@ -26,6 +26,10 @@ from .utils import (
 )
 
 
+class TokenizerFilename(Filename):
+    pass
+
+
 def extract_dataset_text(
     dataset_filename: DatasetFilename, output_filename: Filename, response_converter_cls: type[ResponseConverter]
 ):
@@ -42,7 +46,7 @@ def extract_dataset_text(
             print(" ".join(text_pieces), file=output)
 
 
-def train_tokenizer(tokenizer_training_text: Filename, model_filename: Filename):
+def train_tokenizer(tokenizer_training_text: Filename, model_filename: TokenizerFilename):
     """
     Train a tokenizer using tokenizer_training_text file as input.
     Saves the model into the specified model_filename.
@@ -52,7 +56,7 @@ def train_tokenizer(tokenizer_training_text: Filename, model_filename: Filename)
     shutil.move(f"{model_prefix}.model", "/tmp/")
 
 
-def load_tokenizer(model_filename: Filename):
+def load_tokenizer(model_filename: TokenizerFilename):
     sp = spm.SentencePieceProcessor()
     sp.load(model_filename)
     return sp
