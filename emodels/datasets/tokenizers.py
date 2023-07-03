@@ -56,7 +56,7 @@ def train_tokenizer(tokenizer_training_text: Filename, model_filename: Tokenizer
     shutil.move(f"{model_prefix}.model", "/tmp/")
 
 
-def load_tokenizer(model_filename: TokenizerFilename):
+def load_tokenizer_from_file(model_filename: TokenizerFilename) -> spm.SentencePieceProcessor:
     sp = spm.SentencePieceProcessor()
     sp.load(model_filename)
     return sp
