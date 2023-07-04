@@ -9,7 +9,7 @@ dateparser = "*"
 
 [dev-packages]
 flake8 = "*"
-mypy = "*"
+mypy = ">=1.4.1"
 ipython = "*"
 black = "==23.1.0"
 twine = "*"
