@@ -160,7 +160,7 @@ class ModelWithTokenizer(ModelWithDataset, Protocol):
             cls._fshelper().download_file(cls.tokenizer_repository, tokenizer_local)
         else:
             LOGGER.info("Training tokenizer model...")
-            training_text_filename = Filename("sptokenizer_training_text.txt")
+            training_text_filename = Filename("sptokenizer_training_text.txt").local(cls.project)
             cls.load_dataset()
             extract_dataset_text(
                 DatasetFilename(cls.dataset_repository).local(cls.project), training_text_filename, cls.converter_class
@@ -340,7 +340,7 @@ class SVMModel(ClassifierModel):
         """ """
 
         vectorizer = cls.get_vectorizer()
-        model = cls.load_trained_model()
+        model = cls.get_trained_model()
 
         X_features = [cls.get_features_from_body(cls.converter_class(), response.text)]
         X_transformed = vectorizer.transform(X_features)

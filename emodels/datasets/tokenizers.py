@@ -53,7 +53,7 @@ def train_tokenizer(tokenizer_training_text: Filename, model_filename: Tokenizer
     """
     model_prefix = os.path.splitext(model_filename.basename)[0]
     spm.SentencePieceTrainer.train(f"--input={tokenizer_training_text} --model_prefix={model_prefix} --vocab_size=2000")
-    shutil.move(f"{model_prefix}.model", "/tmp/")
+    shutil.move(f"{model_prefix}.model", model_filename)
 
 
 def load_tokenizer_from_file(model_filename: TokenizerFilename) -> spm.SentencePieceProcessor:
