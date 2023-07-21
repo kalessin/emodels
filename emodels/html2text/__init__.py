@@ -41,6 +41,8 @@ class HTML2Text(html.parser.HTMLParser):
         bodywidth: int = config.BODY_WIDTH,
         ids: bool = False,
         classes: bool = False,
+        extra_ids: Optional[List[str]] = None,
+        extra_classes: Optional[List[str]] = None
     ) -> None:
         """
         Input parameters:
@@ -138,6 +140,9 @@ class HTML2Text(html.parser.HTMLParser):
         self.classes = classes
         self.current_class: List[Tuple[str, bool | None]] = []
         self.within_table_row = 0
+
+        self.extra_ids: List[str] = extra_ids.copy() if extra_ids is not None else []
+        self.extra_classes: List[str] = extra_classes.copy() if extra_classes is not None else []
 
         config.UNIFIABLE["nbsp"] = "&nbsp_place_holder;"
 
@@ -833,13 +838,12 @@ class HTML2Text(html.parser.HTMLParser):
             if rawdata:
                 if attrid:
                     self.out(f" <!--#{attrid}-->")
-                elif len(self.current_id) > 1:
-                    a, d = self.current_id[-2]
-                    if d:
-                        self.out(f" <!--#{a}-->")
-                        self.current_id = self.current_id[:-2] + [(a, False), self.current_id[-1]]
+                else:
+                    for a, d in self.current_id[:-1][::-1]:
+                        if d and a in self.extra_ids:
+                            self.out(f" <!--#{a}-->")
+                            break
             elif attrid and delayed_attrid is None:
-
                 self.current_id.pop()
                 self.current_id.append((attrid, True))
 
@@ -848,11 +852,11 @@ class HTML2Text(html.parser.HTMLParser):
             if rawdata:
                 if attrclass:
                     self.out(f" <!--.{attrclass}-->")
-                elif len(self.current_class) > 1:
-                    a, d = self.current_class[-2]
-                    if d:
-                        self.out(f" <!--.{a}-->")
-                        self.current_class = self.current_class[:-2] + [(a, False), self.current_class[-1]]
+                else:
+                    for a, d in self.current_class[:-1][::-1]:
+                        if d and a in self.extra_classes:
+                            self.out(f" <!--.{a}-->")
+                            break
             elif attrclass and delayed_attrclass is None:
                 self.current_class.pop()
                 self.current_class.append((attrclass, True))

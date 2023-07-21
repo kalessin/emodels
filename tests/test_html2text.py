@@ -13,18 +13,22 @@ class Html2TextTests(TestCase):
 <p id="pid1">this is a line with id</p>
 <p id="pid2">this is another line with id</p>
 </div>
+<p>A final line<p>
         """
         response = ExtractTextResponse(url="http://example.com/example1.html", status=200, body=html)
+        response._add_extra_ids(["did"])
         expected = """first line <!--#did-->
 
-this is a line
+this is a line <!--#did-->
 
 this is a line with id <!--#pid1-->
 
 this is another line with id <!--#pid2-->
+
+A final line
 """
 
-        self.assertEqual(response.markdown_ids, expected)
+        self.assertEqual(expected, response.markdown_ids)
 
     def test_ids_ii(self):
         html = b"""
@@ -45,7 +49,7 @@ this is a line with id <!--#pid1-->
 this is another line with id <!--#pid2-->
 """
 
-        self.assertEqual(response.markdown_ids, expected)
+        self.assertEqual(expected, response.markdown_ids)
 
     def test_classes(self):
         html = b"""
@@ -54,16 +58,20 @@ this is another line with id <!--#pid2-->
 <p class="pc1">this is a line with class</p>
 <p id="pid2">this is a line with id</p>
 </div>
+<p>A final line<p>
         """
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        response._add_extra_classes(["did"])
         expected = """this is a line <!--.did-->
 
 this is a line with class <!--.pc1-->
 
-this is a line with id
+this is a line with id <!--.did-->
+
+A final line
 """
 
-        self.assertEqual(response.markdown_classes, expected)
+        self.assertEqual(expected, response.markdown_classes)
 
     def test_classes_ii(self):
         html = b"""
@@ -81,7 +89,7 @@ this is a line with class <!--.pc1-->
 this is a line with id
 """
 
-        self.assertEqual(response.markdown_classes, expected)
+        self.assertEqual(expected, response.markdown_classes)
 
     def test_tables_plain(self):
         html = b"""
@@ -96,7 +104,7 @@ this is a line with id
 | Data 3| Data 4|
 | Data 5| Data 6|
 """
-        self.assertEqual(response.markdown, expected)
+        self.assertEqual(expected, response.markdown)
 
     def test_tables_with_header(self):
         html = b"""
@@ -113,7 +121,7 @@ this is a line with id
 | Data 1| Data 2|
 | Data 3| Data 4|
 """
-        self.assertEqual(response.markdown, expected)
+        self.assertEqual(expected, response.markdown)
 
     def test_tables_with_br_line_breaks(self):
         html = b"""
@@ -131,7 +139,7 @@ this is a line with id
 | Data 5| <br><br>Data 6<br><br>|
 | Data 7| Data 8|
 """
-        self.assertEqual(response.markdown, expected)
+        self.assertEqual(expected, response.markdown)
         html2text.config.LINE_BREAK_WITHIN_TABLE = saved
 
     def test_tables_with_line_breaks_default(self):
@@ -150,7 +158,7 @@ this is a line with id
 |
 | Data 7| Data 8|
 """
-        self.assertEqual(response.markdown, expected)
+        self.assertEqual(expected, response.markdown)
 
     def test_entities(self):
         html = b"""<div>There&nbsp;are&nbsp;spaces</div>"""
@@ -163,4 +171,57 @@ this is a line with id
 
         html = b"""<div>There&nbspare&nbspspaces</div>"""
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
-        self.assertEqual(response.markdown, "There are spaces\n")
+        self.assertEqual("There are spaces\n", response.markdown)
+
+    def test_ids_delayed(self):
+        html = b"""
+<div id="did">
+<span>
+<p>first line</p>
+<p class="pc0">this is a line</p>
+<p id="pid1">this is a line with id</p>
+<p id="pid2">this is another line with id</p>
+</span>
+</div>
+<p>A final line<p>
+        """
+        response = ExtractTextResponse(url="http://example.com/example1.html", status=200, body=html)
+        response._add_extra_ids(["did"])
+        expected = """first line <!--#did-->
+
+this is a line <!--#did-->
+
+this is a line with id <!--#pid1-->
+
+this is another line with id <!--#pid2-->
+
+A final line
+"""
+
+        self.assertEqual(expected, response.markdown_ids)
+
+    def test_classes_delayed(self):
+        html = b"""
+<div class="did">
+<span>
+<p>this is a line</p>
+<p class="pc1">this is a line with class</p>
+<p id="pid2">this is a line with id</p>
+</span>
+</div>
+<p>A final line<p>
+        """
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        response._add_extra_classes(["did"])
+        expected = """this is a line <!--.did-->
+
+this is a line with class <!--.pc1-->
+
+this is a line with id <!--.did-->
+
+A final line
+"""
+
+        self.assertEqual(expected, response.markdown_classes)
+
+

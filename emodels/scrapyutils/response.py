@@ -21,6 +21,16 @@ class ExtractTextResponse(TextResponse):
         self._markdown = None
         self._markdown_ids = None
         self._markdown_classes = None
+        self._extra_ids: List[str] = []
+        self._extra_classes: List[str] = []
+        self._markdown_ids_rendered_extras: List[str] = []
+        self._markdown_classes_rendered_extras: List[str] = []
+
+    def _add_extra_ids(self, ids: List[str]):
+        self._extra_ids.extend(ids)
+
+    def _add_extra_classes(self, classes: List[str]):
+        self._extra_classes.extend(classes)
 
     @property
     def markdown(self):
@@ -31,16 +41,18 @@ class ExtractTextResponse(TextResponse):
 
     @property
     def markdown_ids(self):
-        if self._markdown_ids is None:
-            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True)
+        if self._markdown_ids is None or self._extra_ids != self._markdown_ids_rendered_extras:
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, ids=True, extra_ids=self._extra_ids)
             self._markdown_ids = self._clean_markdown(h2t.handle(self.text))
+            self._markdown_ids_rendered_extras = self._extra_ids.copy()
         return self._markdown_ids
 
     @property
     def markdown_classes(self):
-        if self._markdown_classes is None:
-            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, classes=True)
+        if self._markdown_classes is None or self._extra_classes != self._markdown_classes_rendered_extras:
+            h2t = html2text.HTML2Text(baseurl=self.url, bodywidth=0, classes=True, extra_classes=self._extra_classes)
             self._markdown_classes = self._clean_markdown(h2t.handle(self.text))
+            self._markdown_classes_rendered_extras = self._extra_classes.copy()
         return self._markdown_classes
 
     def css_split(self, selector: str) -> List[TextResponse]:
