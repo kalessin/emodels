@@ -75,7 +75,7 @@ class ScrapyUtilsTests(TestCase):
             for f in os.listdir(dname):
                 os.remove(os.path.join(dname, f))
 
-    def test_example_one(self):
+    def test_case_one(self):
         tresponse = self.samples["https://careers.und.edu/jobs/job21.html"]
         loader = JobItemLoader(response=tresponse)
         loader.add_text_re("job_title", tid="#job_title_2_2")
@@ -120,7 +120,7 @@ class ScrapyUtilsTests(TestCase):
 
         self.assertTrue(response.text_re(tid=".job-field job-title"))
 
-    def test_example_two(self):
+    def test_case_two(self):
         response = self.samples["https://yell.com/result.html"].replace(cls=ExtractTextResponse)
 
         for r in response.css_split(".businessCapsule--mainRow"):
@@ -172,11 +172,19 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[7]["street"], "York House, 20, Church St")
         self.assertEqual(extracted[8]["postal_code"], "IV1 1DF")
 
-    def test_example_three(self):
+    def test_case_three(self):
+        response = self.samples["https://npc.isolvedhire.com/jobs/857557.html"].replace(cls=ExtractTextResponse)
+        self.assertEqual(
+            response.text_re(tid=".job-items"),
+            [("Holbrook, AZ, USA", 461, 478), ("13.85", 487, 492), ("Hourly", 501, 507), ("Part Time", 516, 525)],
+        )
+
         tresponse = self.samples["https://npc.isolvedhire.com/jobs/857557.html"]
         loader = JobItemLoader(response=tresponse)
 
         loader.add_text_re("locality", tid=".job-items")
+        loader.add_text_re("employment_type", tid=".job-items", idx=3)
 
         item = loader.load_item()
         self.assertEqual(item["locality"], "Holbrook, AZ, USA")
+        self.assertEqual(item["employment_type"], "Part Time")

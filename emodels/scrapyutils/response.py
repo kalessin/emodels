@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple, Generator
 
 from scrapy.http import TextResponse
 
@@ -92,8 +92,7 @@ class ExtractTextResponse(TextResponse):
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
         strict_tid: bool = False,
-        optimize: bool = False,
-    ):
+    ) -> Generator[Tuple[str, int, int], None, None]:
         if tid and strict_tid:
             reg = f"(?:.*<!--.+-->)?{reg}"
         reg = f"{skip_prefix}{reg}"
@@ -105,7 +104,6 @@ class ExtractTextResponse(TextResponse):
                 tid = "\\" + tid
                 markdown = self.markdown_classes
             reg += fr"\s+<!--{tid}-->"
-        result = []
         for m in re.finditer(reg, markdown, flags):
             if m.groups():
                 extracted = m.groups()[0]
@@ -129,10 +127,7 @@ class ExtractTextResponse(TextResponse):
                         accum += comment_len
                     start -= accum
                     end -= accum
-                result.append((extracted, start, end))
-                if optimize:
-                    break
-        return result
+                yield (extracted, start, end)
 
     def text_re(
         self,
@@ -141,13 +136,23 @@ class ExtractTextResponse(TextResponse):
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
         strict_tid: bool = False,
+        idx: int = 0,
         optimize: bool = False,
-    ):
-        result = self._text_re(reg, tid, flags, skip_prefix, strict_tid, optimize)
+    ) -> List[Tuple[str, int, int]]:
+        result = []
+        for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix, strict_tid)):
+            if not optimize or i == idx:
+                result.append(r)
+            if optimize and result:
+                break
         if tid and not result:
             if tid.startswith("#"):
                 self._add_extra_ids([tid[1:]])
             elif tid.startswith("."):
                 self._add_extra_classes([tid[1:]])
-            result = self._text_re(reg, tid, flags, skip_prefix, strict_tid, optimize)
+            for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix, strict_tid)):
+                if not optimize or i == idx:
+                    result.append(r)
+                if optimize and result:
+                    break
         return result

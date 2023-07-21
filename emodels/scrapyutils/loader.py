@@ -45,13 +45,14 @@ class ExtractItemLoader(ItemLoader):
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
         strict_tid: bool = False,
+        idx: int = 0,
         *processors,
         **kw,
     ):
         if not self._check_valid_response():
             raise ValueError("context response type is not a valid TextResponse.")
         extracted = self.context["response"].text_re(
-            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid, optimize=True
+            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid, idx=idx, optimize=True
         )
         if extracted:
             t, s, e = extracted[0]
