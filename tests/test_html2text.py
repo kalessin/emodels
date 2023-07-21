@@ -223,5 +223,3 @@ A final line
 """
 
         self.assertEqual(expected, response.markdown_classes)
-
-

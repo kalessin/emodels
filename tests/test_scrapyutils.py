@@ -32,6 +32,7 @@ class JobItem(Item):
     state = Field()
     country = Field()
     response = Field()
+    locality = Field()
 
 
 class JobItemLoader(ExtractItemLoader):
@@ -170,3 +171,12 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[6]["locality"], "Inverness")
         self.assertEqual(extracted[7]["street"], "York House, 20, Church St")
         self.assertEqual(extracted[8]["postal_code"], "IV1 1DF")
+
+    def test_example_three(self):
+        tresponse = self.samples["https://npc.isolvedhire.com/jobs/857557.html"]
+        loader = JobItemLoader(response=tresponse)
+
+        loader.add_text_re("locality", tid=".job-items")
+
+        item = loader.load_item()
+        self.assertEqual(item["locality"], "Holbrook, AZ, USA")

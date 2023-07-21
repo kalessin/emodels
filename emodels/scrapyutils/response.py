@@ -85,7 +85,7 @@ class ExtractTextResponse(TextResponse):
                 shrink += len(link_orig) - len(link)
         return md
 
-    def text_re(
+    def _text_re(
         self,
         reg: str = "(.+?)",
         tid: Optional[str] = None,
@@ -132,4 +132,22 @@ class ExtractTextResponse(TextResponse):
                 result.append((extracted, start, end))
                 if optimize:
                     break
+        return result
+
+    def text_re(
+        self,
+        reg: str = "(.+?)",
+        tid: Optional[str] = None,
+        flags: int = 0,
+        skip_prefix: str = DEFAULT_SKIP_PREFIX,
+        strict_tid: bool = False,
+        optimize: bool = False,
+    ):
+        result = self._text_re(reg, tid, flags, skip_prefix, strict_tid, optimize)
+        if tid and not result:
+            if tid.startswith("#"):
+                self._add_extra_ids([tid[1:]])
+            elif tid.startswith("."):
+                self._add_extra_classes([tid[1:]])
+            result = self._text_re(reg, tid, flags, skip_prefix, strict_tid, optimize)
         return result
