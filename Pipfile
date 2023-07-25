@@ -6,6 +6,11 @@ name = "pypi"
 [packages]
 scrapy = "*"
 dateparser = "*"
+datasets = "*"
+scikit-learn = "==1.2.1"
+sentencepiece = "*"
+transformers = "*"
+torch = "*"
 
 [dev-packages]
 flake8 = "*"

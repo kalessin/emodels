@@ -14,7 +14,12 @@ setup(
     url          = 'https://github.com/kalessin/emodels',
     packages     = find_packages(),
     install_requires=(
+        "datasets",
+        "scikit-learn",
         "scrapy",
+        "sentencepiece",
+        "torch",
+        "transformers",
     ),
     scripts = [],
     classifiers = [
