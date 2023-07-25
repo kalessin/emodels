@@ -16,7 +16,7 @@ from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse  # noqa
 from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data  # noqa
 
 
-class JobItem(Item):
+class JobItemTest(Item):
     job_title = Field()
     description = Field()
     url = Field()
@@ -36,11 +36,11 @@ class JobItem(Item):
 
 
 class JobItemLoader(ExtractItemLoader):
-    default_item_class = JobItem
+    default_item_class = JobItemTest
     default_output_processor = TakeFirst()
 
 
-class BusinessSearchItem(Item):
+class BusinessSearchItemTest(Item):
     name = Field()
     phone = Field()
     website = Field()
@@ -54,13 +54,13 @@ class BusinessSearchItem(Item):
 
 
 class BusinessSearchItemLoader(ExtractItemLoader):
-    default_item_class = BusinessSearchItem
+    default_item_class = BusinessSearchItemTest
     default_output_processor = TakeFirst()
 
 
 class ScrapyUtilsTests(TestCase):
-    jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItem/0.jl.gz"))
-    business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItem/0.jl.gz"))
+    jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItemTest/0.jl.gz"))
+    business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItemTest/0.jl.gz"))
     samples_file = DatasetFilename(os.path.join(os.path.dirname(__file__), "samples.jl.gz"))
     samples: Dict[str, TextResponse]
 
@@ -72,8 +72,11 @@ class ScrapyUtilsTests(TestCase):
         for col in "jobs", "business":
             fname = getattr(self, f"{col}_result_file")
             dname = os.path.dirname(fname)
-            for f in os.listdir(dname):
-                os.remove(os.path.join(dname, f))
+            try:
+                for f in os.listdir(dname):
+                    os.remove(os.path.join(dname, f))
+            except FileNotFoundError:
+                pass
 
     def test_case_one(self):
         tresponse = self.samples["https://careers.und.edu/jobs/job21.html"]
