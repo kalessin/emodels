@@ -6,13 +6,14 @@ import gzip
 import json
 import logging
 from random import random
-from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO
+from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional
 
+from typing_extensions import Self
 from typing_extensions import TypedDict
 from scrapy.http import TextResponse
 import lxml.html
 
-from emodels.config import EMODELS_DIR
+from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ LOGGER.setLevel(logging.INFO)
 NO_TEXT_TAGS = ["script", "style", "noscript"]
 
 DatasetBucket = Literal["train", "validation", "test"]
+DEFAULT_DATASET_RATIO = (0.67, 0.33)
 
 
 class Filename(str):
@@ -43,6 +45,7 @@ class Filename(str):
     >>> with filename.open() as f:
     ...     contents = f.read()
     """
+
     @property
     def basename(self):
         return self.__class__(os.path.basename(self))
@@ -62,8 +65,10 @@ class Filename(str):
 class DatasetFilename(Filename):
     """
     A class that represents a dataset filename. Datasets are gzipped
-    and have json lines format
+    and have json lines format, They are iterable and has a method
+    append() in order to add new samples.
     """
+
     _file: None | IO
 
     def __new__(cls, text):
@@ -88,6 +93,31 @@ class DatasetFilename(Filename):
         with self.open("at") as fz:
             print(json.dumps(data), file=fz)
 
+    @classmethod
+    def from_items(
+        cls,
+        name: str,
+        project: str,
+        classes: Optional[Tuple[str]] = None,
+        dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO,
+    ) -> Self:
+        """
+        Build a dataset dict from extracted items in user dataset folder.
+        - name is a name for the dataset. It will determine the storing filename.
+        - project is the name of the project the dataset belongs to. It will determine the storing filename.
+        - If classes is a tuple of strings, select only the specified
+        item subfolders.
+
+        """
+        result = cls(os.path.join(EMODELS_DIR, project, f"{name}.jl.gz"))
+        for sf in os.listdir(EMODELS_ITEMS_DIR):
+            for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+                df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                for sample in df:
+                    sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
+                    result.append(sample)
+        return result
+
 
 class WebsiteSampleData(TypedDict):
     url: str
@@ -99,11 +129,17 @@ class WebsiteDatasetFilename(DatasetFilename):
     """
     Website Datasets contain a collection of WebsiteSampleData
     """
+
     def __next__(self) -> WebsiteSampleData:
         return cast(WebsiteSampleData, super().__next__())
 
 
-def get_random_dataset(dataset_ratio: Tuple[float, ...] = (0.6, 0.4)) -> DatasetBucket:
+def get_random_dataset(dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO) -> DatasetBucket:
+    """
+    - dataset_ratio: a 2-tuple of floats. The first element is the probability to yield "train",
+      and the second element the probability to yield "test". If they sum below 1, the remaining
+      is the probability to yield "validation".
+    """
     assert len(dataset_ratio) == 2, "Invalid dataset_ratio len: must be 2."
     r = random()
     if r < dataset_ratio[0]:
