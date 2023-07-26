@@ -7,13 +7,10 @@ from itemloaders.processors import TakeFirst
 from scrapy import Item, Field
 from scrapy.http import TextResponse
 
-os.environ["EMODELS_SAVE_EXTRACT_ITEMS"] = "1"
-os.environ["EMODELS_DIR"] = os.path.dirname(__file__)
-
-from emodels import config  # noqa
-from emodels.scrapyutils.loader import ExtractItemLoader  # noqa
-from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse  # noqa
-from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data  # noqa
+from emodels import config
+from emodels.scrapyutils.loader import ExtractItemLoader
+from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse
+from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data
 
 
 class JobItemTest(Item):
