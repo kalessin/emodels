@@ -8,8 +8,8 @@ import logging
 from random import random
 from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional
 
-from typing_extensions import Self
-from typing_extensions import TypedDict
+from typing_extensions import Self, TypedDict
+from shub_workflow.deliver.futils import exists
 from scrapy.http import TextResponse
 import lxml.html
 
@@ -110,12 +110,13 @@ class DatasetFilename(Filename):
 
         """
         result = cls(os.path.join(EMODELS_DIR, project, f"{name}.jl.gz"))
-        for sf in os.listdir(EMODELS_ITEMS_DIR):
-            for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
-                df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
-                for sample in df:
-                    sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
-                    result.append(sample)
+        if not exists(result):
+            for sf in os.listdir(EMODELS_ITEMS_DIR):
+                for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+                    df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                    for sample in df:
+                        sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
+                        result.append(sample)
         return result
 
 
