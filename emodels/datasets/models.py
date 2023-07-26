@@ -64,6 +64,9 @@ class ModelWithDataset(Protocol):
     target_label: TargetLabel
     project: str
 
+    def __init__(self):
+        raise ValueError("Class must not be instantiated.")
+
     @classmethod
     @abstractmethod
     def build_fshelper(cls, settings) -> FSHelper:
