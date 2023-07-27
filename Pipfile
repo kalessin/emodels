@@ -11,6 +11,7 @@ scikit-learn = "==1.2.1"
 sentencepiece = "*"
 transformers = "*"
 torch = "*"
+shub-workflow = "*"
 
 [dev-packages]
 flake8 = "*"
