@@ -14,13 +14,13 @@ setup(
     url          = 'https://github.com/kalessin/emodels',
     packages     = find_packages(),
     install_requires=(
-        "datasets",
         "scikit-learn",
         "scrapy",
         "sentencepiece",
-        "torch",
-        "transformers",
     ),
+    extras_require = {
+        "with-transformers": ["datasets", "torch", "transformers"],
+    },
     scripts = [],
     classifiers = [
         'Development Status :: 3 - Alpha',
