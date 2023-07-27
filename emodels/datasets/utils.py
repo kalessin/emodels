@@ -9,7 +9,6 @@ from random import random
 from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional
 
 from typing_extensions import Self, TypedDict
-from shub_workflow.deliver.futils import exists
 from scrapy.http import TextResponse
 import lxml.html
 
@@ -121,7 +120,7 @@ class DatasetFilename(Filename):
           among train, test and validation buckets.
         """
         result = cls.local_by_name(name, project)
-        if exists(result):
+        if os.path.exists(result):
             raise ValueError(
                 "Output file already exists. "
                 f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
