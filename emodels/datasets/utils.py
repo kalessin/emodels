@@ -61,6 +61,16 @@ class Filename(str):
     def open(self, mode="rt"):
         return open(self, mode)
 
+    @classmethod
+    def local_by_name(cls, name: str, project_name: str) -> Self:
+        """
+        Returns a Filename object by name and project.
+        """
+        return cls(os.path.join(EMODELS_DIR, project_name, f"{name}.jl.gz"))
+
+    def delete_local(self, project_name: str):
+        os.remove(self.local(project_name))
+
 
 class DatasetFilename(Filename):
     """
@@ -94,7 +104,7 @@ class DatasetFilename(Filename):
             print(json.dumps(data), file=fz)
 
     @classmethod
-    def from_items(
+    def build_from_items(
         cls,
         name: str,
         project: str,
@@ -107,16 +117,21 @@ class DatasetFilename(Filename):
         - project is the name of the project the dataset belongs to. It will determine the storing filename.
         - If classes is a tuple of strings, select only the specified
         item subfolders.
-
+        - dataset_ratio is the same for get_random_dataset() and determines how samples are distributed
+          among train, test and validation buckets.
         """
-        result = cls(os.path.join(EMODELS_DIR, project, f"{name}.jl.gz"))
-        if not exists(result):
-            for sf in os.listdir(EMODELS_ITEMS_DIR):
-                for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
-                    df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
-                    for sample in df:
-                        sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
-                        result.append(sample)
+        result = cls.local_by_name(name, project)
+        if exists(result):
+            raise ValueError(
+                "Output file already exists. "
+                f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
+            )
+        for sf in os.listdir(EMODELS_ITEMS_DIR):
+            for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+                df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                for sample in df:
+                    sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
+                    result.append(sample)
         return result
 
 
