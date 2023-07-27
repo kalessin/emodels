@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, TypedDict, Any, Protocol, Tuple
+from typing import Generator, List, Any, Protocol, Tuple
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -19,6 +19,7 @@ from sklearn.svm import SVC
 from sentencepiece import SentencePieceProcessor
 from shub_workflow.deliver.futils import FSHelper
 from shub_workflow.utils import get_project_settings
+from typing_extensions import Self
 
 from emodels.datasets.utils import (
     build_response_from_sample_data,
@@ -47,16 +48,38 @@ class VectorizerFilename(Filename):
     pass
 
 
-class DatasetsDict(TypedDict):
+class DatasetsPandas:
     X_train: pd.DataFrame
     X_test: pd.Series
     Y_train: pd.DataFrame
     Y_test: pd.Series
 
+    @classmethod
+    def from_datasetfilename(cls, filename: DatasetFilename, features: Tuple[str, ...], target_label: str) -> Self:
+        df = pd.read_json(filename, lines=True, compression="gzip")
+        df = df[~df[target_label].isnull()]
+
+        df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
+        df_test = df[df.dataset_bucket == "test"].drop("dataset_bucket", axis=1)
+
+        df_X_train = df_train[list(features)]
+        df_Y_train = df_train[target_label]
+
+        df_X_test = df_test[list(features)]
+        df_Y_test = df_test[target_label]
+
+        obj = cls()
+        obj.X_train = df_X_train
+        obj.X_test = df_X_test
+        obj.Y_train = df_Y_train
+        obj.Y_test = df_Y_test
+
+        return obj
+
 
 class ModelWithDataset(Protocol):
-    FSHELPER: FSHelper = None
-    datasets: DatasetsDict | None = None
+    FSHELPER: FSHelper | None = None
+    datasets: DatasetsPandas | None = None
 
     dataset_repository: DatasetFilename
     features: Tuple[str, ...]
@@ -79,28 +102,7 @@ class ModelWithDataset(Protocol):
         return cls.FSHELPER
 
     @classmethod
-    def get_dataset_from_filename(cls, filename: DatasetFilename) -> DatasetsDict:
-        df = pd.read_json(filename, lines=True, compression="gzip")
-        df = df[~df[cls.target_label].isnull()]
-
-        df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
-        df_test = df[df.dataset_bucket == "test"].drop("dataset_bucket", axis=1)
-
-        df_X_train = df_train[list(cls.features)]
-        df_Y_train = df_train[cls.target_label]
-
-        df_X_test = df_test[list(cls.features)]
-        df_Y_test = df_test[cls.target_label]
-
-        return {
-            "X_train": df_X_train,
-            "X_test": df_X_test,
-            "Y_train": df_Y_train,
-            "Y_test": df_Y_test,
-        }
-
-    @classmethod
-    def load_dataset(cls) -> DatasetsDict:
+    def load_dataset(cls) -> DatasetsPandas:
         dataset_local: DatasetFilename = DatasetFilename(cls.dataset_repository).local(cls.project)
 
         if cls._fshelper().exists(dataset_local):
@@ -112,10 +114,10 @@ class ModelWithDataset(Protocol):
             LOGGER.info("Generating datasets...")
             cls.download_labelled_samples(dataset_local)
             cls._fshelper().upload_file(dataset_local, cls.dataset_repository)
-        return cls.get_dataset_from_filename(dataset_local)
+        return DatasetsPandas.from_datasetfilename(dataset_local, cls.features, cls.target_label)
 
     @classmethod
-    def get_dataset(cls) -> DatasetsDict:
+    def get_dataset(cls) -> DatasetsPandas:
         if cls.datasets is None:
             cls.datasets = cls.load_dataset()
         return cls.datasets
@@ -214,8 +216,7 @@ class ModelWithVectorizer(ModelWithTokenizer, ModelWithDataset, Protocol):
             LOGGER.info("Training vectorizer...")
             vectorizer = TfidfVectorizer(min_df=10, max_df=0.7, ngram_range=(1, 3))
             datasets = cls.load_dataset()
-            X_train = datasets["X_train"]
-            vectorizer.fit(cls.get_dataset_features(X_train))
+            vectorizer.fit(cls.get_dataset_features(datasets.X_train))
             joblib.dump(vectorizer, vectorizer_local)
             cls._fshelper().upload_file(vectorizer_local, cls.vectorizer_repository)
         return joblib.load(vectorizer_local)
@@ -289,8 +290,8 @@ class ClassifierModel(TrainableModel):
     @classmethod
     def evaluate(cls):
         datasets = cls.get_dataset()
-        predicted = cls.predict(datasets["X_train"])
-        y_train = datasets["Y_train"]
+        predicted = cls.predict(datasets.X_train)
+        y_train = datasets.Y_train
 
         def _stat(score_func, target, predicted):
             return str(round(score_func(target, predicted) * 100, 2)) + "%"
@@ -310,8 +311,8 @@ class ClassifierModel(TrainableModel):
         print("Confusion matrix:\n", _print_confusion_matrix(y_train, predicted))
         print()
 
-        predicted = cls.predict(datasets["X_test"])
-        y_test = datasets["Y_test"]
+        predicted = cls.predict(datasets.X_test)
+        y_test = datasets.Y_test
 
         print("Test set scores")
         print("---------------")
@@ -333,8 +334,8 @@ class SVMModel(ClassifierModel):
         LOGGER.info("Training SVM classifier...")
         model = SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
         datasets = cls.load_dataset()
-        vfeatures = vectorizer.transform(cls.get_dataset_features(datasets["X_train"]))
-        model.fit(vfeatures, datasets["Y_train"])
+        vfeatures = vectorizer.transform(cls.get_dataset_features(datasets.X_train))
+        model.fit(vfeatures, datasets.Y_train)
         return model
 
     @classmethod
