@@ -5,12 +5,18 @@ import abc
 import gzip
 import json
 import logging
+from functools import partial
 from random import random
 from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional
 
 from typing_extensions import Self, TypedDict
 from scrapy.http import TextResponse
 import lxml.html
+
+try:
+    from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
+except ImportError:
+    pass
 
 from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 
@@ -104,7 +110,6 @@ class DatasetFilename(Filename):
 
 
 class ItemsDatasetFilename(DatasetFilename):
-
     @classmethod
     def build_from_items(
         cls,
@@ -135,6 +140,31 @@ class ItemsDatasetFilename(DatasetFilename):
                     sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
                     result.append(sample)
         return result
+
+    def to_hfdataset(self) -> HuggingFaceDatasetDict:
+        """
+        Convert to HuggingFace Dataset suitable for usage in transformers
+        """
+
+        def _generator(bucket: DatasetBucket):
+            for sample in self:
+                if sample["dataset_bucket"] != bucket:
+                    continue
+                for key, idx in sample["indexes"].items():
+                    if idx is None:
+                        continue
+                    yield {
+                        "markdown": sample["markdown"],
+                        "attribute": key,
+                        "start": idx[0],
+                        "end": idx[1],
+                    }
+
+        train = HuggingFaceDataset.from_generator(partial(_generator, "train"))
+        test = HuggingFaceDataset.from_generator(partial(_generator, "test"))
+
+        ds = HuggingFaceDatasetDict({"train": train, "test": test})
+        return ds
 
 
 class WebsiteSampleData(TypedDict):
