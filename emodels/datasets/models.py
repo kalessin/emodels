@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import get_args, Generator, List, TypedDict, NewType, Any, Protocol
+from typing import Generator, List, TypedDict, Any, Protocol, Tuple
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -38,8 +38,6 @@ from emodels.datasets.utils import WebsiteSampleData
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
 
-TargetLabel = NewType("TargetLabel", str)
-
 
 class ModelFilename(Filename):
     pass
@@ -61,7 +59,8 @@ class ModelWithDataset(Protocol):
     datasets: DatasetsDict | None = None
 
     dataset_repository: DatasetFilename
-    target_label: TargetLabel
+    features: Tuple[str, ...]
+    target_label: str
     project: str
 
     def __init__(self):
@@ -81,16 +80,16 @@ class ModelWithDataset(Protocol):
 
     @classmethod
     def get_dataset_from_filename(cls, filename: DatasetFilename) -> DatasetsDict:
-        df = pd.read_json(filename, lines=True, compression="gzip").drop("manually_labelled", axis=1)
+        df = pd.read_json(filename, lines=True, compression="gzip")
         df = df[~df[cls.target_label].isnull()]
 
         df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
         df_test = df[df.dataset_bucket == "test"].drop("dataset_bucket", axis=1)
 
-        df_X_train = df_train.drop(list(get_args(TargetLabel)), axis=1)
+        df_X_train = df_train[list(cls.features)]
         df_Y_train = df_train[cls.target_label]
 
-        df_X_test = df_test.drop(list(get_args(TargetLabel)), axis=1)
+        df_X_test = df_test[list(cls.features)]
         df_Y_test = df_test[cls.target_label]
 
         return {
