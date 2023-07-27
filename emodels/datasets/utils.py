@@ -102,6 +102,9 @@ class DatasetFilename(Filename):
         with self.open("at") as fz:
             print(json.dumps(data), file=fz)
 
+
+class ItemsDatasetFilename(DatasetFilename):
+
     @classmethod
     def build_from_items(
         cls,
