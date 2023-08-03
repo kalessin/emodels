@@ -7,9 +7,9 @@ import json
 import logging
 from functools import partial
 from random import random
-from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional
+from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, Optional, TypedDict
 
-from typing_extensions import Self, TypedDict
+from typing_extensions import Self
 from scrapy.http import TextResponse
 import lxml.html
 
@@ -255,3 +255,10 @@ def build_sample_data_from_response(response: TextResponse) -> WebsiteSampleData
         "status": response.status,
     }
     return sampledata
+
+
+def save_sample_data_from_response(response: TextResponse, filename: str | WebsiteDatasetFilename):
+    sampledata = build_sample_data_from_response(response)
+    if not isinstance(filename, WebsiteDatasetFilename):
+        filename = WebsiteDatasetFilename(filename)
+    filename.append(dict(sampledata))
