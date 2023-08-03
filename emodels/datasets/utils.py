@@ -19,6 +19,7 @@ except ImportError:
     pass
 
 from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
+from emodels.scrapyutils.response import ExtractTextResponse
 
 
 LOGGER = logging.getLogger(__name__)
@@ -239,8 +240,8 @@ class lxmlResponseConverter(ResponseConverter):
         return texts
 
 
-def build_response_from_sample_data(sampledata: WebsiteSampleData) -> TextResponse:
-    response = TextResponse(
+def build_response_from_sample_data(sampledata: WebsiteSampleData) -> ExtractTextResponse:
+    response = ExtractTextResponse(
         url=sampledata["url"],
         body=sampledata["body"].encode("utf8"),
         status=sampledata["status"],

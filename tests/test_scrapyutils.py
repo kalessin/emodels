@@ -9,7 +9,7 @@ from scrapy.http import TextResponse
 
 from emodels import config
 from emodels.scrapyutils.loader import ExtractItemLoader
-from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse
+from emodels.scrapyutils.response import COMMENT_RE
 from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data
 
 
@@ -76,16 +76,14 @@ class ScrapyUtilsTests(TestCase):
                 pass
 
     def test_case_one(self):
-        tresponse = self.samples["https://careers.und.edu/jobs/job21.html"]
-        loader = JobItemLoader(response=tresponse)
+        response = self.samples["https://careers.und.edu/jobs/job21.html"]
+        loader = JobItemLoader(response=response)
         loader.add_text_re("job_title", tid="#job_title_2_2")
         loader.add_text_re("employment_type", tid="#employment_type_2_2_0_0")
         loader.add_text_re("job_id", tid="#requisition_identifier_2_2_0")
         loader.add_text_re("description", r"(###\s+.+?)\*\*apply now\*\*", flags=re.S | re.I)
 
         item = loader.load_item()
-
-        response = loader.context["response"]
 
         self.assertFalse(COMMENT_RE.findall(item["description"]))
         self.assertEqual(COMMENT_RE.sub("", response.markdown_ids), response.markdown)
@@ -121,7 +119,7 @@ class ScrapyUtilsTests(TestCase):
         self.assertTrue(response.text_re(tid=".job-field job-title"))
 
     def test_case_two(self):
-        response = self.samples["https://yell.com/result.html"].replace(cls=ExtractTextResponse)
+        response = self.samples["https://yell.com/result.html"]
 
         for r in response.css_split(".businessCapsule--mainRow"):
             loader = BusinessSearchItemLoader(response=r)
@@ -173,14 +171,13 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[8]["postal_code"], "IV1 1DF")
 
     def test_case_three(self):
-        response = self.samples["https://npc.isolvedhire.com/jobs/857557.html"].replace(cls=ExtractTextResponse)
+        response = self.samples["https://npc.isolvedhire.com/jobs/857557.html"]
         self.assertEqual(
             response.text_re(tid=".job-items"),
             [("Holbrook, AZ, USA", 461, 478), ("13.85", 487, 492), ("Hourly", 501, 507), ("Part Time", 516, 525)],
         )
 
-        tresponse = self.samples["https://npc.isolvedhire.com/jobs/857557.html"]
-        loader = JobItemLoader(response=tresponse)
+        loader = JobItemLoader(response=response)
 
         loader.add_text_re("locality", tid=".job-items")
         loader.add_text_re("employment_type", tid=".job-items", idx=3)
