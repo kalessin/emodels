@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from emodels.scrapyutils import ExtractTextResponse
+from emodels.scrapyutils.response import ExtractTextResponse
 from emodels import html2text
 
 
