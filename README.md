@@ -20,6 +20,9 @@ extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 2. The main purpose of this approach is the generation of datasets suitable for training transformer models for text extraction (aka extractive question answering, EQA)
 3. As a secondary objective, it provides an alternative approach to xpath and css selectors for extraction of data from the html source, that may be more suitable and readable for humans.
 4. In many situations, and specially when there is not an id or a class to spot accurately the text, the expresion in terms of regular expressions in the domain of markdown is usually much simpler.
+5. The additional cost of maintenance is zero. Even if you are introducing a new kind of selector that may be unknown for most people, this only characterizes single lines and does not condition
+   any other line of the spider code. If the selector still works, it is not needed to be changed. If it doesn't work anymore, it can be replaced by common and known selectors without affecting
+   anything else.
 
 Usage:
 
