@@ -6,13 +6,13 @@ import gzip
 import json
 import logging
 from random import random
-from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict
+from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
 import lxml.html
 
-from emodels.config import EMODELS_DIR
+from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 from emodels.scrapyutils.response import ExtractTextResponse
 
 
@@ -119,6 +119,39 @@ class WebsiteDatasetFilename(DatasetFilename):
 
     def __next__(self) -> WebsiteSampleData:
         return cast(WebsiteSampleData, super().__next__())
+
+
+class ItemsDatasetFilename(DatasetFilename):
+    @classmethod
+    def build_from_items(
+        cls,
+        name: str,
+        project: str,
+        classes: Optional[Tuple[str]] = None,
+        dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO,
+    ) -> Self:
+        """
+        Build a dataset dict from extracted items in user dataset folder.
+        - name is a name for the dataset. It will determine the storing filename.
+        - project is the name of the project the dataset belongs to. It will determine the storing filename.
+        - If classes is a tuple of strings, select only the specified
+        item subfolders.
+        - dataset_ratio is the same for get_random_dataset() and determines how samples are distributed
+          among train, test and validation buckets.
+        """
+        result = cls.local_by_name(name, project)
+        if os.path.exists(result):
+            raise ValueError(
+                "Output file already exists. "
+                f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
+            )
+        for sf in os.listdir(EMODELS_ITEMS_DIR):
+            for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+                df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                for sample in df:
+                    sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
+                    result.append(sample)
+        return result
 
 
 def get_random_dataset(dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO) -> DatasetBucket:
