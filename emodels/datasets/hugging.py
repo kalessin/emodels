@@ -14,7 +14,7 @@ def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
     """
 
     def _generator(bucket: DatasetBucket):
-        for sample in target:
+        for sample in ExtractDatasetFilename(target):
             if sample["dataset_bucket"] != bucket:
                 continue
             for key, idx in sample["indexes"].items():
