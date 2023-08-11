@@ -18,7 +18,6 @@ ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
 
 class ExtractItemLoader(ItemLoader):
-
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
         if not hasattr(cls, "savefile"):
@@ -49,6 +48,26 @@ class ExtractItemLoader(ItemLoader):
         *processors,
         **kw,
     ):
+        """
+        attr - item attribute where selector extracted value will be assigned to.
+        reg - Optional regular expression (it is optional because you can also use tid alone)
+        tid - Optional css id or class specification (start with either # or .). When this parameter is present,
+              regular expression match will be restricted to the text region with the specified id or class. Note:
+              when the tid string starts with #, it is also able to match the itemprop attribute, not only the id.
+        flags - Optional regular expression flag
+        skip_prefix - This prefix is added to the provided regular expression in order to skip it from the result.
+              The default one is any non alphanumeric character at begining of the line and in most cases
+              you will use this value. Provided for convenience, in order to avoid to repeat it frequently
+              in the regular expression parameter, making it more natural.
+        strict_tid - The default behavior of selectors is to match the regex against full single entire lines (except
+              when using for example the flag re.S), even when there are multiple ids or classes in same line. If you
+              want a stricter match against regions inside lines, set this parameter to True. Of course, this
+              parameter has no effect if you don't use the optional parameter tid.
+        idx - Regex selectors only return a single match, and by default it is the first one (idx=0). If you want
+              instead to extract a different match, set the appropiate index with this parameter.
+        *processors - Extraction processors passed to the method (same as in usual loaders)
+        **kw - Additional extract parameters passed to the method (same as in usual loaders)
+        """
         if not self._check_valid_response():
             raise ValueError("context response type is not a valid TextResponse.")
         extracted = self.context["response"].text_re(
@@ -67,7 +86,9 @@ class ExtractItemLoader(ItemLoader):
 
     def _save_extract_sample(self):
         if EMODELS_SAVE_EXTRACT_ITEMS and self.extract_indexes:
-            self.savefile.append({
-                "indexes": self.extract_indexes,
-                "markdown": self.context["response"].markdown,
-            })
+            self.savefile.append(
+                {
+                    "indexes": self.extract_indexes,
+                    "markdown": self.context["response"].markdown,
+                }
+            )
