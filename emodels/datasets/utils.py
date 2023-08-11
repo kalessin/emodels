@@ -121,7 +121,7 @@ class WebsiteDatasetFilename(DatasetFilename):
         return cast(WebsiteSampleData, super().__next__())
 
 
-class ItemsDatasetFilename(DatasetFilename):
+class ExtractDatasetFilename(DatasetFilename):
     @classmethod
     def build_from_items(
         cls,

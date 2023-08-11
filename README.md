@@ -125,7 +125,10 @@ This will save in the local datasets directory, the extraction data, generated f
 At any moment, you can build a dataset from all the saved extraction data up to now, with the following lines in a python console:
 
 ```
-> 
+> from emodels.datasets.utils import ItemsDatasetFilename
+> eds = ExtractDatasetFilename.build_from_items("extract", "myproject")
+
+The dataset will be saved to the dataset file represented by eds variable.
 ```
 
 ## html2text module

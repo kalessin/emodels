@@ -5,16 +5,16 @@ from functools import partial
 
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 
-from emodels.datasets.utils import ItemsDatasetFilename, DatasetBucket
+from emodels.datasets.utils import ExtractDatasetFilename, DatasetBucket
 
 
-def to_hfdataset(items: ItemsDatasetFilename) -> HuggingFaceDatasetDict:
+def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
     """
     Convert to HuggingFace Dataset suitable for usage in transformers
     """
 
     def _generator(bucket: DatasetBucket):
-        for sample in items:
+        for sample in target:
             if sample["dataset_bucket"] != bucket:
                 continue
             for key, idx in sample["indexes"].items():
