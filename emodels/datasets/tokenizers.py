@@ -1,20 +1,8 @@
 """
-Example of training:
-
-> from lexisnexis.utils.website_checker import WebsiiteCheckerHelper
-
-download samples:
-
-> WebsiiteCheckerHelper.download_labelled_samples("samples.jl")
-
-generate text for tokenizer training:
-
-> from lexisnexis.utils.website_checker.tokenizers import extract_dataset_text
-> extract_dataset_text("samples.jl", "tokenizer_training_text.txt")
-
 """
 import os
 import shutil
+from typing import Optional
 
 import sentencepiece as spm
 
@@ -23,6 +11,8 @@ from .utils import (
     ResponseConverter,
     build_response_from_sample_data,
     Filename,
+    WebsiteDatasetFilename,
+    ExtractDatasetFilename,
 )
 
 
@@ -31,19 +21,31 @@ class TokenizerFilename(Filename):
 
 
 def extract_dataset_text(
-    dataset_filename: DatasetFilename, output_filename: Filename, response_converter_cls: type[ResponseConverter]
+    dataset_filename: DatasetFilename,
+    output_filename: Filename,
+    response_converter_cls: Optional[type[ResponseConverter]] = None,
 ):
     """
     Extracts text from a dataset, suitable for usage in training tokenizer.
     The text is extracted using the specified ResponseConverter class, and saved into an output file
     for further tokenizer processing.
     """
-    converter = response_converter_cls()
-    with output_filename.open("w") as output:
-        for data in dataset_filename:
-            response = build_response_from_sample_data(data)
-            text_pieces = converter.response_to_valid_text(response.text)
-            print(" ".join(text_pieces), file=output)
+    if isinstance(dataset_filename, WebsiteDatasetFilename):
+        assert (
+            response_converter_cls is not None
+        ), "response_converter_cls parameter cannot be None for WebsiteDatasetFilename"
+        converter = response_converter_cls()
+        with output_filename.open("w") as output:
+            for data in dataset_filename:
+                response = build_response_from_sample_data(data)
+                text_pieces = converter.response_to_valid_text(response.text)
+                print(" ".join(text_pieces), file=output)
+    elif isinstance(dataset_filename, ExtractDatasetFilename):
+        with output_filename.open("w") as output:
+            for data in dataset_filename:
+                print(data["markdown"], file=output)
+    else:
+        raise ValueError(f"dataset of type {type(dataset_filename)} is not supported.")
 
 
 def train_tokenizer(tokenizer_training_text: Filename, model_filename: TokenizerFilename):
