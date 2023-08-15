@@ -103,7 +103,7 @@ class ModelWithDataset(Protocol):
 
     @classmethod
     def load_dataset(cls) -> DatasetsPandas:
-        dataset_local: DatasetFilename = DatasetFilename(cls.dataset_repository).local(cls.project)
+        dataset_local = cls.dataset_repository.local(cls.project)
 
         if cls._fshelper().exists(dataset_local):
             LOGGER.info(f"Found local copy of datasets {dataset_local}.")
@@ -137,7 +137,7 @@ class ModelWithDataset(Protocol):
 
     @classmethod
     @abstractmethod
-    def download_labelled_samples(cls, target: Filename):
+    def download_labelled_samples(cls, target: DatasetFilename):
         ...
 
 
@@ -167,7 +167,7 @@ class ModelWithTokenizer(ModelWithDataset, Protocol):
             training_text_filename = Filename("sptokenizer_training_text.txt").local(cls.project)
             cls.load_dataset()
             extract_dataset_text(
-                DatasetFilename(cls.dataset_repository).local(cls.project), training_text_filename, cls.converter_class
+                cls.dataset_repository.local(cls.project), training_text_filename, cls.converter_class
             )
             train_tokenizer(training_text_filename, tokenizer_local)
             cls._fshelper().upload_file(tokenizer_local, cls.tokenizer_repository)
