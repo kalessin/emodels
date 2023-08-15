@@ -120,15 +120,36 @@ As we mentioned before, the way to collect extraction data from a spider run is 
 EMODELS_SAVE_EXTRACT_ITEMS=1 scrapy crawl myspider
 ```
 
-This will save in the local datasets directory, the extraction data, generated from the the fields extracted with the `add_text_re()` method.
+This will save in the local datasets directory, within the folder `items/<scrapy item name associacted to the loader>`, the extraction data generated from the the fields extracted
+with the `add_text_re()` method. Each time you run a spider in this way, a new file will be generated within the mentioned folder.
 
-At any moment, you can build a dataset from all the saved extraction data up to now, with the following lines in a python console:
+At any moment, you can build a joint from all the individual files, with the following lines in a python console:
+
+```python
+> from emodels.datasets.utils import ItemsDatasetFilename
+> eds = ExtractDatasetFilename.build_from_items("items", "myproject")
+```
+
+The joint dataset will be saved to the dataset file represented by eds variable.
 
 ```
-> from emodels.datasets.utils import ItemsDatasetFilename
-> eds = ExtractDatasetFilename.build_from_items("extract", "myproject")
+> eds
+'/home/myuser/.datasets/myproject/items.jl.gz'
+```
 
-The dataset will be saved to the dataset file represented by eds variable.
+This operation also assigns randomly the samples to train/test/validation buckets, according to the
+`dataset_ratio` parameter, which by default assigns 66% to training bucket, 34% to test bucket and 0 to validation bucket.
+
+Provided `EMODELS_DATASET_DIR` is the same, you can also recover back the dataset later:
+
+```
+> eds = ExtractDatasetFilename.local_by_name("items", "myproject")
+```
+
+If not, you can also do:
+
+```
+> eds = ExtractDatasetFilename("/home/myuser/.datasets/myproject/items.jl.gz")
 ```
 
 ## html2text module
