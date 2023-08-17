@@ -2,12 +2,11 @@
 """
 import os
 import shutil
-from typing import Optional
+from typing import Optional, TypeVar
 
 import sentencepiece as spm
 
 from .utils import (
-    DatasetFilename,
     ResponseConverter,
     build_response_from_sample_data,
     Filename,
@@ -20,8 +19,13 @@ class TokenizerFilename(Filename):
     pass
 
 
+ExtractTextDatasetFilenameType = TypeVar(
+    "ExtractTextDatasetFilenameType", WebsiteDatasetFilename, ExtractDatasetFilename
+)
+
+
 def extract_dataset_text(
-    dataset_filename: DatasetFilename,
+    dataset_filename: ExtractTextDatasetFilenameType,
     output_filename: Filename,
     response_converter_cls: Optional[type[ResponseConverter]] = None,
 ):

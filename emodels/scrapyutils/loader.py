@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import NewType, Dict, Tuple, Optional
+from typing import Optional
 
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
@@ -9,12 +9,10 @@ from scrapy import Item
 from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
 from emodels.datasets.utils import DatasetFilename
 from emodels.scrapyutils.response import ExtractTextResponse, DEFAULT_SKIP_PREFIX
+from emodels.stypes import ExtractDict, ItemSample
 
 
 LOG = logging.getLogger(__name__)
-
-
-ExtractDict = NewType("ExtractDict", Dict[str, Tuple[int, int]])
 
 
 class ExtractItemLoader(ItemLoader):
@@ -24,7 +22,7 @@ class ExtractItemLoader(ItemLoader):
             folder = os.path.join(EMODELS_ITEMS_DIR, obj.default_item_class.__name__)
             os.makedirs(folder, exist_ok=True)
             findex = len(os.listdir(folder))
-            cls.savefile = DatasetFilename(os.path.join(folder, f"{findex}.jl.gz"))
+            cls.savefile: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(folder, f"{findex}.jl.gz"))
         return obj
 
     def _check_valid_response(self):

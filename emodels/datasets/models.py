@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, Any, Protocol, Tuple
+from typing import Generator, List, Any, Protocol, Tuple, Generic
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -32,6 +32,7 @@ from emodels.datasets.tokenizers import (
     train_tokenizer,
     load_tokenizer_from_file,
     TokenizerFilename,
+    ExtractTextDatasetFilenameType,
 )
 from emodels.datasets.utils import WebsiteSampleData
 
@@ -77,11 +78,11 @@ class DatasetsPandas:
         return obj
 
 
-class ModelWithDataset(Protocol):
+class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
     FSHELPER: FSHelper | None = None
     datasets: DatasetsPandas | None = None
 
-    dataset_repository: DatasetFilename
+    dataset_repository: ExtractTextDatasetFilenameType
     features: Tuple[str, ...]
     target_label: str
     project: str
@@ -103,7 +104,7 @@ class ModelWithDataset(Protocol):
 
     @classmethod
     def load_dataset(cls) -> DatasetsPandas:
-        dataset_local = cls.dataset_repository.local(cls.project)
+        dataset_local: ExtractTextDatasetFilenameType = cls.dataset_repository.local(cls.project)
 
         if cls._fshelper().exists(dataset_local):
             LOGGER.info(f"Found local copy of datasets {dataset_local}.")
@@ -141,7 +142,7 @@ class ModelWithDataset(Protocol):
         ...
 
 
-class ModelWithTokenizer(ModelWithDataset, Protocol):
+class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Protocol):
     tokenizer_repository: TokenizerFilename
     converter_class: type[ResponseConverter]
 
@@ -166,9 +167,7 @@ class ModelWithTokenizer(ModelWithDataset, Protocol):
             LOGGER.info("Training tokenizer model...")
             training_text_filename = Filename("sptokenizer_training_text.txt").local(cls.project)
             cls.load_dataset()
-            extract_dataset_text(
-                cls.dataset_repository.local(cls.project), training_text_filename, cls.converter_class
-            )
+            extract_dataset_text(cls.dataset_repository.local(cls.project), training_text_filename, cls.converter_class)
             train_tokenizer(training_text_filename, tokenizer_local)
             cls._fshelper().upload_file(tokenizer_local, cls.tokenizer_repository)
         return load_tokenizer_from_file(tokenizer_local)
@@ -234,7 +233,9 @@ class ModelWithVectorizer(ModelWithTokenizer, ModelWithDataset, Protocol):
         super().reset()
 
 
-class TrainableModel(ModelWithVectorizer, ModelWithTokenizer, ModelWithDataset, Protocol):
+class TrainableModel(
+    ModelWithVectorizer, ModelWithTokenizer, ModelWithDataset, Protocol
+):
     model_repository: ModelFilename
     model: Any | None = None
 
@@ -272,7 +273,6 @@ class TrainableModel(ModelWithVectorizer, ModelWithTokenizer, ModelWithDataset, 
 
 
 class ClassifierModel(TrainableModel):
-
     @classmethod
     @abstractmethod
     def classify_response(cls, response: HtmlResponse) -> bool:

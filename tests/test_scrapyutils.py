@@ -8,7 +8,7 @@ from scrapy import Item, Field
 from scrapy.http import TextResponse
 
 from emodels import config
-from emodels.scrapyutils.loader import ExtractItemLoader
+from emodels.scrapyutils.loader import ExtractItemLoader, ItemSample
 from emodels.scrapyutils.response import COMMENT_RE
 from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data
 
@@ -56,9 +56,15 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 
 
 class ScrapyUtilsTests(TestCase):
-    jobs_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/JobItemTest/0.jl.gz"))
-    business_result_file = DatasetFilename(os.path.join(config.EMODELS_DIR, "items/BusinessSearchItemTest/0.jl.gz"))
-    samples_file = DatasetFilename(os.path.join(os.path.dirname(__file__), "samples.jl.gz"))
+    jobs_result_file: DatasetFilename[ItemSample] = DatasetFilename(
+        os.path.join(config.EMODELS_DIR, "items/JobItemTest/0.jl.gz")
+    )
+    business_result_file: DatasetFilename[ItemSample] = DatasetFilename(
+        os.path.join(config.EMODELS_DIR, "items/BusinessSearchItemTest/0.jl.gz")
+    )
+    samples_file: DatasetFilename[ItemSample] = DatasetFilename(
+        os.path.join(os.path.dirname(__file__), "samples.jl.gz")
+    )
     samples: Dict[str, TextResponse]
 
     @classmethod

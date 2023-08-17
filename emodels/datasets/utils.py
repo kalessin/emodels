@@ -6,7 +6,7 @@ import gzip
 import json
 import logging
 from random import random
-from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional
+from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -14,6 +14,7 @@ import lxml.html
 
 from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 from emodels.scrapyutils.response import ExtractTextResponse
+from emodels.scrapyutils.stypes import ItemSample
 
 
 LOGGER = logging.getLogger(__name__)
@@ -75,7 +76,10 @@ class Filename(str):
         os.remove(self.local(project_name))
 
 
-class DatasetFilename(Filename):
+E = TypeVar("E")
+
+
+class DatasetFilename(Generic[E], Filename):
     """
     A class that represents a dataset filename. Datasets are gzipped
     and have json lines format, They are iterable and has a method
@@ -95,11 +99,11 @@ class DatasetFilename(Filename):
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> E:
         if self._file is None:
             self._file = self.open()
         line = next(self._file)
-        return json.loads(line)
+        return cast(E, json.loads(line))
 
     def append(self, data: Dict[str, Any]):
         assert not self._file, "Already opened."
@@ -115,16 +119,21 @@ class WebsiteSampleData(TypedDict):
     status: int
 
 
-class WebsiteDatasetFilename(DatasetFilename):
+class WebsiteDatasetFilename(DatasetFilename[WebsiteSampleData]):
     """
     Website Datasets contain a collection of WebsiteSampleData
     """
-
-    def __next__(self) -> WebsiteSampleData:
-        return cast(WebsiteSampleData, super().__next__())
+    ...
 
 
-class ExtractDatasetFilename(DatasetFilename):
+class ExtractSample(TypedDict):
+    markdown: str
+    attribute: str
+    start: int
+    end: int
+
+
+class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
     @classmethod
     def build_from_items(
         cls,
@@ -150,7 +159,7 @@ class ExtractDatasetFilename(DatasetFilename):
             )
         for sf in os.listdir(EMODELS_ITEMS_DIR):
             for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
-                df = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
                 for sample in df:
                     sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
                     result.append(sample)
