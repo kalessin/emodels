@@ -2,7 +2,7 @@
 tools for huggingface compatibility
 """
 from functools import partial
-from typing import Generator
+from typing import Generator, TypedDict, List
 
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
@@ -50,4 +50,36 @@ def truncate_sample(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -
         "attribute": sample["attribute"],
         "start": sample["start"] - mstart,
         "end": sample["end"] - mstart,
+    })
+
+
+class TransformerTrainSample(TypedDict):
+    input_ids: List[int]
+    attention_mask: List[int]
+    start: int
+    end: int
+
+
+def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> TransformerTrainSample:
+    truncated = truncate_sample(sample, tokenizer)
+    question = f"Extract the {truncated['attribute']}."
+    tokenized_data = tokenizer(truncated['markdown'], question, padding="max_length")
+
+    start = tokenized_data.char_to_token(truncated["start"])
+    correction = 1
+    while start is None:
+        start = tokenized_data.char_to_token(truncated["start"] - correction)
+        correction += 1
+
+    end = tokenized_data.char_to_token(truncated["end"])
+    correction = 1
+    while end is None:
+        end = tokenized_data.char_to_token(truncated["end"] + correction)
+        correction += 1
+
+    return TransformerTrainSample({
+        "input_ids": tokenized_data["input_ids"],
+        "attention_mask": tokenized_data["attention_mask"],
+        "start": start,
+        "end": end,
     })
