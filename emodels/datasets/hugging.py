@@ -5,6 +5,7 @@ from functools import partial
 from typing import Generator
 
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
+from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from emodels.datasets.utils import ExtractDatasetFilename, DatasetBucket, ExtractSample
 
@@ -37,11 +38,16 @@ def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
     return ds
 
 
-# def truncate_sample(sample: Sample, tokenizer: PreTrainedTokenizerBase) -> Sample:
-#     max_length = tokenizer.model_max_length
-#     prefix_len = max_length // 2
-#     suffix_len = max_length - prefix_len
-#     center = sample["start"]
-#     return {
-#         "markdown":
-#     }
+def truncate_sample(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> ExtractSample:
+    max_length = tokenizer.model_max_length
+    prefix_len = max_length // 2
+    suffix_len = max_length - prefix_len
+    center = (sample["start"] + sample["end"]) // 2
+    mstart = max(0, center - prefix_len)
+    mend = min(len(sample["markdown"]), center + suffix_len)
+    return ExtractSample({
+        "markdown": sample["markdown"][mstart:mend],
+        "attribute": sample["attribute"],
+        "start": sample["start"] - mstart,
+        "end": sample["end"] - mstart,
+    })
