@@ -9,7 +9,7 @@ dateparser = "*"
 datasets = "*"
 scikit-learn = "==1.2.1"
 sentencepiece = "*"
-transformers = "*"
+transformers = {extras = ["torch"], version = "*"}
 torch = "*"
 shub-workflow = "*"
 

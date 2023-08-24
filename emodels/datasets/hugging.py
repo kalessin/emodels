@@ -45,25 +45,27 @@ def truncate_sample(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -
     center = (sample["start"] + sample["end"]) // 2
     mstart = max(0, center - prefix_len)
     mend = min(len(sample["markdown"]), center + suffix_len)
-    return ExtractSample({
-        "markdown": sample["markdown"][mstart:mend],
-        "attribute": sample["attribute"],
-        "start": sample["start"] - mstart,
-        "end": sample["end"] - mstart,
-    })
+    return ExtractSample(
+        {
+            "markdown": sample["markdown"][mstart:mend],
+            "attribute": sample["attribute"],
+            "start": sample["start"] - mstart,
+            "end": sample["end"] - mstart,
+        }
+    )
 
 
 class TransformerTrainSample(TypedDict):
     input_ids: List[int]
     attention_mask: List[int]
-    start: int
-    end: int
+    start_positions: int
+    end_positions: int
 
 
 def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> TransformerTrainSample:
     truncated = truncate_sample(sample, tokenizer)
     question = f"Extract the {truncated['attribute']}."
-    tokenized_data = tokenizer(truncated['markdown'], question, padding="max_length")
+    tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length")
 
     start = tokenized_data.char_to_token(truncated["start"])
     correction = 1
@@ -77,9 +79,19 @@ def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokeniz
         end = tokenized_data.char_to_token(truncated["end"] + correction)
         correction += 1
 
-    return TransformerTrainSample({
-        "input_ids": tokenized_data["input_ids"],
-        "attention_mask": tokenized_data["attention_mask"],
-        "start": start,
-        "end": end,
-    })
+    return TransformerTrainSample(
+        {
+            "input_ids": tokenized_data["input_ids"],
+            "attention_mask": tokenized_data["attention_mask"],
+            "start_positions": start,
+            "end_positions": end,
+        }
+    )
+
+
+def prepare_datasetdict(
+    hf: HuggingFaceDatasetDict, tokenizer: PreTrainedTokenizerBase, load_from_cache_file=True
+) -> HuggingFaceDatasetDict:
+    mapper = partial(process_sample_for_train, tokenizer=tokenizer)
+    hff = hf.map(mapper, load_from_cache_file=load_from_cache_file)
+    return hff

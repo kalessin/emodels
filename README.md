@@ -112,7 +112,7 @@ undesired characters, etc.
 
 This module contains utils for creating datasets and training models.
 
-#### Creating a dataset from collected items.
+#### 1. Creating a dataset from collected items.
 
 As we mentioned before, the way to collect extraction data from a spider run is by running the spider with the appropiate environment variable set:
 
@@ -132,7 +132,7 @@ At any moment, you can build a joint from all the individual files, with the fol
 
 The joint dataset will be saved to the dataset file represented by eds variable.
 
-```
+```python
 > eds
 '/home/myuser/.datasets/myproject/items.jl.gz'
 ```
@@ -142,15 +142,41 @@ This operation also assigns randomly the samples to train/test/validation bucket
 
 Provided `EMODELS_DATASET_DIR` is the same, you can also recover back the dataset later:
 
-```
+```python
 > eds = ExtractDatasetFilename.local_by_name("items", "myproject")
 ```
 
 If not, you can also do:
 
-```
+```python
 > eds = ExtractDatasetFilename("/home/myuser/.datasets/myproject/items.jl.gz")
 ```
+
+#### 2. Preparing dataset to train a HuggingFace transformer model
+
+Convert extract dataset to HuggingFace DatasetDict:
+
+```python
+> from emodels.datasets.hugging import to_hfdataset, prepare_datasetdict
+> from transformers import AutoTokenizer
+> hf = to_hfdataset(eds)
+> tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
+> hff = prepare_datasetdict(hf, tokenizer)
+```
+
+Both `hf` and `hff` in the examples above are instances of HuggingFace DatasetDict class. So you can save them to disk and recover them at any time. I.e:
+
+```python
+> hff.save_to_disk("<save folder>")
+```
+
+Later, for recovering:
+
+```
+> from datasets import DatasetDict
+> hff = DatasetDict.load_from_disk("<save folder>")
+```
+
 
 ## html2text module
 
