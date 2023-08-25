@@ -20,7 +20,7 @@ setup(
         "shub-workflow",
     ),
     extras_require = {
-        "with-transformers": ["datasets", "torch", "transformers"],
+        "with-transformers": ["datasets", "torch", "transformers[torch]"],
     },
     scripts = [],
     classifiers = [

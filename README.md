@@ -177,6 +177,30 @@ Later, for recovering:
 > hff = DatasetDict.load_from_disk("<save folder>")
 ```
 
+#### 3. Get trainer and do the train stuff.
+
+```python
+> from emodels.datasets.hugging import get_qatransformer_trainer
+> model, trainer, test_data = get_qatransformer_trainer(hff, "distilbert-base-cased-distilled-squad", "mytransformer_cache_dir")
+> trainer.train()   # this will take long time
+...
+
+> trainer.evaluate(test_data)
+```
+
+Once trained, the model can be saved:
+
+```python
+> model.save_pretrained("./mypretrained_model")
+```
+
+And later be recovered:
+
+```python
+> from transformers import AutoModelForQuestionAnswering
+> model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
+> model.from_pretrained("./mypretrained_model")
+```
 
 ## html2text module
 
