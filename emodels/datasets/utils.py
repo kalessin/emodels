@@ -26,7 +26,7 @@ DatasetBucket = Literal["train", "validation", "test"]
 
 # first number represents probability of being assigned to train dataset bucket, second number to test dataset bucket.
 # if they sum up below 1, the remaining will be assigned to validation dataset bucket.
-DEFAULT_DATASET_RATIO = (0.67, 0.33)
+DEFAULT_DATASET_RATIO = (0.65, 0.15)
 
 
 class Filename(str):
@@ -123,6 +123,7 @@ class WebsiteDatasetFilename(DatasetFilename[WebsiteSampleData]):
     """
     Website Datasets contain a collection of WebsiteSampleData
     """
+
     ...
 
 
@@ -140,7 +141,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
         name: str,
         project: str,
         classes: Optional[Tuple[str]] = None,
-        dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO,
+        dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO,
     ) -> Self:
         """
         Build a dataset dict from extracted items in user dataset folder.
@@ -157,28 +158,66 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
                 "Output file already exists. "
                 f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
             )
+        randomizer = DatasetBucketRandomizer(dataset_ratio)
         for sf in os.listdir(EMODELS_ITEMS_DIR):
             for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+                dataset_bucket = randomizer.get_random_dataset()
                 df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
                 for sample in df:
-                    sample["dataset_bucket"] = get_random_dataset(dataset_ratio)
+                    sample["dataset_bucket"] = dataset_bucket
+                    randomizer.inc_assigned(dataset_bucket)
                     result.append(sample)
         return result
 
 
-def get_random_dataset(dataset_ratio: Tuple[float, ...] = DEFAULT_DATASET_RATIO) -> DatasetBucket:
-    """
-    - dataset_ratio: a 2-tuple of floats. The first element is the probability to yield "train",
-      and the second element the probability to yield "test". If they sum below 1, the remaining
-      is the probability to yield "validation".
-    """
-    assert len(dataset_ratio) == 2, "Invalid dataset_ratio len: must be 2."
-    r = random()
-    if r < dataset_ratio[0]:
-        return "train"
-    if r < sum(dataset_ratio):
-        return "test"
-    return "validation"
+class DatasetBucketRandomizer:
+    def __init__(self, dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO):
+        assert len(dataset_ratio) == 2, "Invalid dataset_ratio len: must be 2."
+        self.__ratios: Tuple[float, float, float] = dataset_ratio + (1 - sum(dataset_ratio),)
+        self.__assigned: Tuple[float, float, float] = (0, 0, 0)
+
+    def _get_current_ratios(self) -> Tuple[float, float, float]:
+        total = sum(self.__assigned)
+        if total == 0:
+            return 0, 0, 0
+        return cast(Tuple[float, float, float], tuple(v / total for v in self.__assigned))
+
+    def inc_assigned(self, bucket: DatasetBucket, inc: int = 1):
+        if bucket == "train":
+            self.__assigned = (self.__assigned[0] + inc, self.__assigned[1], self.__assigned[2])
+        elif bucket == "test":
+            self.__assigned = (self.__assigned[0], self.__assigned[1] + inc, self.__assigned[2])
+        else:
+            self.__assigned = (self.__assigned[0], self.__assigned[1], self.__assigned[2] + inc)
+
+    def _get_random_dataset(self) -> DatasetBucket:
+        """
+        - dataset_ratio: a 2-tuple of floats. The first element is the probability to yield "train",
+          and the second element the probability to yield "test". If they sum below 1, the remaining
+          is the probability to yield "validation".
+        """
+        r = random()
+        if r < self.__ratios[0]:
+            return "train"
+        if r < sum(self.__ratios[:2]):
+            return "test"
+        return "validation"
+
+    def get_random_dataset(self) -> DatasetBucket:
+        below = [
+            k[0]
+            for k in zip(
+                ["train", "test", "validation"], [i < j for i, j in zip(self._get_current_ratios(), self.__ratios)]
+            )
+            if k[1]
+        ]
+        if not below:
+            return self._get_random_dataset()
+
+        while True:
+            bucket = self._get_random_dataset()
+            if bucket in below:
+                return bucket
 
 
 class ResponseConverter(Protocol):

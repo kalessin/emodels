@@ -37,9 +37,10 @@ def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
                 )
 
     train = HuggingFaceDataset.from_generator(partial(_generator, "train"))
+    validation = HuggingFaceDataset.from_generator(partial(_generator, "validation"))
     test = HuggingFaceDataset.from_generator(partial(_generator, "test"))
 
-    ds = HuggingFaceDatasetDict({"train": train, "test": test})
+    ds = HuggingFaceDatasetDict({"train": train, "test": test, "validation": validation})
     return ds
 
 
