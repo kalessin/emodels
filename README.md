@@ -171,7 +171,7 @@ And then prepare the dataset for usage in transformers training:
 > hff = prepare_datasetdict(hf, tokenizer)
 ```
 
-This preparation includes truncation of samples in order to fit to the target HuggingFace model (in this case, `distilbert-base-cased-distilled-squad`), and set of appropiate sample fields
+This preparation includes truncation of samples in order to fit to the target HuggingFace model size (in this case, `distilbert-base-cased-distilled-squad`), and set of appropiate sample fields
 required for training.
 
 
@@ -187,6 +187,8 @@ Later, for recovering:
 > from datasets import DatasetDict
 > hff = DatasetDict.load_from_disk("<save folder>")
 ```
+
+(Notice that the `datasets` module here is not the same as `emodels.datasets` module. The former comes from the HuggingFace package.)
 
 #### 3. Get trainer and do the train stuff.
 
