@@ -162,9 +162,18 @@ Convert extract dataset to HuggingFace DatasetDict:
 > from emodels.datasets.hugging import to_hfdataset, prepare_datasetdict
 > from transformers import AutoTokenizer
 > hf = to_hfdataset(eds)
+```
+
+And then prepare the dataset for usage in transformers training:
+
+```python
 > tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
 > hff = prepare_datasetdict(hf, tokenizer)
 ```
+
+This preparation includes truncation of samples in order to fit to the target HuggingFace model (in this case, `distilbert-base-cased-distilled-squad`), and set of appropiate sample fields
+required for training.
+
 
 Both `hf` and `hff` in the examples above are instances of HuggingFace DatasetDict class. So you can save them to disk and recover them at any time. I.e:
 
