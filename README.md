@@ -38,8 +38,10 @@ EMODELS_SAVE_EXTRACT_ITEMS=1 scrapy crawl myspider
 ```
 
 In addition, in order to have your dataset organized, you may want to choose the same item class name for same item schema, even accross multiple projects. And avoid to repeat it among items with different
-schema. However, in general you will use extraction data from all classes of items at same time in order to train a transformer model, as this is the way how transformers learn to generalize. At
-the end you will have a transformer model that is suited to extract any kind of item, as they are trained not to extract "data from x item" but instead to recognize and extract based on fields.
+schema. However, in general you will use extraction data from all classes of items at same time in order to train a transformer model, as this is the way how transformers learn to generalize. In addition
+avoid to create multiple collections for same item class and target site, as they will not provide diversity and you may commit the mistake of having same sample distribution in train and test datasets.
+
+At the end you will have a transformer model that is suited to extract any kind of item, as they are trained not to extract "data from x item" but instead to recognize and extract based on fields.
 So, even if you didn't train the transformer to extract a specific item class, it will do great if you trained it to extract its fields, if it already learned to extract same fields from
 other item classes. You only need to ask the correct question. For example, given an html page as a context, you can ask the model: `which is the phone number?`. You don't need to specify
 which kind of data (a business? a person? an organization?) you expect to find there.
@@ -126,7 +128,7 @@ with the `add_text_re()` method. Each time you run a spider in this way, a new f
 At any moment, you can build a joint from all the individual files, with the following lines in a python console:
 
 ```python
-> from emodels.datasets.utils import ItemsDatasetFilename
+> from emodels.datasets.utils import ExtractDatasetFilename
 > eds = ExtractDatasetFilename.build_from_items("items", "myproject")
 ```
 

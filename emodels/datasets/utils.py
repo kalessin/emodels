@@ -5,7 +5,7 @@ import abc
 import gzip
 import json
 import logging
-from random import random
+from random import random, randrange
 from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
 
 from typing_extensions import Self
@@ -142,6 +142,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
         project: str,
         classes: Optional[Tuple[str]] = None,
         dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO,
+        max_samples_per_source: int = 50,
     ) -> Self:
         """
         Build a dataset dict from extracted items in user dataset folder.
@@ -161,9 +162,19 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
         randomizer = DatasetBucketRandomizer(dataset_ratio)
         for sf in os.listdir(EMODELS_ITEMS_DIR):
             for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
-                dataset_bucket = randomizer.get_random_dataset()
                 df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                selected: List[ItemSample] = []
+                count = 0
                 for sample in df:
+                    count += 1
+                    if len(selected) < max_samples_per_source:
+                        selected.append(sample)
+                    else:
+                        idx = randrange(count)
+                        if idx < max_samples_per_source:
+                            selected = selected[:idx] + selected[idx+1:]
+                dataset_bucket = randomizer.get_random_dataset()
+                for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
                     randomizer.inc_assigned(dataset_bucket)
                     result.append(sample)
