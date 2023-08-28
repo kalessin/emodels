@@ -160,13 +160,13 @@ Convert extract dataset to HuggingFace DatasetDict:
 
 ```python
 > from emodels.datasets.hugging import to_hfdataset, prepare_datasetdict
-> from transformers import AutoTokenizer
 > hf = to_hfdataset(eds)
 ```
 
 And then prepare the dataset for usage in transformers training:
 
 ```python
+> from transformers import AutoTokenizer
 > tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
 > hff = prepare_datasetdict(hf, tokenizer)
 ```
@@ -213,6 +213,16 @@ And later be recovered:
 > from transformers import AutoModelForQuestionAnswering
 > model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
 > model.from_pretrained("./mypretrained_model")
+```
+
+#### 4. Extracting with the model:
+
+```python
+> from transformers import pipeline
+> from transformers import AutoTokenizer
+> tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
+> question_answerer = pipeline(task="question-answering", model="./pretrained_ih/", tokenizer=tokenizer)
+> question_answerer(question="Extract the name", context=<target markdown>)
 ```
 
 ## html2text module
