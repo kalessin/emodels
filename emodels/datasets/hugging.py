@@ -17,7 +17,7 @@ from sklearn.metrics import f1_score
 
 
 from emodels.datasets.utils import ExtractDatasetFilename
-from emodels.datasets.stypes import DatasetBucket
+from emodels.datasets.stypes import DatasetBucket, ItemSample
 
 
 class ExtractSample(TypedDict):
@@ -181,18 +181,26 @@ def compare(
     tokenizer: Optional[PreTrainedTokenizerBase] = None,
     print_each: int = 50,
     rate: float = 0.1,
-):
+) -> Dict[str, Dict[DatasetBucket, float]]:
     def _clean(txt):
         txt = re.sub(r"^\W+", "", txt)
         txt = re.sub(r"\W+$", "", txt)
         return txt
 
-    score: Dict[DatasetBucket, float] = defaultdict(float)
-    totals: Dict[DatasetBucket, int] = defaultdict(int)
+    def _to_dict(ddict):
+        return_value = dict(ddict)
+        for key in return_value.keys():
+            return_value[key] = dict(return_value[key])
+        return return_value
+
+    score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
+    totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
     question_answerer = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
     count = 0
+    sample: ItemSample
     for sample in eds:
+        source = sample["source"]
         bucket = sample["dataset_bucket"]
         for attr, idx in sample["indexes"].items():
             if random() > rate:
@@ -202,12 +210,13 @@ def compare(
                 question_answerer(question=f"Extract the {attr}", context=sample["markdown"])["answer"]
             )
             real_answer = sample["markdown"][slice(*idx)]
-            totals[bucket] += 1
+            totals[source][bucket] += 1
             if real_answer in model_answer:
-                score[bucket] += len(real_answer) / len(model_answer)
+                score[source][bucket] += len(real_answer) / len(model_answer)
             if count % print_each == 0:
-                print("Score count: ", dict(score), "Total count: ", dict(totals), file=sys.stderr)
-    for key in score.keys():
-        score[key] /= totals[key]
+                print("Score count: ", _to_dict(score), "Total count: ", _to_dict(totals), file=sys.stderr)
+    for source in score.keys():
+        for bucket in score[source].keys():
+            score[source][bucket] /= totals[source][bucket]
 
-    return score
+    return _to_dict(score)
