@@ -10,3 +10,4 @@ class ItemSample(TypedDict):
     indexes: ExtractDict
     markdown: str
     dataset_bucket: NotRequired[DatasetBucket]
+    source: NotRequired[str]

@@ -152,6 +152,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
             )
         randomizer = DatasetBucketRandomizer(dataset_ratio)
         for sf in os.listdir(EMODELS_ITEMS_DIR):
+            source = sf
             for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
                 df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
                 selected: List[ItemSample] = []
@@ -163,10 +164,11 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                     else:
                         idx = randrange(count)
                         if idx < max_samples_per_source:
-                            selected = selected[:idx] + selected[idx + 1 :]
+                            selected = selected[:idx] + selected[idx + 1:]
                 dataset_bucket = randomizer.get_random_dataset()
                 for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
+                    sample["source"] = source
                     randomizer.inc_assigned(dataset_bucket)
                     result.append(sample)
         return result
