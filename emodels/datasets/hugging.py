@@ -1,13 +1,17 @@
 """
 tools for huggingface compatibility
 """
+import re
+import sys
+from random import random
 from functools import partial
-from typing import Generator, TypedDict, List, Tuple, Callable, Dict
+from collections import defaultdict
+from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Optional
 
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 from datasets.arrow_dataset import Dataset as ArrowDataset
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments
+from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, pipeline
 from transformers.trainer_utils import EvalPrediction
 from sklearn.metrics import f1_score
 
@@ -161,3 +165,41 @@ def get_qatransformer_trainer(
     )
 
     return model, trainer, processed_test_data
+
+
+def compare(
+    eds: ExtractDatasetFilename,
+    model: str,
+    tokenizer: Optional[PreTrainedTokenizerBase] = None,
+    print_each: int = 50,
+    rate: float = 0.1,
+):
+    def _clean(txt):
+        txt = re.sub(r"^\W+", "", txt)
+        txt = re.sub(r"\W+$", "", txt)
+        return txt
+
+    score: Dict[DatasetBucket, float] = defaultdict(float)
+    totals: Dict[DatasetBucket, int] = defaultdict(int)
+
+    question_answerer = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
+    count = 0
+    for sample in eds:
+        bucket = sample["dataset_bucket"]
+        for attr, idx in sample["indexes"].items():
+            if random() > rate:
+                continue
+            count += 1
+            model_answer = _clean(
+                question_answerer(question=f"Extract the {attr}", context=sample["markdown"])["answer"]
+            )
+            real_answer = sample["markdown"][slice(*idx)]
+            totals[bucket] += 1
+            if real_answer in model_answer:
+                score[bucket] += len(real_answer) / len(model_answer)
+            if count % print_each == 0:
+                print("Score count: ", dict(score), "Total count: ", dict(totals), file=sys.stderr)
+    for key in score.keys():
+        score[key] /= totals[key]
+
+    return score
