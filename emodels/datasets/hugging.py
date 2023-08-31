@@ -16,7 +16,15 @@ from transformers.trainer_utils import EvalPrediction
 from sklearn.metrics import f1_score
 
 
-from emodels.datasets.utils import ExtractDatasetFilename, DatasetBucket, ExtractSample
+from emodels.datasets.utils import ExtractDatasetFilename
+from emodels.datasets.stypes import DatasetBucket
+
+
+class ExtractSample(TypedDict):
+    markdown: str
+    attribute: str
+    start: int
+    end: int
 
 
 def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:

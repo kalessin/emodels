@@ -9,7 +9,7 @@ from scrapy import Item
 from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
 from emodels.datasets.utils import DatasetFilename
 from emodels.scrapyutils.response import ExtractTextResponse, DEFAULT_SKIP_PREFIX
-from emodels.scrapyutils.stypes import ExtractDict, ItemSample
+from emodels.datasets.stypes import ExtractDict, ItemSample
 
 
 LOG = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ import gzip
 import json
 import logging
 from random import random, randrange
-from typing import List, Literal, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
+from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -14,15 +14,13 @@ import lxml.html
 
 from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.scrapyutils.stypes import ItemSample
+from emodels.datasets.stypes import ItemSample, DatasetBucket
 
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.INFO)
 
 NO_TEXT_TAGS = ["script", "style", "noscript"]
-
-DatasetBucket = Literal["train", "validation", "test"]
 
 # first number represents probability of being assigned to train dataset bucket, second number to test dataset bucket.
 # if they sum up below 1, the remaining will be assigned to validation dataset bucket.
@@ -127,14 +125,7 @@ class WebsiteDatasetFilename(DatasetFilename[WebsiteSampleData]):
     ...
 
 
-class ExtractSample(TypedDict):
-    markdown: str
-    attribute: str
-    start: int
-    end: int
-
-
-class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
+class ExtractDatasetFilename(DatasetFilename[ItemSample]):
     @classmethod
     def build_from_items(
         cls,
@@ -153,7 +144,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
         - dataset_ratio is the same for get_random_dataset() and determines how samples are distributed
           among train, test and validation buckets.
         """
-        result = cls.local_by_name(name, project)
+        result: Self = cls.local_by_name(name, project)
         if os.path.exists(result):
             raise ValueError(
                 "Output file already exists. "
@@ -172,7 +163,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
                     else:
                         idx = randrange(count)
                         if idx < max_samples_per_source:
-                            selected = selected[:idx] + selected[idx+1:]
+                            selected = selected[:idx] + selected[idx + 1 :]
                 dataset_bucket = randomizer.get_random_dataset()
                 for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
