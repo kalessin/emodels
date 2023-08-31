@@ -204,7 +204,7 @@ Later, for recovering:
 Once trained, the model can be saved:
 
 ```python
-> model.save_pretrained("./mypretrained_model")
+> model.save_pretrained("./mytunned_model")
 ```
 
 And later be recovered:
@@ -212,18 +212,38 @@ And later be recovered:
 ```python
 > from transformers import AutoModelForQuestionAnswering
 > model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
-> model.from_pretrained("./mypretrained_model")
+> model.from_pretrained("./mytunned_model")
 ```
 
-#### 4. Extracting with the model:
+#### 4. Extracting with the model.
 
 ```python
 > from transformers import pipeline
 > from transformers import AutoTokenizer
 > tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
-> question_answerer = pipeline(task="question-answering", model="./pretrained_ih/", tokenizer=tokenizer)
+> question_answerer = pipeline(task="question-answering", model="./mytunned_model", tokenizer=tokenizer)
 > question_answerer(question="Extract the name", context=<target markdown>)
 ```
+
+#### 5. Evaluating the model.
+
+First, evaluate the extraction with the base untunned model:
+
+```python
+> from emodels.datasets.hugging import compare
+> eds = ExtractDatasetFilename(eds)  # this initializes the generator, in case already consumed by steps above.
+> compare(eds, model="distilbert-base-cased-distilled-squad")
+```
+
+This will return a score dictionary, one item per dataset bucket. Then, do the same for the tunned model:
+
+
+```python
+> eds = ExtractDatasetFilename(eds)
+> compare(eds, model="./mytunned_model", tokenizer=tokenizer)
+```
+
+if everything went ok, the score of the tunned model should be bigger than the pretrained one.
 
 ## html2text module
 
