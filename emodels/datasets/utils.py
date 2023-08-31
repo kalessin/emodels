@@ -5,6 +5,7 @@ import abc
 import gzip
 import json
 import logging
+from collections import defaultdict
 from random import random, randrange
 from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
 
@@ -150,8 +151,8 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                 "Output file already exists. "
                 f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
             )
-        randomizer = DatasetBucketRandomizer(dataset_ratio)
         for sf in os.listdir(EMODELS_ITEMS_DIR):
+            randomizer = DatasetBucketRandomizer(dataset_ratio)
             source = sf
             for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
                 df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
@@ -172,6 +173,13 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                     randomizer.inc_assigned(dataset_bucket)
                     result.append(sample)
         return result
+
+    def count(self):
+        count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
+        for sample in self:
+            for _ in sample["indexes"].keys():
+                count[sample["source"]][sample["dataset_bucket"]] += 1
+        return dict(count)
 
 
 class DatasetBucketRandomizer:
