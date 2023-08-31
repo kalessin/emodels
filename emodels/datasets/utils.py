@@ -142,7 +142,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
         project: str,
         classes: Optional[Tuple[str]] = None,
         dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO,
-        max_samples_per_source: int = 50,
+        max_samples_per_source: Optional[int] = None,
     ) -> Self:
         """
         Build a dataset dict from extracted items in user dataset folder.
@@ -167,7 +167,7 @@ class ExtractDatasetFilename(DatasetFilename[ExtractSample]):
                 count = 0
                 for sample in df:
                     count += 1
-                    if len(selected) < max_samples_per_source:
+                    if max_samples_per_source is None or len(selected) < max_samples_per_source:
                         selected.append(sample)
                     else:
                         idx = randrange(count)
