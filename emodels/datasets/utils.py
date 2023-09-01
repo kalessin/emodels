@@ -6,7 +6,7 @@ import gzip
 import json
 import logging
 from collections import defaultdict
-from random import random, randrange
+from random import random, randrange, shuffle
 from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
 
 from typing_extensions import Self
@@ -154,7 +154,9 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
         for sf in os.listdir(EMODELS_ITEMS_DIR):
             randomizer = DatasetBucketRandomizer(dataset_ratio)
             source = sf
-            for f in os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf)):
+            files = os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf))
+            shuffle(files)
+            for f in files:
                 df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
                 selected: List[ItemSample] = []
                 count = 0
@@ -167,6 +169,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                         if idx < max_samples_per_source:
                             selected = selected[:idx] + selected[idx + 1:]
                 dataset_bucket = randomizer.get_random_dataset()
+                LOGGER.info(f"Bucket {dataset_bucket} assigned to samples from source {sf}/{f}.")
                 for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
                     sample["source"] = source
@@ -223,13 +226,28 @@ class DatasetBucketRandomizer:
             )
             if k[1]
         ]
-        if not below:
-            return self._get_random_dataset()
 
-        while True:
-            bucket = self._get_random_dataset()
-            if bucket in below:
-                return bucket
+        zero = [
+            k[0]
+            for k in zip(
+                ["train", "test", "validation"], [i == 0 for i in self.__assigned]
+            )
+            if k[1]
+        ]
+
+        if zero:
+            while True:
+                bucket = self._get_random_dataset()
+                if bucket in zero:
+                    return bucket
+
+        if below:
+            while True:
+                bucket = self._get_random_dataset()
+                if bucket in below:
+                    return bucket
+
+        return self._get_random_dataset()
 
 
 class ResponseConverter(Protocol):
