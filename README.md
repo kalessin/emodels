@@ -211,8 +211,7 @@ And later be recovered:
 
 ```python
 > from transformers import AutoModelForQuestionAnswering
-> model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
-> model.from_pretrained("./mytunned_model")
+> model = AutoModelForQuestionAnswering.from_pretrained("./mytunned_model")
 ```
 
 #### 4. Extracting with the model.
