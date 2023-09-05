@@ -7,7 +7,7 @@ import json
 import logging
 from collections import defaultdict
 from random import random, randrange, shuffle
-from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar
+from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar, Union
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -85,7 +85,7 @@ class DatasetFilename(Generic[E], Filename):
     append() in order to add new samples.
     """
 
-    _file: None | IO
+    _file: Union[None, IO]
 
     def __new__(cls, text):
         obj = super().__new__(cls, text)
@@ -310,7 +310,7 @@ def build_sample_data_from_response(response: TextResponse) -> WebsiteSampleData
     return sampledata
 
 
-def save_sample_data_from_response(response: TextResponse, filename: str | WebsiteDatasetFilename):
+def save_sample_data_from_response(response: TextResponse, filename: Union[str, WebsiteDatasetFilename]):
     sampledata = build_sample_data_from_response(response)
     if not isinstance(filename, WebsiteDatasetFilename):
         filename = WebsiteDatasetFilename(filename)
