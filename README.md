@@ -178,14 +178,14 @@ required for training.
 Both `hf` and `hff` in the examples above are instances of HuggingFace DatasetDict class. So you can save them to disk and recover them at any time. I.e:
 
 ```python
-> hff.save_to_disk("<save folder>")
+> hff.save_to_disk("./my_prepared_dataset")
 ```
 
 Later, for recovering:
 
 ```
 > from datasets import DatasetDict
-> hff = DatasetDict.load_from_disk("<save folder>")
+> hff = DatasetDict.load_from_disk("./my_prepared_dataset")
 ```
 
 (Notice that the `datasets` module here is not the same as `emodels.datasets` module. The former comes from the HuggingFace package.)
@@ -207,6 +207,15 @@ Once trained, the model can be saved:
 > model.save_pretrained("./mytunned_model")
 ```
 
+Optionally, for convenience you may want to save the tokenizer along with the model:
+
+
+```python
+> tokenizer.save_pretrained("./mytunned_model")
+```
+
+This will avoid the requirement to manually load the tokenizer on each further operation.
+
 And later be recovered:
 
 ```python
@@ -220,7 +229,7 @@ And later be recovered:
 > from transformers import pipeline
 > from transformers import AutoTokenizer
 > tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
-> question_answerer = pipeline(task="question-answering", model="./mytunned_model", tokenizer=tokenizer)
+> question_answerer = pipeline(task="question-answering", model="./mytunned_model")
 > question_answerer(question="Extract the name", context=<target markdown>)
 ```
 
@@ -239,7 +248,7 @@ This will return a score dictionary, one item per dataset bucket. Then, do the s
 
 ```python
 > eds = ExtractDatasetFilename(eds)
-> compare(eds, model="./mytunned_model", tokenizer=tokenizer)
+> compare(eds, model="./mytunned_model")
 ```
 
 if everything went ok, the score of the tunned model should be bigger than the pretrained one.
