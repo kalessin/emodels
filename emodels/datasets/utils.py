@@ -7,7 +7,7 @@ import json
 import logging
 from collections import defaultdict
 from random import random, randrange, shuffle
-from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar, Union
+from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar, Union, Generator
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -111,6 +111,15 @@ class DatasetFilename(Generic[E], Filename):
         with self.open("at") as fz:
             print(json.dumps(data), file=fz)
 
+    def iter(self, **kwargs) -> Generator[E, None, None]:
+        df = self.__class__(self)
+        for sample in df:
+            for key, val in kwargs.items():
+                if sample.get(key, None) != val:
+                    break
+            else:
+                yield sample
+
 
 class WebsiteSampleData(TypedDict):
     url: str
@@ -151,13 +160,12 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                 "Output file already exists. "
                 f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
             )
-        for sf in os.listdir(EMODELS_ITEMS_DIR):
+        for source in os.listdir(EMODELS_ITEMS_DIR):
             randomizer = DatasetBucketRandomizer(dataset_ratio)
-            source = sf
-            files = os.listdir(os.path.join(EMODELS_ITEMS_DIR, sf))
+            files = os.listdir(os.path.join(EMODELS_ITEMS_DIR, source))
             shuffle(files)
             for f in files:
-                df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, sf, f))
+                df: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(EMODELS_ITEMS_DIR, source, f))
                 selected: List[ItemSample] = []
                 count = 0
                 for sample in df:
@@ -169,7 +177,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                         if idx < max_samples_per_source:
                             selected = selected[:idx] + selected[idx + 1:]
                 dataset_bucket = randomizer.get_random_dataset()
-                LOGGER.info(f"Bucket {dataset_bucket} assigned to samples from source {sf}/{f}.")
+                LOGGER.info(f"Bucket {dataset_bucket} assigned to samples from source {source}/{f}.")
                 for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
                     sample["source"] = source
@@ -177,7 +185,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                     result.append(sample)
         return result
 
-    def count(self):
+    def count_samples(self) -> Dict[str, Dict[DatasetBucket, int]]:
         count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
         for sample in self:
             for _ in sample["indexes"].keys():
