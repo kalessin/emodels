@@ -82,7 +82,7 @@ class TransformerTrainSample(TypedDict):
 
 def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> TransformerTrainSample:
     truncated = truncate_sample(sample, tokenizer)
-    question = f"Extract the {truncated['attribute']}."
+    question = f"Which is the {truncated['attribute']}?"
     tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length")
 
     start = tokenized_data.char_to_token(truncated["start"])
@@ -175,7 +175,7 @@ def get_qatransformer_trainer(
     return model, trainer, processed_test_data
 
 
-def compare(
+def evaluate(
     eds: ExtractDatasetFilename,
     model: str,
     tokenizer: Optional[PreTrainedTokenizerBase] = None,
@@ -207,12 +207,14 @@ def compare(
                 continue
             count += 1
             model_answer = _clean(
-                question_answerer(question=f"Extract the {attr}", context=sample["markdown"])["answer"]
+                question_answerer(question=f"Which is the {attr}?", context=sample["markdown"])["answer"]
             )
             real_answer = sample["markdown"][slice(*idx)]
             totals[source][bucket] += 1
             if real_answer in model_answer:
                 score[source][bucket] += len(real_answer) / len(model_answer)
+            elif source not in score or bucket not in score[source]:
+                score[source][bucket] = 0.0
             if count % print_each == 0:
                 print("Score count: ", _to_dict(score), "Total count: ", _to_dict(totals), file=sys.stderr)
     for source in score.keys():
