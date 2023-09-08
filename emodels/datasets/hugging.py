@@ -27,13 +27,13 @@ class ExtractSample(TypedDict):
     end: int
 
 
-def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
+def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDatasetDict:
     """
     Convert to HuggingFace Dataset suitable for usage in transformers
     """
 
     def _generator(bucket: DatasetBucket) -> Generator[ExtractSample, None, None]:
-        for sample in target.iter():
+        for sample in target.iter(**kwargs):
             if sample["dataset_bucket"] != bucket:
                 continue
             for key, idx in sample["indexes"].items():
