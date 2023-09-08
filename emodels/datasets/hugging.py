@@ -209,6 +209,8 @@ def evaluate(
                 question_answerer(question=f"Which is the {attr}?", context=sample["markdown"])["answer"]
             )
             real_answer = sample["markdown"][slice(*idx)]
+            model_answer = model_answer.replace(" ", "")
+            real_answer = real_answer.replace(" ", "")
             totals[source][bucket] += 1
             if real_answer in model_answer:
                 score[source][bucket] += len(real_answer) / len(model_answer)
