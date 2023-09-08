@@ -6,7 +6,7 @@ import sys
 from random import random
 from functools import partial
 from collections import defaultdict
-from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Optional
+from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Optional, Iterator
 
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 from datasets.arrow_dataset import Dataset as ArrowDataset
@@ -33,7 +33,7 @@ def to_hfdataset(target: ExtractDatasetFilename) -> HuggingFaceDatasetDict:
     """
 
     def _generator(bucket: DatasetBucket) -> Generator[ExtractSample, None, None]:
-        for sample in ExtractDatasetFilename(target):
+        for sample in target.iter():
             if sample["dataset_bucket"] != bucket:
                 continue
             for key, idx in sample["indexes"].items():
@@ -176,7 +176,7 @@ def get_qatransformer_trainer(
 
 
 def evaluate(
-    eds: ExtractDatasetFilename,
+    eds: Iterator[ItemSample],
     model: str,
     tokenizer: Optional[PreTrainedTokenizerBase] = None,
     print_each: int = 50,
@@ -198,7 +198,6 @@ def evaluate(
 
     question_answerer = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
     count = 0
-    sample: ItemSample
     for sample in eds:
         source = sample["source"]
         bucket = sample["dataset_bucket"]

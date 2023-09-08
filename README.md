@@ -239,19 +239,22 @@ First, evaluate the extraction with the base untunned model:
 
 ```python
 > from emodels.datasets.hugging import compare
-> eds = ExtractDatasetFilename(eds)  # this initializes the generator, in case already consumed by steps above.
-> compare(eds, model="distilbert-base-cased-distilled-squad")
+> evaluate(eds.iter(), model="distilbert-base-cased-distilled-squad")
 ```
 
 This will return a score dictionary, one item per dataset bucket. Then, do the same for the tunned model:
 
 
 ```python
-> eds = ExtractDatasetFilename(eds)
-> compare(eds, model="./mytunned_model")
+> evaluate(eds.iter(), model="./mytunned_model")
 ```
 
 if everything went ok, the score of the tunned model should be bigger than the pretrained one.
+
+This evaluation is different than the one performed by trainer.evaluate() above. While the last evaluates by comparing
+indexes results, which are the output and target of the model, the one here evaluates actual results as extracted text.
+
+Results however should be similar.
 
 ## html2text module
 
