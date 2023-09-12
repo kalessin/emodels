@@ -187,7 +187,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
 
     def count_samples(self) -> Dict[str, Dict[DatasetBucket, int]]:
         count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
-        for sample in self:
+        for sample in self.iter():
             for _ in sample["indexes"].keys():
                 count[sample["source"]][sample["dataset_bucket"]] += 1
         return dict(count)
