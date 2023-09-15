@@ -107,7 +107,8 @@ class DatasetFilename(Generic[E], Filename):
     def append(self, data: Dict[str, Any]):
         assert not self._file, "Already opened."
         folder = os.path.dirname(self)
-        os.makedirs(folder, exist_ok=True)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
         with self.open("at") as fz:
             print(json.dumps(data), file=fz)
 
