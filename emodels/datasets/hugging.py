@@ -135,6 +135,7 @@ def get_qatransformer_trainer(
     hg_model_name: str,
     output_dir: str,
     eval_metrics: Callable[[EvalPrediction], Dict] = compute_f1_metrics,
+    **training_args_kw,
 ) -> Tuple[AutoModelForQuestionAnswering, Trainer, ArrowDataset]:
     columns_to_return = ["input_ids", "attention_mask", "start_positions", "end_positions"]
 
@@ -150,7 +151,7 @@ def get_qatransformer_trainer(
     else:
         processed_validation_data = processed_test_data
 
-    training_args = TrainingArguments(
+    trargs = dict(
         output_dir=output_dir,  # output directory
         overwrite_output_dir=True,
         num_train_epochs=3,  # total number of training epochs
@@ -161,6 +162,9 @@ def get_qatransformer_trainer(
         logging_dir=None,  # directory for storing logs
         logging_steps=50,
     )
+    trargs.update(**training_args_kw)
+
+    training_args = TrainingArguments(**trargs)
 
     model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
 
