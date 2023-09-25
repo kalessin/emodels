@@ -80,9 +80,13 @@ class TransformerTrainSample(TypedDict):
     end_positions: int
 
 
+def _adapt_attribute(attr: str) -> str:
+    return attr.lower().replace("_", " ")
+
+
 def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> TransformerTrainSample:
     truncated = truncate_sample(sample, tokenizer)
-    question = f"Which is the {truncated['attribute']}?"
+    question = f"Which is the {_adapt_attribute(truncated['attribute'])}?"
     tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length")
 
     start = tokenized_data.char_to_token(truncated["start"])
@@ -209,8 +213,9 @@ def evaluate(
             if random() > rate:
                 continue
             count += 1
+            attr_adapted = _adapt_attribute(attr)
             model_answer = _clean(
-                question_answerer(question=f"Which is the {attr}?", context=sample["markdown"])["answer"]
+                question_answerer(question=f"Which is the {attr_adapted}?", context=sample["markdown"])["answer"]
             )
             real_answer = sample["markdown"][slice(*idx)]
             model_answer = model_answer.replace(" ", "")
