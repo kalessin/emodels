@@ -220,7 +220,7 @@ def evaluate(
 
     question_answerer = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
     count = 0
-    for sample in eds:
+    for sample in eds.iter():
         source = sample["source"]
         bucket = sample["dataset_bucket"]
         for attr, idx in sample["indexes"].items():
