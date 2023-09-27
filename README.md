@@ -108,6 +108,9 @@ For example, the browser development console is readily accesible but frequently
 readily used in the `add_text_re()` `tid` parameter. In many situations, however, it is not as straighforward as that, and you may get unexpected results, dirty extraction with
 undesired characters, etc.
 
+3. Put testing code in the spider to save responses and open it from a python console
+
+
 (WIP)
 
 ## datasets module

@@ -107,8 +107,7 @@ class DatasetFilename(Generic[E], Filename):
     def append(self, data: Dict[str, Any]):
         assert not self._file, "Already opened."
         folder = os.path.dirname(self)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
+        os.makedirs(folder, exist_ok=True)
         with self.open("at") as fz:
             print(json.dumps(data), file=fz)
 
@@ -188,7 +187,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
 
     def count_samples(self) -> Dict[str, Dict[DatasetBucket, int]]:
         count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
-        for sample in self.iter():
+        for sample in self.__class__(self):
             for _ in sample["indexes"].keys():
                 count[sample["source"]][sample["dataset_bucket"]] += 1
         return dict(count)
