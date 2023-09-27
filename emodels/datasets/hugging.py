@@ -8,10 +8,11 @@ from functools import partial
 from collections import defaultdict
 from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Optional, Iterator
 
+import torch
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 from datasets.arrow_dataset import Dataset as ArrowDataset
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, pipeline
+from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, AutoTokenizer
 from transformers.trainer_utils import EvalPrediction
 from datasets.builder import DatasetGenerationError
 from sklearn.metrics import f1_score
@@ -197,10 +198,23 @@ def get_qatransformer_trainer(
     return model, trainer, processed_test_data
 
 
+class QuestionAnswerer:
+    def __init__(self, model_path: str):
+        self.model = AutoModelForQuestionAnswering.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+    def answer(self, question: str, context: str) -> str:
+        input_ids = self.tokenizer.encode(question, context)
+        output = self.model(torch.tensor([input_ids]))
+        answer_start = torch.argmax(output.start_logits)
+        answer_end = torch.argmax(output.end_logits)
+        tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
+        return self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
+
+
 def evaluate(
     eds: Iterator[ItemSample],
     model: str,
-    tokenizer: Optional[PreTrainedTokenizerBase] = None,
     print_each: int = 50,
     rate: float = 0.1,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
@@ -218,9 +232,9 @@ def evaluate(
     score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
     totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
-    question_answerer = pipeline(task="question-answering", model=model, tokenizer=tokenizer)
+    question_answerer = QuestionAnswerer(model)
     count = 0
-    for sample in eds.iter():
+    for sample in eds:
         source = sample["source"]
         bucket = sample["dataset_bucket"]
         for attr, idx in sample["indexes"].items():
@@ -228,10 +242,8 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = _clean(
-                question_answerer(question=f"Which is the {attr_adapted}?", context=sample["markdown"])["answer"]
-            )
-            real_answer = sample["markdown"][slice(*idx)]
+            model_answer = _clean(question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"]))
+            real_answer = _clean(sample["markdown"][slice(*idx)])
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
             totals[source][bucket] += 1
