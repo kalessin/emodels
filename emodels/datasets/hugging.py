@@ -63,8 +63,10 @@ def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDataset
     return ds
 
 
-def truncate_sample(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> ExtractSample:
-    max_length = tokenizer.model_max_length
+def truncate_sample(
+    sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_length: Optional[int] = None
+) -> ExtractSample:
+    max_length = max_length or tokenizer.model_max_length
     prefix_len = max_length // 2
     suffix_len = max_length - prefix_len
     center = (sample["start"] + sample["end"]) // 2
@@ -91,10 +93,12 @@ def _adapt_attribute(attr: str) -> str:
     return attr.lower().replace("_", " ")
 
 
-def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokenizerBase) -> TransformerTrainSample:
-    truncated = truncate_sample(sample, tokenizer)
+def process_sample_for_train(
+    sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_length: Optional[int] = None
+) -> TransformerTrainSample:
+    truncated = truncate_sample(sample, tokenizer, max_length)
     question = f"Which is the {_adapt_attribute(truncated['attribute'])}?"
-    tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length")
+    tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length", max_length=max_length)
 
     start = tokenized_data.char_to_token(truncated["start"])
     correction = 1
@@ -119,9 +123,12 @@ def process_sample_for_train(sample: ExtractSample, tokenizer: PreTrainedTokeniz
 
 
 def prepare_datasetdict(
-    hf: HuggingFaceDatasetDict, tokenizer: PreTrainedTokenizerBase, load_from_cache_file=True
+    hf: HuggingFaceDatasetDict,
+    tokenizer: PreTrainedTokenizerBase,
+    load_from_cache_file=True,
+    max_length: Optional[int] = None,
 ) -> HuggingFaceDatasetDict:
-    mapper = partial(process_sample_for_train, tokenizer=tokenizer)
+    mapper = partial(process_sample_for_train, tokenizer=tokenizer, max_length=max_length)
     hff = hf.map(mapper, load_from_cache_file=load_from_cache_file)
     return hff
 

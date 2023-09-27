@@ -233,7 +233,7 @@ And later be recovered:
 > from transformers import AutoTokenizer
 > tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
 > question_answerer = pipeline(task="question-answering", model="./mytunned_model")
-> question_answerer(question="Extract the name", context=<target markdown>)
+> question_answerer(question="Which is the name?", context=<target markdown>)
 ```
 
 #### 5. Evaluating the model.
@@ -241,7 +241,7 @@ And later be recovered:
 First, evaluate the extraction with the base untunned model:
 
 ```python
-> from emodels.datasets.hugging import compare
+> from emodels.datasets.hugging import evaluate
 > evaluate(eds.iter(), model="distilbert-base-cased-distilled-squad")
 ```
 
