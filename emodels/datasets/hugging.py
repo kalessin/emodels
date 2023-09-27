@@ -13,6 +13,7 @@ from datasets.arrow_dataset import Dataset as ArrowDataset
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, pipeline
 from transformers.trainer_utils import EvalPrediction
+from datasets.builder import DatasetGenerationError
 from sklearn.metrics import f1_score
 
 
@@ -49,10 +50,16 @@ def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDataset
                 )
 
     train = HuggingFaceDataset.from_generator(partial(_generator, "train"))
-    validation = HuggingFaceDataset.from_generator(partial(_generator, "validation"))
+    try:
+        validation = HuggingFaceDataset.from_generator(partial(_generator, "validation"))
+    except DatasetGenerationError:
+        validation = None
     test = HuggingFaceDataset.from_generator(partial(_generator, "test"))
 
-    ds = HuggingFaceDatasetDict({"train": train, "test": test, "validation": validation})
+    if validation is not None:
+        ds = HuggingFaceDatasetDict({"train": train, "test": test, "validation": validation})
+    else:
+        ds = HuggingFaceDatasetDict({"train": train, "test": test})
     return ds
 
 
