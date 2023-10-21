@@ -29,6 +29,17 @@ class ExtractSample(TypedDict):
     end: int
 
 
+class TransformerTrainSample(TypedDict):
+    input_ids: List[int]
+    attention_mask: List[int]
+    start_positions: int
+    end_positions: int
+
+
+def _adapt_attribute(attr: str) -> str:
+    return attr.lower().replace("_", " ")
+
+
 def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDatasetDict:
     """
     Convert to HuggingFace Dataset suitable for usage in transformers
@@ -64,61 +75,56 @@ def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDataset
     return ds
 
 
-def truncate_sample(
-    sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_length: Optional[int] = None
-) -> ExtractSample:
-    max_length = max_length or tokenizer.model_max_length
-    prefix_len = max_length // 2
-    suffix_len = max_length - prefix_len
-    center = (sample["start"] + sample["end"]) // 2
-    mstart = max(0, center - prefix_len)
-    mend = min(len(sample["markdown"]), center + suffix_len)
-    return ExtractSample(
-        {
-            "markdown": sample["markdown"][mstart:mend],
-            "attribute": sample["attribute"],
-            "start": sample["start"] - mstart,
-            "end": sample["end"] - mstart,
-        }
-    )
-
-
-class TransformerTrainSample(TypedDict):
-    input_ids: List[int]
-    attention_mask: List[int]
-    start_positions: int
-    end_positions: int
-
-
-def _adapt_attribute(attr: str) -> str:
-    return attr.lower().replace("_", " ")
-
-
 def process_sample_for_train(
-    sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_length: Optional[int] = None
+    sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_question_length: int = 12
 ) -> TransformerTrainSample:
-    truncated = truncate_sample(sample, tokenizer, max_length)
-    question = f"Which is the {_adapt_attribute(truncated['attribute'])}?"
-    tokenized_data = tokenizer(truncated["markdown"], question, padding="max_length", max_length=max_length)
 
-    start = tokenized_data.char_to_token(truncated["start"])
+    tokenized = tokenizer(sample["markdown"])
+    input_ids = tokenized["input_ids"]
+
+    tokens_start = tokenized.char_to_token(sample["start"])
     correction = 1
-    while start is None:
-        start = tokenized_data.char_to_token(truncated["start"] - correction)
+    while tokens_start is None:
+        tokens_start = tokenized.char_to_token(sample["start"] - correction)
         correction += 1
 
-    end = tokenized_data.char_to_token(truncated["end"])
+    tokens_end = tokenized.char_to_token(sample["end"])
     correction = 1
-    while end is None:
-        end = tokenized_data.char_to_token(truncated["end"] + correction)
+    while tokens_end is None:
+        tokens_end = tokenized.char_to_token(sample["end"] + correction)
         correction += 1
+
+    max_length = tokenizer.model_max_length - max_question_length
+    prefix_len = max_length // 2
+    center = (tokens_start + tokens_end) // 2
+    mstart = max(0, center - prefix_len)
+    mend = mstart + max_length
+
+    truncated_input_ids = input_ids[mstart:mend]
+    if truncated_input_ids[0] != tokenizer.cls_token_id:
+        truncated_input_ids = [tokenizer.cls_token_id] + truncated_input_ids[1:]
+    if truncated_input_ids[-1] != tokenizer.sep_token_id:
+        truncated_input_ids = truncated_input_ids[:-1] + [tokenizer.sep_token_id]
+
+    answer_start = tokens_start - mstart
+    answer_end = tokens_end - mstart
+
+    question = f"Which is the {_adapt_attribute(sample['attribute'])}?"
+    tokenized_question_ids = tokenizer(question)["input_ids"][1:]
+
+    context_question_input_ids = truncated_input_ids + [tokenizer.sep_token_id] + tokenized_question_ids
+    attention_mask = [1] * len(context_question_input_ids)
+
+    pads = [tokenizer.pad_token_id] * (tokenizer.model_max_length - len(context_question_input_ids))
+    context_question_input_ids += pads
+    attention_mask += [0] * len(pads)
 
     return TransformerTrainSample(
         {
-            "input_ids": tokenized_data["input_ids"],
-            "attention_mask": tokenized_data["attention_mask"],
-            "start_positions": start,
-            "end_positions": end,
+            "input_ids": context_question_input_ids,
+            "attention_mask": attention_mask,
+            "start_positions": answer_start,
+            "end_positions": answer_end,
         }
     )
 
