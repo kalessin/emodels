@@ -143,7 +143,7 @@ The joint dataset will be saved to the dataset file represented by eds variable.
 ```
 
 This operation also assigns randomly the samples to train/test/validation buckets, according to the
-`dataset_ratio` parameter, which by default assigns 66% to training bucket, 34% to test bucket and 0 to validation bucket.
+`dataset_ratio` parameter, which by default assigns 70% to training bucket, 30% to test bucket and 0 to validation bucket.
 
 Provided `EMODELS_DATASET_DIR` is the same, you can also recover back the dataset later:
 

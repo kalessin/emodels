@@ -25,7 +25,7 @@ NO_TEXT_TAGS = ["script", "style", "noscript"]
 
 # first number represents probability of being assigned to train dataset bucket, second number to test dataset bucket.
 # if they sum up below 1, the remaining will be assigned to validation dataset bucket.
-DEFAULT_DATASET_RATIO = (0.65, 0.15)
+DEFAULT_DATASET_RATIO = (0.70, 0.30)
 
 
 class Filename(str):
