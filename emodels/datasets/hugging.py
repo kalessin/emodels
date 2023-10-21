@@ -133,9 +133,9 @@ def prepare_datasetdict(
     hf: HuggingFaceDatasetDict,
     tokenizer: PreTrainedTokenizerBase,
     load_from_cache_file=True,
-    max_length: Optional[int] = None,
+    max_question_length: int = 12,
 ) -> HuggingFaceDatasetDict:
-    mapper = partial(process_sample_for_train, tokenizer=tokenizer, max_length=max_length)
+    mapper = partial(process_sample_for_train, tokenizer=tokenizer, max_question_length=max_question_length)
     hff = hf.map(mapper, load_from_cache_file=load_from_cache_file)
     return hff
 
