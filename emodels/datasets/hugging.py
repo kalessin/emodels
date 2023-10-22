@@ -261,7 +261,7 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = _clean(question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"]))
+            model_answer = _clean(question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"])[0])
             real_answer = _clean(sample["markdown"][slice(*idx)])
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
