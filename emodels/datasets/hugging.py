@@ -6,7 +6,7 @@ import sys
 from random import random
 from functools import partial
 from collections import defaultdict
-from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Optional, Iterator
+from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Iterator
 
 import torch
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
@@ -209,20 +209,33 @@ class QuestionAnswerer:
         self.model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    def answer(self, question: str, context: str) -> str:
-        input_ids = self.tokenizer.encode(question, context)
-        output = self.model(torch.tensor([input_ids]))
-        answer_start = torch.argmax(output.start_logits)
-        answer_end = torch.argmax(output.end_logits)
-        tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
-        return self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
+    def answer(self, question: str, context: str, window_step: int = 50) -> Tuple[str, float]:
+        context_input_ids = self.tokenizer.encode(context)[1:]
+        question_input_ids = self.tokenizer.encode(question)
+
+        best_answer = ""
+        best_score = -torch.inf
+
+        max_context_len = min(len(context_input_ids), self.tokenizer.model_max_length - len(question_input_ids)) - 1
+        for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
+            input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_input_ids[start:max_context_len]
+            output = self.model(torch.tensor([input_ids]))
+            score = float((torch.max(output.start_logits) + torch.max(output.end_logits)) / 2)
+            if score > best_score:
+                answer_start = torch.argmax(output.start_logits)
+                answer_end = torch.argmax(output.end_logits)
+                if answer_end > answer_start:
+                    best_score = score
+                    tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
+                    best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
+        return best_answer, best_score
 
 
 def evaluate(
     eds: Iterator[ItemSample],
-    model: str,
+    model_path: str,
     print_each: int = 50,
-    rate: float = 0.1,
+    rate: float = 1.0,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
     def _clean(txt):
         txt = re.sub(r"^\W+", "", txt)
@@ -238,7 +251,7 @@ def evaluate(
     score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
     totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
-    question_answerer = QuestionAnswerer(model)
+    question_answerer = QuestionAnswerer(model_path)
     count = 0
     for sample in eds:
         source = sample["source"]

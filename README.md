@@ -210,7 +210,7 @@ Once trained, the model can be saved:
 > model.save_pretrained("./mytunned_model")
 ```
 
-Optionally, for convenience you may want to save the tokenizer along with the model:
+Save the tokenizer along with the model, so everything is packed in the same place:
 
 
 ```python
@@ -238,11 +238,11 @@ And later be recovered:
 
 #### 5. Evaluating the model.
 
-First, evaluate the extraction with the base untunned model:
+Optionally, evaluate the extraction with the base untunned model:
 
 ```python
 > from emodels.datasets.hugging import evaluate
-> evaluate(eds, model="distilbert-base-cased-distilled-squad")
+> evaluate(eds.iter(), model="distilbert-base-cased-distilled-squad")
 ```
 
 This will return a score dictionary, one item per dataset bucket. Then, do the same for the tunned model:
