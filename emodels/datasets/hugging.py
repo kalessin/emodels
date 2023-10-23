@@ -215,18 +215,16 @@ class QuestionAnswerer:
         self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    def __call__(self, question: str, context: str, window_step: int = 50) -> Tuple[str, float]:
+    def __call__(self, question: str, context: str, window_overlap: int = 50) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
 
         best_answer = ""
         best_score = -torch.inf
-
         max_context_len = min(len(context_input_ids), self.tokenizer.model_max_length - len(question_input_ids)) - 1
+        window_step = max_context_len - window_overlap
         for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
-            context_ids = context_input_ids[start:max_context_len]
-            if not context_ids:
-                break
+            context_ids = context_input_ids[start:start + max_context_len]
             if context_ids[-1] != self.tokenizer.sep_token_id:
                 context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
             input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
