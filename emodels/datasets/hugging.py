@@ -12,7 +12,7 @@ import torch
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
 from datasets.arrow_dataset import Dataset as ArrowDataset
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
-from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, AutoTokenizer
+from transformers import AutoModelForQuestionAnswering, Trainer, TrainingArguments, AutoTokenizer, pipeline
 from transformers.trainer_utils import EvalPrediction
 from datasets.builder import DatasetGenerationError
 from sklearn.metrics import f1_score
@@ -204,12 +204,18 @@ def get_qatransformer_trainer(
     return model, trainer, processed_test_data
 
 
+def _clean(txt):
+    txt = re.sub(r"^\W+", "", txt)
+    txt = re.sub(r"\W+$", "", txt)
+    return txt
+
+
 class QuestionAnswerer:
     def __init__(self, model_path: str):
-        self.model = AutoModelForQuestionAnswering.from_pretrained(model_path)
+        self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    def answer(self, question: str, context: str, window_step: int = 50) -> Tuple[str, float]:
+    def __call__(self, question: str, context: str, window_step: int = 50) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
 
@@ -218,8 +224,14 @@ class QuestionAnswerer:
 
         max_context_len = min(len(context_input_ids), self.tokenizer.model_max_length - len(question_input_ids)) - 1
         for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
-            input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_input_ids[start:max_context_len]
-            output = self.model(torch.tensor([input_ids]))
+            context_ids = context_input_ids[start:max_context_len]
+            if not context_ids:
+                break
+            if context_ids[-1] != self.tokenizer.sep_token_id:
+                context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
+            input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
+            input_ids = input_ids + [self.tokenizer.pad_token_id] * (self.tokenizer.model_max_length - len(input_ids))
+            output = self._model(torch.tensor([input_ids]))
             score = float((torch.max(output.start_logits) + torch.max(output.end_logits)) / 2)
             if score > best_score:
                 answer_start = torch.argmax(output.start_logits)
@@ -228,7 +240,17 @@ class QuestionAnswerer:
                     best_score = score
                     tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
                     best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
-        return best_answer, best_score
+                    print(best_answer, score)
+        return _clean(best_answer), best_score
+
+
+class HFQuestionAnswerer:
+    def __init__(self, model_path: str):
+        self.qa = pipeline(task="question-answering", model=model_path)
+
+    def __call__(self, question: str, context: str) -> Tuple[str, float]:
+        result = self.qa(question=question, context=context, align_to_words=False)
+        return _clean(result["answer"]), result["score"]
 
 
 def evaluate(
@@ -236,11 +258,8 @@ def evaluate(
     model_path: str,
     print_each: int = 50,
     rate: float = 1.0,
+    qaclass=QuestionAnswerer,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
-    def _clean(txt):
-        txt = re.sub(r"^\W+", "", txt)
-        txt = re.sub(r"\W+$", "", txt)
-        return txt
 
     def _to_dict(ddict):
         return_value = dict(ddict)
@@ -251,7 +270,7 @@ def evaluate(
     score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
     totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
-    question_answerer = QuestionAnswerer(model_path)
+    question_answerer = qaclass(model_path)
     count = 0
     for sample in eds:
         source = sample["source"]
@@ -261,8 +280,8 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = _clean(question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"])[0])
-            real_answer = _clean(sample["markdown"][slice(*idx)])
+            model_answer = question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"])[0]
+            real_answer = sample["markdown"][slice(*idx)]
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
             totals[source][bucket] += 1

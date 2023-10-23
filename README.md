@@ -170,11 +170,11 @@ And then prepare the dataset for usage in transformers training:
 
 ```python
 > from transformers import AutoTokenizer
-> tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
+> tokenizer = AutoTokenizer.from_pretrained("deepset/roberta-base-squad2")
 > hff = prepare_datasetdict(hf, tokenizer)
 ```
 
-This preparation includes truncation of samples in order to fit to the target HuggingFace model size (in this case, `distilbert-base-cased-distilled-squad`), and set of appropiate sample fields
+This preparation includes truncation of samples in order to fit to the target HuggingFace model size (in this case, `deepset/roberta-base-squad2`), and set of appropiate sample fields
 required for training.
 
 
@@ -197,7 +197,7 @@ Later, for recovering:
 
 ```python
 > from emodels.datasets.hugging import get_qatransformer_trainer
-> model, trainer, test_data = get_qatransformer_trainer(hff, "distilbert-base-cased-distilled-squad", "mytransformer_cache_dir")
+> model, trainer, test_data = get_qatransformer_trainer(hff, "deepset/roberta-base-squad2", "mytransformer_cache_dir")
 > trainer.train()   # this will take long time
 ...
 
@@ -230,7 +230,7 @@ And later be recovered:
 
 ```python
 > from transformers import AutoTokenizer
-> tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased-distilled-squad")
+> tokenizer = AutoTokenizer.from_pretrained("deepset/roberta-base-squad2")
 > from emodels.datasets.hugging import QuestionAnswerer
 > question_answerer = QuestionAnswerer("./mytunned_model")
 > question_answerer.answer(question="Which is the name?", context=<target markdown>)
@@ -242,7 +242,7 @@ Optionally, evaluate the extraction with the base untunned model:
 
 ```python
 > from emodels.datasets.hugging import evaluate
-> evaluate(eds.iter(), model="distilbert-base-cased-distilled-squad")
+> evaluate(eds.iter(), model_path="deepset/roberta-base-squad2")
 ```
 
 This will return a score dictionary, one item per dataset bucket. Then, do the same for the tunned model:
