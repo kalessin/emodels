@@ -240,7 +240,7 @@ class QuestionAnswerer:
                     best_score = score
                     tokens = self.tokenizer.convert_ids_to_tokens(input_ids)
                     best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
-                    print(best_answer, score)
+                    # print(best_answer, score)
         return _clean(best_answer), best_score
 
 
@@ -280,7 +280,7 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = question_answerer.answer(f"Which is the {attr_adapted}?", sample["markdown"])[0]
+            model_answer = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"])[0]
             real_answer = sample["markdown"][slice(*idx)]
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
