@@ -78,7 +78,6 @@ def to_hfdataset(target: ExtractDatasetFilename, **kwargs) -> HuggingFaceDataset
 def process_sample_for_train(
     sample: ExtractSample, tokenizer: PreTrainedTokenizerBase, max_question_length: int = 12
 ) -> TransformerTrainSample:
-
     tokenized = tokenizer(sample["markdown"])
     input_ids = tokenized["input_ids"]
 
@@ -215,33 +214,50 @@ class QuestionAnswerer:
         self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    def __call__(self, question: str, context: str, window_overlap: int = 50) -> Tuple[str, float]:
+    def __call__(
+        self, question: str, context: str, initial_window_overlap: int = 50, score_threshold: float = 6.0
+    ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
 
         max_context_len = min(len(context_input_ids), self.tokenizer.model_max_length - len(question_input_ids)) - 1
-        window_step = max_context_len - window_overlap
-        inputs = []
-        attention_masks = []
-        for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
-            context_ids = context_input_ids[start:start + max_context_len]
-            if context_ids[-1] != self.tokenizer.sep_token_id:
-                context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
-            input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
-            input_ids = input_ids + [self.tokenizer.pad_token_id] * (self.tokenizer.model_max_length - len(input_ids))
-            inputs.append(input_ids)
-            attention_mask = [int(t != self.tokenizer.pad_token_id) for t in input_ids]
-            attention_masks.append(attention_mask)
-        outputs = self._model(torch.tensor(inputs), attention_mask=torch.tensor(attention_masks))
-        scores_start = torch.max(outputs.start_logits, dim=1)
-        scores_end = torch.max(outputs.end_logits, dim=1)
-        scores = (scores_start.values + scores_end.values) / 2
-        best_idx = int(torch.argmax(scores))
-        answer_start = scores_start.indices[best_idx]
-        answer_end = scores_end.indices[best_idx]
-        tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
-        best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
-        return best_answer, float(scores[best_idx])
+
+        best_best_answer = ""
+        best_best_score = -torch.inf
+
+        for window_overlap in range(
+            initial_window_overlap, max(max_context_len, initial_window_overlap + 1), initial_window_overlap
+        ):
+            window_step = max_context_len - window_overlap
+            inputs = []
+            attention_masks = []
+            for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
+                context_ids = context_input_ids[start:start + max_context_len]
+                if context_ids[-1] != self.tokenizer.sep_token_id:
+                    context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
+                input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
+                input_ids = input_ids + [self.tokenizer.pad_token_id] * (
+                    self.tokenizer.model_max_length - len(input_ids)
+                )
+                inputs.append(input_ids)
+                attention_mask = [int(t != self.tokenizer.pad_token_id) for t in input_ids]
+                attention_masks.append(attention_mask)
+            outputs = self._model(torch.tensor(inputs), attention_mask=torch.tensor(attention_masks))
+            scores_start = torch.max(outputs.start_logits, dim=1)
+            scores_end = torch.max(outputs.end_logits, dim=1)
+            scores = (scores_start.values + scores_end.values) / 2
+            best_idx = int(torch.argmax(scores))
+            answer_start = scores_start.indices[best_idx]
+            answer_end = scores_end.indices[best_idx]
+            tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
+            best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
+            best_score = scores[best_idx]
+            if best_score > score_threshold:
+                return best_answer, float(scores[best_idx])
+            if best_score > best_best_score:
+                best_best_score = best_score
+                best_best_answer = best_answer
+        return best_best_answer, best_best_score
 
 
 class HFQuestionAnswerer:
@@ -260,7 +276,6 @@ def evaluate(
     rate: float = 1.0,
     qaclass=QuestionAnswerer,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
-
     def _to_dict(ddict):
         return_value = dict(ddict)
         for key in return_value.keys():
