@@ -210,9 +210,10 @@ def _clean(txt):
 
 
 class QuestionAnswerer:
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str, max_vectorized_inputs: int = 100):
         self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.max_vectorized_inputs = max_vectorized_inputs
 
     def __call__(
         self,
@@ -220,7 +221,6 @@ class QuestionAnswerer:
         context: str,
         initial_window_overlap: int = 50,
         score_threshold: float = 6.0,
-        max_vectorized_inputs: int = 100,
     ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
@@ -230,15 +230,17 @@ class QuestionAnswerer:
         best_best_answer = ""
         best_best_score = -torch.inf
 
-        for window_overlap in range(
-            initial_window_overlap, max(max_context_len, initial_window_overlap + 1), initial_window_overlap
-        ):
+        window_overlaps = list(
+            range(initial_window_overlap, max(max_context_len, initial_window_overlap + 1), initial_window_overlap)
+        )
+        while window_overlaps:
+            window_overlap = window_overlaps.pop(0)
             window_step = max_context_len - window_overlap
             windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))
             while windows_starts:
                 apply_windows_starts, windows_starts = (
-                    windows_starts[:max_vectorized_inputs],
-                    windows_starts[max_vectorized_inputs:],
+                    windows_starts[:self.max_vectorized_inputs],
+                    windows_starts[self.max_vectorized_inputs:],
                 )
                 inputs = []
                 attention_masks = []
@@ -256,10 +258,14 @@ class QuestionAnswerer:
                 try:
                     outputs = self._model(torch.tensor(inputs), attention_mask=torch.tensor(attention_masks))
                 except RuntimeError:
-                    raise RuntimeError(
+                    print(
                         f"Could not allocate memory for {len(inputs)} vectorized inputs."
-                        "Reduce parameter 'max_vectorized_inputs' below that number."
+                        "I will set max_vectorized_inputs to {len(inputs) - 1}.",
+                        file=sys.stderr,
                     )
+                    self.max_vectorized_inputs = len(inputs) - 1
+                    window_overlaps.insert(0, window_overlap)
+                    break
                 scores_start = torch.max(outputs.start_logits, dim=1)
                 scores_end = torch.max(outputs.end_logits, dim=1)
                 scores = (scores_start.values + scores_end.values) / 2
