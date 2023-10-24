@@ -215,7 +215,12 @@ class QuestionAnswerer:
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     def __call__(
-        self, question: str, context: str, initial_window_overlap: int = 50, score_threshold: float = 6.0
+        self,
+        question: str,
+        context: str,
+        initial_window_overlap: int = 50,
+        score_threshold: float = 6.0,
+        max_vectorized_inputs: int = 100,
     ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
@@ -229,34 +234,46 @@ class QuestionAnswerer:
             initial_window_overlap, max(max_context_len, initial_window_overlap + 1), initial_window_overlap
         ):
             window_step = max_context_len - window_overlap
-            inputs = []
-            attention_masks = []
-            for start in range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step):
-                context_ids = context_input_ids[start:start + max_context_len]
-                if context_ids[-1] != self.tokenizer.sep_token_id:
-                    context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
-                input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
-                input_ids = input_ids + [self.tokenizer.pad_token_id] * (
-                    self.tokenizer.model_max_length - len(input_ids)
+            windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))
+            while windows_starts:
+                apply_windows_starts, windows_starts = (
+                    windows_starts[:max_vectorized_inputs],
+                    windows_starts[max_vectorized_inputs:],
                 )
-                inputs.append(input_ids)
-                attention_mask = [int(t != self.tokenizer.pad_token_id) for t in input_ids]
-                attention_masks.append(attention_mask)
-            outputs = self._model(torch.tensor(inputs), attention_mask=torch.tensor(attention_masks))
-            scores_start = torch.max(outputs.start_logits, dim=1)
-            scores_end = torch.max(outputs.end_logits, dim=1)
-            scores = (scores_start.values + scores_end.values) / 2
-            best_idx = int(torch.argmax(scores))
-            answer_start = scores_start.indices[best_idx]
-            answer_end = scores_end.indices[best_idx]
-            tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
-            best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
-            best_score = scores[best_idx]
-            if best_score > score_threshold:
-                return best_answer, float(scores[best_idx])
-            if best_score > best_best_score:
-                best_best_score = best_score
-                best_best_answer = best_answer
+                inputs = []
+                attention_masks = []
+                for start in apply_windows_starts:
+                    context_ids = context_input_ids[start:start + max_context_len]
+                    if context_ids[-1] != self.tokenizer.sep_token_id:
+                        context_ids = context_ids[:-1] + [self.tokenizer.sep_token_id]
+                    input_ids = question_input_ids + [self.tokenizer.sep_token_id] + context_ids
+                    input_ids = input_ids + [self.tokenizer.pad_token_id] * (
+                        self.tokenizer.model_max_length - len(input_ids)
+                    )
+                    inputs.append(input_ids)
+                    attention_mask = [int(t != self.tokenizer.pad_token_id) for t in input_ids]
+                    attention_masks.append(attention_mask)
+                try:
+                    outputs = self._model(torch.tensor(inputs), attention_mask=torch.tensor(attention_masks))
+                except RuntimeError:
+                    raise RuntimeError(
+                        f"Could not allocate memory for {len(inputs)} vectorized inputs."
+                        "Reduce parameter 'max_vectorized_inputs' below that number."
+                    )
+                scores_start = torch.max(outputs.start_logits, dim=1)
+                scores_end = torch.max(outputs.end_logits, dim=1)
+                scores = (scores_start.values + scores_end.values) / 2
+                best_idx = int(torch.argmax(scores))
+                answer_start = scores_start.indices[best_idx]
+                answer_end = scores_end.indices[best_idx]
+                tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
+                best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
+                best_score = scores[best_idx]
+                if best_score > score_threshold:
+                    return best_answer, float(scores[best_idx])
+                if best_score > best_best_score:
+                    best_best_score = best_score
+                    best_best_answer = best_answer
         return best_best_answer, best_best_score
 
 
@@ -277,7 +294,7 @@ def evaluate(
     dataset_buckets: Tuple[DatasetBucket, ...] = (),
     sources: Tuple[str, ...] = (),
     qaclass=QuestionAnswerer,
-    **qaclass_kwargs,
+    **qa_kwargs,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
     def _to_dict(ddict):
         return_value = dict(ddict)
@@ -288,7 +305,7 @@ def evaluate(
     score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
     totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
-    question_answerer = qaclass(model_path, **qaclass_kwargs)
+    question_answerer = qaclass(model_path)
     count = 0
     for sample in eds:
         source = sample["source"]
@@ -302,7 +319,7 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"])[0]
+            model_answer = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)[0]
             real_answer = sample["markdown"][slice(*idx)]
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
