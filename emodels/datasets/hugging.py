@@ -274,7 +274,10 @@ def evaluate(
     model_path: str,
     print_each: int = 50,
     rate: float = 1.0,
+    dataset_buckets: Tuple[DatasetBucket, ...] = (),
+    sources: Tuple[str, ...] = (),
     qaclass=QuestionAnswerer,
+    **qaclass_kwargs,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
     def _to_dict(ddict):
         return_value = dict(ddict)
@@ -285,11 +288,15 @@ def evaluate(
     score: Dict[str, Dict[DatasetBucket, float]] = defaultdict(lambda: defaultdict(float))
     totals: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
 
-    question_answerer = qaclass(model_path)
+    question_answerer = qaclass(model_path, **qaclass_kwargs)
     count = 0
     for sample in eds:
         source = sample["source"]
+        if sources and source not in sources:
+            continue
         bucket = sample["dataset_bucket"]
+        if dataset_buckets and bucket not in dataset_buckets:
+            continue
         for attr, idx in sample["indexes"].items():
             if random() > rate:
                 continue
