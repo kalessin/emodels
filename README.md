@@ -97,21 +97,37 @@ The docstring aim is to be enough explicative, so no need to repeat here.
 In most cases, as usual with selectors, you will first need to test different selectors in order to set the definitive one to hardcode in the spider. Typically with css and xpath selectors,
 there are three alternatives used by developers:
 
-* The browser development console
-* The fetch command in the `scrapy shell` console
-* Put testing code in the spider to save responses and open it from a python console
+1. The browser development console
+2. The fetch command in the `scrapy shell` console
+3. Put testing code in the spider to save responses and open it from a python console
 
 Each one has its pros and cons, and which to use depends on specific needs.
 
-For example, the browser development console is readily accesible but frequently the page rendered in the browser is not exactly the one that will be downloaded by the spider
+1. For example, the browser development console is readily accesible but frequently the page rendered in the browser is not exactly the one that will be downloaded by the spider
 (not only because of rendering itself, but also bans, session issues, etc). However, when applicable, it allows to easily identify id, itemprop and class attributes that can be
 readily used in the `add_text_re()` `tid` parameter. In many situations, however, it is not as straighforward as that, and you may get unexpected results, dirty extraction with
-undesired characters, etc.
+undesired characters, etc. However, with experience you will be able to make most of the extraction using only the browser. See instructions on usage of tid parameter in the selector
+doctest.
+
+2. Scrapy shell
+
+```
+$ scrapy shell
+> fetch(<url>)
+> from emodels.scrapyutils.response import ExtractTextResponse
+> response = response.replace(cls=ExtractTextResponse)
+```
+
+The newly created response has available the method `text_re()` for testing extraction with markdown "selectors".
+
 
 3. Put testing code in the spider to save responses and open it from a python console
 
 
-(WIP)
+```
+
+```
+
 
 ## datasets module
 
