@@ -322,6 +322,7 @@ def evaluate(
     rate: float = 1.0,
     dataset_buckets: Tuple[DatasetBucket, ...] = (),
     sources: Tuple[str, ...] = (),
+    attributes: Tuple[str, ...] = (),
     qaclass=QuestionAnswerer,
     **qa_kwargs,
 ) -> Dict[str, Dict[DatasetBucket, float]]:
@@ -344,6 +345,8 @@ def evaluate(
         if dataset_buckets and bucket not in dataset_buckets:
             continue
         for attr, idx in sample["indexes"].items():
+            if attributes and attr not in attributes:
+                continue
             if random() > rate:
                 continue
             count += 1
