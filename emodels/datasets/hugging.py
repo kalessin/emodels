@@ -210,10 +210,29 @@ def _clean(txt):
 
 
 class QuestionAnswerer:
-    def __init__(self, model_path: str, max_vectorized_inputs: int = 100):
+    def __init__(self, model_path: str, max_vectorized_overlaps: int = 8):
+        """
+        When context is big and does not fit the model size, it tries with several overlapped windows following
+        this strategy:
+        - generates many overlap sizes, starting from initial_window_overlap.
+        - for each overlap size, it tests all the possible overlap windows until a result with a score equal or bigger
+          than score_threshold is achieved.
+        - if after all iterations, score_threshold is not achieved, it just return the best result.
+
+        The strategy may slow down the prediction a lot as the context is bigger and the answer difficult to find
+        (if any) but it achieves much better accuracy.
+
+        max_vectorized_overlaps (class parameter) - the bigger, the faster, but uses more memory. A big number may
+          unstabilize your system, so be careful. The default value is fair. You may want to increase it if you are
+          running the model in a powerful machine with lots of memory available.
+        max_overlaps (call parameter) - The bigger, the more accurate, but slower. Sets the max overlaps to test for
+          each overlap size generated.
+
+        both parameters affects only context with very big sizes that don't fit on the model size.
+        """
         self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.max_vectorized_inputs = max_vectorized_inputs
+        self.max_vectorized_overlaps = max_vectorized_overlaps
 
     def __call__(
         self,
@@ -221,6 +240,7 @@ class QuestionAnswerer:
         context: str,
         initial_window_overlap: int = 50,
         score_threshold: float = 6.0,
+        max_overlaps: int = 10,
     ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
@@ -230,17 +250,19 @@ class QuestionAnswerer:
         best_best_answer = ""
         best_best_score = -torch.inf
 
-        window_overlaps = list(
+        window_overlap_sizes = list(
             range(initial_window_overlap, max(max_context_len, initial_window_overlap + 1), initial_window_overlap)
         )
-        while window_overlaps:
-            window_overlap = window_overlaps.pop(0)
+        while window_overlap_sizes:
+            window_overlap = window_overlap_sizes.pop(0)
             window_step = max_context_len - window_overlap
-            windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))
+            windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))[
+                : max_overlaps
+            ]
             while windows_starts:
                 apply_windows_starts, windows_starts = (
-                    windows_starts[:self.max_vectorized_inputs],
-                    windows_starts[self.max_vectorized_inputs:],
+                    windows_starts[:self.max_vectorized_overlaps],
+                    windows_starts[self.max_vectorized_overlaps:],
                 )
                 inputs = []
                 attention_masks = []
@@ -260,11 +282,12 @@ class QuestionAnswerer:
                 except RuntimeError:
                     print(
                         f"Could not allocate memory for {len(inputs)} vectorized inputs."
-                        "I will set max_vectorized_inputs to {len(inputs) - 1}.",
+                        "I will set max_vectorized_overlaps to {len(inputs) - 1}.",
                         file=sys.stderr,
                     )
-                    self.max_vectorized_inputs = len(inputs) - 1
-                    window_overlaps.insert(0, window_overlap)
+                    self.max_vectorized_overlaps = len(inputs) - 1
+                    # retry same overlap size with smaller tensors
+                    window_overlap_sizes.insert(0, window_overlap)
                     break
                 scores_start = torch.max(outputs.start_logits, dim=1)
                 scores_end = torch.max(outputs.end_logits, dim=1)
