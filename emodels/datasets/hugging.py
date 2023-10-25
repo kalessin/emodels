@@ -240,7 +240,7 @@ class QuestionAnswerer:
         context: str,
         initial_window_overlap: int = 50,
         score_threshold: float = 6.0,
-        max_overlaps: int = 10,
+        max_overlaps: int = 20,
     ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
@@ -303,7 +303,7 @@ class QuestionAnswerer:
                 if best_score > best_best_score:
                     best_best_score = best_score
                     best_best_answer = best_answer
-        return best_best_answer, best_best_score
+        return best_best_answer, float(best_best_score)
 
 
 class HFQuestionAnswerer:
