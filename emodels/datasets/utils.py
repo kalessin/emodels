@@ -197,7 +197,8 @@ class DatasetBucketRandomizer:
     def __init__(self, dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO):
         assert len(dataset_ratio) == 2, "Invalid dataset_ratio len: must be 2."
         self.__ratios: Tuple[float, float, float] = dataset_ratio + (1 - sum(dataset_ratio),)
-        self.__assigned: Tuple[float, float, float] = (0, 0, 0)
+        self.__assigned: Tuple[int, int, int] = (0, 0, 0)
+        self.__all_buckets: List[DatasetBucket] = ["train", "test", "validation"]
 
     def _get_current_ratios(self) -> Tuple[float, float, float]:
         total = sum(self.__assigned)
@@ -230,7 +231,7 @@ class DatasetBucketRandomizer:
         below = [
             k[0]
             for k in zip(
-                ["train", "test", "validation"], [i < j for i, j in zip(self._get_current_ratios(), self.__ratios)]
+                self.__all_buckets, [cr < t for cr, t in zip(self._get_current_ratios(), self.__ratios)]
             )
             if k[1]
         ]
@@ -238,18 +239,22 @@ class DatasetBucketRandomizer:
         zero = [
             k[0]
             for k in zip(
-                ["train", "test", "validation"], [i == 0 for i in self.__assigned]
+                self.__all_buckets, [a == 0 and t > 0 for a, t in zip(self.__assigned, self.__ratios)]
             )
             if k[1]
         ]
 
         if zero:
+            if len(zero) == 1:
+                return zero[0]
             while True:
                 bucket = self._get_random_dataset()
                 if bucket in zero:
                     return bucket
 
         if below:
+            if len(below) == 1:
+                return below[0]
             while True:
                 bucket = self._get_random_dataset()
                 if bucket in below:

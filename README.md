@@ -48,7 +48,7 @@ which kind of data (a business? a person? an organization?) you expect to find t
 
 For instructions on how to create datasets for training your transformers, go to the datasets module sections.
 
-#### Selectors
+#### Markdown Selectors
 
 The new kind of selector is based on regular expressions, but it also admits id and class specifications for further guiding the selector extraction. Many examples can be seen in
 `tests/test_scrapyutils.py`. This selector does not operate on the html source, but on a text rendered (markdown) version of it. The loader function that applies this selector is
@@ -118,7 +118,7 @@ $ scrapy shell
 > response = response.replace(cls=ExtractTextResponse)
 ```
 
-The newly created response has available the method `text_re()` for testing extraction with markdown "selectors".
+The newly created response has available the method `text_re()` for testing extraction with markdown selectors.
 
 
 3. Put testing code in the spider to save responses and open it from a python console
