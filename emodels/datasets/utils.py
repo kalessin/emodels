@@ -181,7 +181,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                 for sample in selected:
                     sample["dataset_bucket"] = dataset_bucket
                     sample["source"] = source
-                    randomizer.inc_assigned(dataset_bucket)
+                    randomizer.inc_assigned(dataset_bucket, len(sample["indexes"]))
                     result.append(sample)
         return result
 
