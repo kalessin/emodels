@@ -210,7 +210,7 @@ def _clean(txt):
 
 
 class QuestionAnswerer:
-    def __init__(self, model_path: str, max_vectorized_overlaps: int = 8):
+    def __init__(self, model_path: str, max_vectorized_overlaps: int = 7):
         """
         When context is big and does not fit the model size, it tries with several overlapped windows following
         this strategy:
@@ -225,10 +225,6 @@ class QuestionAnswerer:
         max_vectorized_overlaps (class parameter) - the bigger, the faster, but uses more memory. A big number may
           unstabilize your system, so be careful. The default value is fair. You may want to increase it if you are
           running the model in a powerful machine with lots of memory available.
-        max_overlaps (call parameter) - The bigger, the more accurate, but slower. Sets the max overlaps to test for
-          each overlap size generated.
-
-        both parameters affects only context with very big sizes that don't fit on the model size.
         """
         self._model = AutoModelForQuestionAnswering.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -238,9 +234,8 @@ class QuestionAnswerer:
         self,
         question: str,
         context: str,
-        initial_window_overlap: int = 50,
-        score_threshold: float = 6.0,
-        max_overlaps: int = 20,
+        initial_window_overlap: int = 2,
+        score_threshold: float = -10.0,
     ) -> Tuple[str, float]:
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
@@ -256,9 +251,7 @@ class QuestionAnswerer:
         while window_overlap_sizes:
             window_overlap = window_overlap_sizes.pop(0)
             window_step = max_context_len - window_overlap
-            windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))[
-                : max_overlaps
-            ]
+            windows_starts = list(range(0, len(context_input_ids) - 1 - max_context_len + window_step, window_step))
             while windows_starts:
                 apply_windows_starts, windows_starts = (
                     windows_starts[:self.max_vectorized_overlaps],
