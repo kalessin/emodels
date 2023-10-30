@@ -7,7 +7,21 @@ import json
 import logging
 from collections import defaultdict
 from random import random, randrange, shuffle
-from typing import List, Tuple, Protocol, cast, Dict, Any, IO, TypedDict, Optional, Generic, TypeVar, Union, Generator
+from typing import (
+    List,
+    Tuple,
+    Protocol,
+    cast,
+    Dict,
+    Any,
+    IO,
+    TypedDict,
+    Optional,
+    Generic,
+    TypeVar,
+    Union,
+    Generator,
+)
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -185,11 +199,18 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                     result.append(sample)
         return result
 
-    def count_samples(self) -> Dict[str, Dict[DatasetBucket, int]]:
+    def count_samples_by_bucket(self) -> Dict[str, Dict[DatasetBucket, int]]:
         count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
         for sample in self.__class__(self):
             for _ in sample["indexes"].keys():
                 count[sample["source"]][sample["dataset_bucket"]] += 1
+        return dict(count)
+
+    def count_samples_by_attribute(self) -> Dict[str, Dict[DatasetBucket, int]]:
+        count: Dict[str, Dict[DatasetBucket, int]] = defaultdict(lambda: defaultdict(int))
+        for sample in self.__class__(self):
+            for key in sample["indexes"].keys():
+                count[sample["source"]][key] += 1
         return dict(count)
 
 
@@ -230,17 +251,13 @@ class DatasetBucketRandomizer:
     def get_random_dataset(self) -> DatasetBucket:
         below = [
             k[0]
-            for k in zip(
-                self.__all_buckets, [cr < t for cr, t in zip(self._get_current_ratios(), self.__ratios)]
-            )
+            for k in zip(self.__all_buckets, [cr < t for cr, t in zip(self._get_current_ratios(), self.__ratios)])
             if k[1]
         ]
 
         zero = [
             k[0]
-            for k in zip(
-                self.__all_buckets, [a == 0 and t > 0 for a, t in zip(self.__assigned, self.__ratios)]
-            )
+            for k in zip(self.__all_buckets, [a == 0 and t > 0 for a, t in zip(self.__assigned, self.__ratios)])
             if k[1]
         ]
 
