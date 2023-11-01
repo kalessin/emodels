@@ -247,7 +247,6 @@ class QuestionAnswerer:
         score_threshold: float = -10.0,
         filters: Optional[List[Callable[[str], bool]]] = None,
     ) -> Tuple[str, float]:
-
         filters = filters or []
         filters.insert(0, filter_empty_string)
 
@@ -275,7 +274,6 @@ class QuestionAnswerer:
         initial_window_overlap: int = 2,
         score_threshold: float = -10.0,
     ) -> Tuple[str, float]:
-
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
 
@@ -383,7 +381,7 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)[0]
+            model_answer, sc = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)
             real_answer = sample["markdown"][slice(*idx)]
             model_answer = model_answer.replace(" ", "")
             real_answer = real_answer.replace(" ", "")
@@ -393,7 +391,22 @@ def evaluate(
             elif source not in score or bucket not in score[source]:
                 score[source][bucket] = 0.0
             if count % print_each == 0:
-                print("Score count: ", _to_dict(score), "Total count: ", _to_dict(totals), file=sys.stderr)
+                if print_each == 1:
+                    print(
+                        "Score count: ",
+                        _to_dict(score),
+                        "Total count: ",
+                        _to_dict(totals),
+                        "Model:",
+                        model_answer,
+                        "Score:",
+                        sc,
+                        "Real:",
+                        real_answer,
+                        file=sys.stderr,
+                    )
+                else:
+                    print("Score count: ", _to_dict(score), "Total count: ", _to_dict(totals), file=sys.stderr)
     for source in score.keys():
         for bucket in score[source].keys():
             score[source][bucket] /= totals[source][bucket]
