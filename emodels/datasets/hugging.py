@@ -381,7 +381,7 @@ def evaluate(
                 continue
             count += 1
             attr_adapted = _adapt_attribute(attr)
-            model_answer, sc = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)
+            model_answer = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)[0]
             real_answer = sample["markdown"][slice(*idx)]
             totals[source][bucket] += 1
             if real_answer in model_answer:
@@ -398,11 +398,9 @@ def evaluate(
                         "Total count: ",
                         _to_dict(totals),
                         "Model:",
-                        model_answer,
-                        "Score:",
-                        sc,
+                        repr(model_answer),
                         "Real:",
-                        real_answer,
+                        repr(real_answer),
                         file=sys.stderr,
                     )
                 else:
