@@ -214,6 +214,10 @@ def _clean(txt):
     return txt
 
 
+def filter_empty_string(text: str) -> bool:
+    return bool(text)
+
+
 class QuestionAnswerer:
     def __init__(self, model_path: str, max_vectorized_overlaps: int = 7):
         """
@@ -241,13 +245,43 @@ class QuestionAnswerer:
         context: str,
         initial_window_overlap: int = 2,
         score_threshold: float = -10.0,
+        filters: Optional[List[Callable[[str], bool]]] = None,
     ) -> Tuple[str, float]:
+
+        filters = filters or []
+        filters.insert(0, filter_empty_string)
+
+        best_result: str = ""
+        best_score: float = -torch.inf
+
+        while True:
+            result, score = self.base_predict(question, context, initial_window_overlap, score_threshold)
+            if score <= best_score:
+                return best_result, best_score
+            best_result = result
+            best_score = score
+            for fltr in filters:
+                if not fltr(result):
+                    # retry with a bigger score
+                    score_threshold = score
+                    break
+            else:
+                return result, score
+
+    def base_predict(
+        self,
+        question: str,
+        context: str,
+        initial_window_overlap: int = 2,
+        score_threshold: float = -10.0,
+    ) -> Tuple[str, float]:
+
         context_input_ids = self.tokenizer.encode(context)[1:]
         question_input_ids = self.tokenizer.encode(question)
 
         max_context_len = min(len(context_input_ids), self.tokenizer.model_max_length - len(question_input_ids)) - 1
 
-        best_best_answer = ""
+        best_best_answer: str = ""
         best_best_score = -torch.inf
 
         window_overlap_sizes = list(
