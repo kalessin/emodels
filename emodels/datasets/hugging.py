@@ -383,8 +383,6 @@ def evaluate(
             attr_adapted = _adapt_attribute(attr)
             model_answer, sc = question_answerer(f"Which is the {attr_adapted}?", sample["markdown"], **qa_kwargs)
             real_answer = sample["markdown"][slice(*idx)]
-            model_answer = model_answer.replace(" ", "")
-            real_answer = real_answer.replace(" ", "")
             totals[source][bucket] += 1
             if real_answer in model_answer:
                 score[source][bucket] += len(real_answer) / len(model_answer)
