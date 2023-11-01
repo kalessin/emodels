@@ -386,6 +386,8 @@ def evaluate(
             totals[source][bucket] += 1
             if real_answer in model_answer:
                 score[source][bucket] += len(real_answer) / len(model_answer)
+            elif model_answer in real_answer:
+                score[source][bucket] += len(model_answer) / len(real_answer)
             elif source not in score or bucket not in score[source]:
                 score[source][bucket] = 0.0
             if count % print_each == 0:
