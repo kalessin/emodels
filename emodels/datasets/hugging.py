@@ -41,13 +41,11 @@ def _adapt_attribute(attr: str) -> str:
 
 
 def to_hfdataset(
-    target: ExtractDatasetFilename, source_attr_map: Optional[Dict[str, Dict[str, str]]], **kwargs
+    target: ExtractDatasetFilename, **kwargs
 ) -> HuggingFaceDatasetDict:
     """
     Convert to HuggingFace Dataset suitable for usage in transformers
     """
-
-    source_attr_map = source_attr_map or {}
 
     def _generator(bucket: DatasetBucket) -> Generator[ExtractSample, None, None]:
         for sample in target.iter(**kwargs):
@@ -56,11 +54,10 @@ def to_hfdataset(
             for key, idx in sample["indexes"].items():
                 if idx is None:
                     continue
-                attribute = source_attr_map.get(sample["source"], {}).get(key, key)
                 yield ExtractSample(
                     {
                         "markdown": sample["markdown"],
-                        "attribute": attribute,
+                        "attribute": key,
                         "start": idx[0],
                         "end": idx[1],
                     }

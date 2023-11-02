@@ -29,7 +29,7 @@ import lxml.html
 
 from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.datasets.stypes import ItemSample, DatasetBucket
+from emodels.datasets.stypes import ItemSample, DatasetBucket, ExtractDict
 
 
 LOGGER = logging.getLogger(__name__)
@@ -212,6 +212,18 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
             for key in sample["indexes"].keys():
                 count[sample["source"]][key] += 1
         return dict(count)
+
+    def convert_attributes(self, name: str, project: str, source_map_dict: Dict[str, Dict[str, str]]) -> Self:
+        result: Self = self.__class__.local_by_name(name, project)
+        for sample in self.__class__(self):
+            if sample["source"] in source_map_dict:
+                new_indexes: ExtractDict = ExtractDict({})
+                for attr, val in sample["indexes"].items():
+                    new_attr = source_map_dict[sample["source"]].get(attr, attr)
+                    new_indexes[new_attr] = val
+                sample["indexes"] = new_indexes
+            result.append(sample)
+        return result
 
 
 class DatasetBucketRandomizer:
