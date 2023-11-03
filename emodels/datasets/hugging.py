@@ -321,7 +321,11 @@ class QuestionAnswerer:
                 scores = (scores_start.values + scores_end.values) / 2
                 best_idx = int(torch.argmax(scores))
                 answer_start = scores_start.indices[best_idx]
+                if answer_start < len(question_input_ids) + 1:
+                    continue
                 answer_end = scores_end.indices[best_idx]
+                if answer_end <= answer_start:
+                    continue
                 tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
                 best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
                 best_score = scores[best_idx]
