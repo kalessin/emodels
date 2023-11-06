@@ -148,7 +148,7 @@ At any moment, you can build a joint from all the individual files, with the fol
 
 ```python
 > from emodels.datasets.utils import ExtractDatasetFilename
-> eds = ExtractDatasetFilename.build_from_items("items", "myproject")
+> eds = ExtractDatasetFilename.build_from_items("myproject/items")
 ```
 
 The joint dataset will be saved to the dataset file represented by eds variable.
@@ -164,7 +164,7 @@ This operation also assigns randomly the samples to train/test/validation bucket
 Provided `EMODELS_DATASET_DIR` is the same, you can also recover back the dataset later:
 
 ```python
-> eds = ExtractDatasetFilename.local_by_name("items", "myproject")
+> eds = ExtractDatasetFilename.local_by_name("myproject/items")
 ```
 
 If not, you can also do:
