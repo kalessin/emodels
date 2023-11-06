@@ -79,11 +79,12 @@ class Filename(str):
         return open(self, mode)
 
     @classmethod
-    def local_by_name(cls, name: str, project_name: str) -> Self:
+    def local_by_name(cls, localname: str) -> Self:
         """
-        Returns a Filename object by name and project.
+        Returns a Filename object by project/name.
         """
-        return cls(os.path.join(EMODELS_REPOSITORY, project_name, f"{name}.jl.gz"))
+        project, name = localname.split("/")
+        return cls(os.path.join(EMODELS_REPOSITORY, project, f"{name}.jl.gz"))
 
     def delete_local(self, project_name: str):
         os.remove(self.local(project_name))
@@ -153,8 +154,7 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
     @classmethod
     def build_from_items(
         cls,
-        name: str,
-        project: str,
+        localname: str,
         classes: Optional[Tuple[str]] = None,
         dataset_ratio: Tuple[float, float] = DEFAULT_DATASET_RATIO,
         max_samples_per_source: Optional[int] = None,
@@ -168,11 +168,11 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
         - dataset_ratio is the same for get_random_dataset() and determines how samples are distributed
           among train, test and validation buckets.
         """
-        result: Self = cls.local_by_name(name, project)
+        result: Self = cls.local_by_name(localname)
         if os.path.exists(result):
             raise ValueError(
                 "Output file already exists. "
-                f'open with {cls.__name__}.local_by_name("{name}", "{project}") or remove it for rebuilding'
+                f'open with {cls.__name__}.local_by_name("{localname}") or remove it for rebuilding'
             )
         for source in os.listdir(EMODELS_ITEMS_DIR):
             randomizer = DatasetBucketRandomizer(dataset_ratio)
@@ -213,8 +213,8 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                 count[sample["source"]][key] += 1
         return dict(count)
 
-    def convert_attributes(self, name: str, project: str, source_map_dict: Dict[str, Dict[str, str]]) -> Self:
-        result: Self = self.__class__.local_by_name(name, project)
+    def convert_attributes(self, target_name: str, source_map_dict: Dict[str, Dict[str, str]]) -> Self:
+        result: Self = self.__class__.local_by_name(target_name)
         for sample in self.__class__(self):
             if sample["source"] in source_map_dict:
                 new_indexes: ExtractDict = ExtractDict({})
