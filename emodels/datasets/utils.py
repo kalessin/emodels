@@ -27,7 +27,7 @@ from typing_extensions import Self
 from scrapy.http import TextResponse
 import lxml.html
 
-from emodels.config import EMODELS_DIR, EMODELS_ITEMS_DIR
+from emodels.config import EMODELS_REPOSITORY, EMODELS_ITEMS_DIR
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.datasets.stypes import ItemSample, DatasetBucket, ExtractDict
 
@@ -71,7 +71,7 @@ class Filename(str):
         """
         Creates a local standard path to find a copy of the source file.
         """
-        basedir = os.path.join(EMODELS_DIR, project_name)
+        basedir = os.path.join(EMODELS_REPOSITORY, project_name)
         os.makedirs(basedir, exist_ok=True)
         return self.__class__(os.path.join(basedir, self.basename))
 
@@ -83,7 +83,7 @@ class Filename(str):
         """
         Returns a Filename object by name and project.
         """
-        return cls(os.path.join(EMODELS_DIR, project_name, f"{name}.jl.gz"))
+        return cls(os.path.join(EMODELS_REPOSITORY, project_name, f"{name}.jl.gz"))
 
     def delete_local(self, project_name: str):
         os.remove(self.local(project_name))

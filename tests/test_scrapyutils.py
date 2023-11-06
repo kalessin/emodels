@@ -57,10 +57,10 @@ class BusinessSearchItemLoader(ExtractItemLoader):
 
 class ScrapyUtilsTests(TestCase):
     jobs_result_file: DatasetFilename[ItemSample] = DatasetFilename(
-        os.path.join(config.EMODELS_DIR, "items/JobItemTest/0.jl.gz")
+        os.path.join(config.EMODELS_REPOSITORY, "items/JobItemTest/0.jl.gz")
     )
     business_result_file: DatasetFilename[ItemSample] = DatasetFilename(
-        os.path.join(config.EMODELS_DIR, "items/BusinessSearchItemTest/0.jl.gz")
+        os.path.join(config.EMODELS_REPOSITORY, "items/BusinessSearchItemTest/0.jl.gz")
     )
     samples_file: DatasetFilename[ItemSample] = DatasetFilename(
         os.path.join(os.path.dirname(__file__), "samples.jl.gz")
