@@ -3,7 +3,7 @@ import re
 from unittest import TestCase
 from typing import Dict
 
-from itemloaders.processors import TakeFirst
+from itemloaders.processors import TakeFirst, Join
 from scrapy import Item, Field
 from scrapy.http import TextResponse
 
@@ -66,6 +66,7 @@ class ScrapyUtilsTests(TestCase):
         os.path.join(os.path.dirname(__file__), "samples.jl.gz")
     )
     samples: Dict[str, TextResponse]
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -119,10 +120,59 @@ class ScrapyUtilsTests(TestCase):
         )
         self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], "492556")
         self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], "Full-time Staff")
-
         self.assertEqual(data["markdown"][slice(*data["indexes"]["description"])], item["description"])
 
         self.assertTrue(response.text_re(tid=".job-field job-title"))
+
+    def test_case_one_css(self):
+        response = self.samples["https://careers.und.edu/jobs/job21.html"]
+        loader = JobItemLoader(response=response)
+        loader.add_css("job_title", "#job_title_2_2::text")
+        loader.add_css("employment_type", "#employment_type_2_2_0_0::text")
+        loader.add_css("job_id", "#requisition_identifier_2_2_0::text")
+
+        loader.load_item()
+
+        self.assertEqual(
+            response.markdown[slice(*loader.extract_indexes["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], "492556")
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], "Full-time Staff")
+
+        data: ItemSample = next(DatasetFilename(self.jobs_result_file))
+
+        self.assertFalse(COMMENT_RE.findall(data["markdown"]))
+
+        self.assertEqual(
+            data["markdown"][slice(*data["indexes"]["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], "492556")
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], "Full-time Staff")
+
+    def test_case_one_xpath(self):
+        response = self.samples["https://careers.und.edu/jobs/job21.html"]
+        loader = JobItemLoader(response=response)
+        loader.add_xpath("job_title", "//*[@id='job_title_2_2']/text()")
+        loader.add_xpath("employment_type", "//*[@id='employment_type_2_2_0_0']/text()")
+        loader.add_xpath("job_id", "//*[@id='requisition_identifier_2_2_0']/text()")
+
+        loader.load_item()
+
+        self.assertEqual(
+            response.markdown[slice(*loader.extract_indexes["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["job_id"])], "492556")
+        self.assertEqual(response.markdown[slice(*loader.extract_indexes["employment_type"])], "Full-time Staff")
+
+        data: ItemSample = next(DatasetFilename(self.jobs_result_file))
+
+        self.assertFalse(COMMENT_RE.findall(data["markdown"]))
+
+        self.assertEqual(
+            data["markdown"][slice(*data["indexes"]["job_title"])], "Student Athlete Support Services Coord"
+        )
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["job_id"])], "492556")
+        self.assertEqual(data["markdown"][slice(*data["indexes"]["employment_type"])], "Full-time Staff")
 
     def test_case_two(self):
         response = self.samples["https://yell.com/result.html"]
@@ -138,14 +188,12 @@ class ScrapyUtilsTests(TestCase):
                 "category",
                 tid=".businessCapsule--classification",
             )
-            loader.add_text_re("locality", tid="#addressLocality", strict_tid=True)
             loader.add_text_re("address_alt", reg=r"(?:.+\|)?(.+?),?", tid="#addressLocality")
             loader.add_text_re("street", reg=r"(?:.+\|)?(.+?),?", tid="#streetAddress")
-            loader.add_text_re("postal_code", tid="#postalCode", strict_tid=True)
             loader.load_item()
 
         extracted = []
-        for d in self.business_result_file:
+        for d in DatasetFilename(self.business_result_file):
             extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
 
         self.assertEqual(len(extracted), 25)
@@ -158,6 +206,51 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(len([e for e in extracted if "website" in e]), 20)
         self.assertEqual(len([e for e in extracted if "address" in e]), 24)
         self.assertFalse("address" in extracted[1])
+        self.assertEqual(len([e for e in extracted if "street" in e]), 24)
+        self.assertEqual(len([e for e in extracted if "profile_url" in e]), 25)
+
+        self.assertEqual(extracted[0]["name"], "Craig Wood Solicitors")
+        self.assertEqual(extracted[1]["category"], "Solicitors")
+        self.assertEqual(extracted[2]["website"], "http://www.greyandcosolicitors.co.uk")
+        self.assertEqual(extracted[3]["phone"], "01463 225544")
+        self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace, Inverness, IV2 3AE")
+        self.assertEqual(extracted[4]["address_alt"], "3 Ardconnel Terrace, Inverness,")
+        self.assertEqual(
+            extracted[5]["profile_url"], "https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/"
+        )
+        self.assertEqual(extracted[7]["street"], "York House, 20, Church St,")
+
+    def test_case_two_css_xpath(self):
+        response = self.samples["https://yell.com/result.html"]
+
+        for r in response.css_split(".businessCapsule--mainRow"):
+            loader = BusinessSearchItemLoader(response=r)
+            loader.add_css("name", "h2::text")
+            loader.add_css("phone", "[itemprop='telephone']::text")
+            loader.add_xpath("website", "//a[contains(text(), 'Website')]/@href")
+            loader.add_xpath("address", "//*[@itemprop='address']//text()", Join())
+            loader.add_xpath(
+                "profile_url", "//a[contains(text(), 'More info')]/@href", Join(), lambda x: response.urljoin(x)
+            )
+            loader.add_css("category", ".businessCapsule--classification::text")
+            loader.add_css("locality", "[itemprop='addressLocality']::text")
+            loader.add_css("street", "[itemprop='streetAddress']::text", Join(), lambda x: x.strip(", "))
+            loader.add_css("postal_code", "[itemprop='postalCode']::text")
+            loader.load_item()
+
+        extracted = []
+        for d in DatasetFilename(self.business_result_file):
+            extracted.append({attr: d["markdown"][slice(*d["indexes"][attr])] for attr in d["indexes"]})
+
+        self.assertEqual(len(extracted), 25)
+        self.assertEqual(len([e for e in extracted if "name" in e]), 25)
+        self.assertEqual(len([e for e in extracted if "category" in e]), 25)
+        categories = [e["category"] for e in extracted if "category" in e]
+        self.assertEqual(categories.count("Solicitors"), 24)
+        self.assertEqual(categories.count("Personal Injury"), 1)
+        self.assertEqual(len([e for e in extracted if "phone" in e]), 25)
+        self.assertEqual(len([e for e in extracted if "website" in e]), 20)
+        self.assertEqual(len([e for e in extracted if "address" in e]), 25)
         self.assertEqual(len([e for e in extracted if "locality" in e]), 24)
         self.assertEqual(len([e for e in extracted if "street" in e]), 24)
         self.assertEqual(len([e for e in extracted if "postal_code" in e]), 24)
@@ -167,8 +260,7 @@ class ScrapyUtilsTests(TestCase):
         self.assertEqual(extracted[1]["category"], "Solicitors")
         self.assertEqual(extracted[2]["website"], "http://www.greyandcosolicitors.co.uk")
         self.assertEqual(extracted[3]["phone"], "01463 225544")
-        self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace,  Inverness, IV2 3AE")
-        self.assertEqual(extracted[4]["address_alt"], "3 Ardconnel Terrace,  Inverness")
+        self.assertEqual(extracted[4]["address"], "3 Ardconnel Terrace, Inverness, IV2 3AE")
         self.assertEqual(
             extracted[5]["profile_url"], "https://yell.com/biz/jack-gowans-and-marc-dickson-inverness-901395225/"
         )
@@ -180,7 +272,7 @@ class ScrapyUtilsTests(TestCase):
         response = self.samples["https://npc.isolvedhire.com/jobs/857557.html"]
         self.assertEqual(
             response.text_re(tid=".job-items"),
-            [("Holbrook, AZ, USA", 461, 478), ("13.85", 487, 492), ("Hourly", 501, 507), ("Part Time", 516, 525)],
+            [("Holbrook, AZ, USA", 456, 473), ("13.85", 480, 485), ("Hourly", 492, 498), ("Part Time", 505, 514)],
         )
 
         loader = JobItemLoader(response=response)

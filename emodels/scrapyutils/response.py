@@ -7,12 +7,13 @@ from scrapy.http import TextResponse
 from emodels import html2text
 
 
-MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s*(\".+\")?\)")
+MARKDOWN_LINK_RE = re.compile(r"\[(.+?)\]\((.+?)\s?(\".+\")?\)")
 LINK_RSTRIP_RE = re.compile("(%20)+$")
 LINK_LSTRIP_RE = re.compile("^(%20)+")
-COMMENT_RE = re.compile(r"\s<!--.+?-->")
+COMMENT_RE = re.compile(r" <!--.+?-->")
 DEFAULT_SKIP_PREFIX = "[^a-zA-Z0-9$]*"
 LOG = logging.getLogger(__name__)
+SPACE_COMMA_RE = re.compile(r"(\s+,)?[ \t]+(?!<!--.+?-->)")
 
 
 class ExtractTextResponse(TextResponse):
@@ -74,6 +75,15 @@ class ExtractTextResponse(TextResponse):
     @staticmethod
     def _clean_markdown(md: str):
         shrink = 0
+        for m in SPACE_COMMA_RE.finditer(md):
+            start = m.start() - shrink
+            end = m.end() - shrink
+            if "," in m.group():
+                md = md[:start] + "," + md[end:]
+            else:
+                md = md[:start] + " " + md[end:]
+            shrink += end - start - 1
+        shrink = 0
         for m in MARKDOWN_LINK_RE.finditer(md):
             if m.groups()[1] is not None:
                 start = m.start(2) - shrink
@@ -91,10 +101,7 @@ class ExtractTextResponse(TextResponse):
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
-        strict_tid: bool = False,
     ) -> Generator[Tuple[str, int, int], None, None]:
-        if tid and strict_tid:
-            reg = f"(?:.*<!--.+-->)?{reg}"
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
         if tid:
@@ -103,7 +110,7 @@ class ExtractTextResponse(TextResponse):
             elif tid.startswith("."):
                 tid = "\\" + tid
                 markdown = self.markdown_classes
-            reg += fr"\s+<!--{tid}-->"
+            reg += fr"\s<!--{tid}-->"
         for m in re.finditer(reg, markdown, flags):
             if m.groups():
                 extracted = m.groups()[0]
@@ -122,8 +129,8 @@ class ExtractTextResponse(TextResponse):
                     end -= len(extracted) - len(new_extracted)
                     extracted = new_extracted
                     accum = 0
-                    for m in COMMENT_RE.finditer(markdown[:start]):
-                        comment_len = m.end() - m.start()
+                    for n in COMMENT_RE.finditer(markdown[:start]):
+                        comment_len = n.end() - n.start()
                         accum += comment_len
                     start -= accum
                     end -= accum
@@ -135,12 +142,11 @@ class ExtractTextResponse(TextResponse):
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
-        strict_tid: bool = False,
         idx: int = 0,
         optimize: bool = False,
     ) -> List[Tuple[str, int, int]]:
         result = []
-        for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix, strict_tid)):
+        for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix)):
             if not optimize or i == idx:
                 result.append(r)
             if optimize and result:
@@ -150,7 +156,7 @@ class ExtractTextResponse(TextResponse):
                 self._add_extra_ids([tid[1:]])
             elif tid.startswith("."):
                 self._add_extra_classes([tid[1:]])
-            for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix, strict_tid)):
+            for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix)):
                 if not optimize or i == idx:
                     result.append(r)
                 if optimize and result:

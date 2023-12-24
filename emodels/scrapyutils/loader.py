@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 from typing import Optional
 
@@ -41,7 +42,6 @@ class ExtractItemLoader(ItemLoader):
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
-        strict_tid: bool = False,
         idx: int = 0,
         *processors,
         **kw,
@@ -57,10 +57,6 @@ class ExtractItemLoader(ItemLoader):
               The default one is any non alphanumeric character at begining of the line and in most cases
               you will use this value. Provided for convenience, in order to avoid to repeat it frequently
               in the regular expression parameter, making it more natural.
-        strict_tid - The default behavior of selectors is to match the regex against full single entire lines (except
-              when using for example the flag re.S), even when there are multiple ids or classes in same line. If you
-              want a stricter match against regions inside lines, set this parameter to True. Of course, this
-              parameter has no effect if you don't use the optional parameter tid.
         idx - Regex selectors only return a single match, and by default it is the first one (idx=0). If you want
               instead to extract a different match, set the appropiate index with this parameter.
         *processors - Extraction processors passed to the method (same as in usual loaders)
@@ -69,7 +65,7 @@ class ExtractItemLoader(ItemLoader):
         if not self._check_valid_response():
             raise ValueError("context response type is not a valid TextResponse.")
         extracted = self.context["response"].text_re(
-            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, strict_tid=strict_tid, idx=idx, optimize=True
+            reg=reg, tid=tid, flags=flags, skip_prefix=skip_prefix, idx=idx, optimize=True
         )
         if extracted:
             t, s, e = extracted[0]
@@ -90,3 +86,20 @@ class ExtractItemLoader(ItemLoader):
                     "markdown": self.context["response"].markdown,
                 }
             )
+
+    def _add_extraction_from_values(self, attr: str):
+        for value in self.get_collected_values(attr):
+            value = value.strip()
+            value = re.sub(r"\s+", " ", value)
+            value = re.sub(r"\s+,", ",", value)
+            start = self.context["response"].markdown.find(value)
+            if start > -1 and len(value):
+                self.extract_indexes[attr] = (start, start + len(value))
+
+    def add_xpath(self, field_name, xpath, *processors, **kw):
+        super().add_xpath(field_name, xpath, *processors, **kw)
+        self._add_extraction_from_values(field_name)
+
+    def add_css(self, field_name, css, *processors, **kw):
+        super().add_css(field_name, css, *processors, **kw)
+        self._add_extraction_from_values(field_name)
