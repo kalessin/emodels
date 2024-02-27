@@ -16,13 +16,13 @@ $ pip install e-models
 scrapyutils module provides two classes, one for extending `scrapy.http.TextResponse` and another for
 extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 
-1. Allow to extract item data in the text (markdown) domain instead of the html source domain. For this purpose, a new type of selector has been added.
+1. Allow to extract item data in the text (markdown) domain instead of the html source domain.
 2. The main purpose of this approach is the generation of datasets suitable for training transformer models for text extraction (aka extractive question answering, EQA)
 3. As a secondary objective, it provides an alternative kind of selector to xpath and css selectors for extraction of data from the html source, that may be more suitable and readable for humans.
 4. In many situations, and specially when there is not an id or a class to spot accurately the text, the expresion in terms of regular expressions in the domain of markdown can be simpler.
 5. The additional cost of maintenance is zero. Even if you are introducing a new kind of selector that may be unknown for most people, this only characterizes single lines and does not condition
    any other line of the spider code. If the selector still works, it is not needed to be changed. If it doesn't work anymore, it can be replaced by common and known selectors without affecting
-   anything else, except that the corresponding field will be missing from the dataset generation that the new selector type aim for.
+   anything else.
 
 #### Set up
 
@@ -63,7 +63,6 @@ The new kind of selector is based on regular expressions, but it also admits id 
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
-        strict_tid: bool = False,
         idx: int = 0,
         *processors,
         **kw,
@@ -79,10 +78,6 @@ The new kind of selector is based on regular expressions, but it also admits id 
               The default one is any non alphanumeric character at begining of the line and in most cases
               you will use this value. Provided for convenience, in order to avoid to repeat it frequently
               in the regular expression parameter, making it more natural.
-        strict_tid - The default behavior of selectors is to match the regex against full single entire lines (except
-              when using for example the flag re.S), even when there are multiple ids or classes in same line. If you
-              want a stricter match against regions inside lines, set this parameter to True. Of course, this
-              parameter has no effect if you don't use the optional parameter tid.
         idx - Regex selectors only return a single match, and by default it is the first one (idx=0). If you want
               instead to extract a different match, set the appropiate index with this parameter.
         *processors - Extraction processors passed to the method (same as in usual loaders)
