@@ -1,5 +1,6 @@
 import re
 import logging
+import difflib
 from typing import List, Optional, Tuple, Generator
 
 from scrapy.http import TextResponse
@@ -129,9 +130,11 @@ class ExtractTextResponse(TextResponse):
                     end -= len(extracted) - len(new_extracted)
                     extracted = new_extracted
                     accum = 0
-                    for n in COMMENT_RE.finditer(markdown[:start]):
-                        comment_len = n.end() - n.start()
-                        accum += comment_len
+                    smatcher = difflib.SequenceMatcher(a=self.markdown, b=markdown)
+                    for block in smatcher.get_matching_blocks():
+                        if block.b > start:
+                            break
+                        accum = block.b - block.a
                     start -= accum
                     end -= accum
                 yield (extracted, start, end)

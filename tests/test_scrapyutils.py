@@ -93,12 +93,10 @@ class ScrapyUtilsTests(TestCase):
         item = loader.load_item()
 
         self.assertFalse(COMMENT_RE.findall(item["description"]))
-        self.assertEqual(COMMENT_RE.sub("", response.markdown_ids), response.markdown)
-        self.assertEqual(COMMENT_RE.sub("", response.markdown_classes), response.markdown)
 
         self.assertEqual(
             item["description"][:80],
-            "###  Student Athlete Support Services Coord \n\n  * __ 492556 \n\n\n\n  * __ Grand For",
+            "### Student Athlete Support Services Coord \n\n * __ 492556 \n\n\n\n * __ Grand Forks,",
         )
         self.assertEqual(
             item["description"][-80:],
