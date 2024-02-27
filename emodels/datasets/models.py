@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, Any, Protocol, Tuple, Generic, TypeVar
+from typing import Generator, List, Any, Protocol, Tuple, Generic, TypeVar, Iterable
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -198,7 +198,17 @@ class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Proto
             yield cls.get_features_from_body(converter, row["body"])
 
 
-V = TypeVar("V")
+class VectorizerProtocol(Protocol):
+    @abstractmethod
+    def transform(self, Iterable) -> Iterable:
+        ...
+
+    @abstractmethod
+    def fit(self, Iterable):
+        ...
+
+
+V = TypeVar("V", bound=VectorizerProtocol)
 
 
 class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
@@ -333,7 +343,10 @@ class ClassifierModel(TrainableModel):
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
 
-class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, ClassifierModel):
+S = TypeVar("S")
+
+
+class SVMModel(Generic[S, V], ModelWithVectorizer[V], ClassifierModel):
     gamma = 0.4
     C = 10
 
@@ -344,9 +357,16 @@ class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, ClassifierModel):
         LOGGER.info("Training SVM classifier...")
         model = SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
         datasets = cls.load_dataset()
-        vfeatures = vectorizer.transform(cls.get_dataset_features(datasets.X_train))
+
+        features = cls.get_training_X_features(datasets.X_train)
+        vfeatures = vectorizer.transform(features)
         model.fit(vfeatures, datasets.Y_train)
         return model
+
+    @classmethod
+    @abstractmethod
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Iterable:
+        ...
 
     @classmethod
     def classify_response(cls, response: HtmlResponse) -> bool:
@@ -355,6 +375,21 @@ class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, ClassifierModel):
         vectorizer = cls.get_vectorizer()
         model = cls.get_trained_model()
 
-        X_features = [cls.get_features_from_body(cls.converter_class(), response.text)]
+        X_features = cls.get_sample_features(response)
         X_transformed = vectorizer.transform(X_features)
         return model.predict(X_transformed)[0]
+
+    @classmethod
+    @abstractmethod
+    def get_sample_features(cls, sample: S) -> Iterable:
+        ...
+
+
+class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, SVMModel[HtmlResponse, TfidfVectorizer]):
+    @classmethod
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Iterable:
+        return cls.get_dataset_features(X_train)
+
+    @classmethod
+    def get_sample_features(cls, response: HtmlResponse) -> Iterable:
+        return [cls.get_features_from_body(cls.converter_class(), response.text)]
