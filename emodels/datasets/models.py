@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, Any, Protocol, Tuple, Generic
+from typing import Generator, List, Any, Protocol, Tuple, Generic, TypeVar
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -198,8 +198,32 @@ class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Proto
             yield cls.get_features_from_body(converter, row["body"])
 
 
-class ModelWithVectorizer(ModelWithTokenizer, ModelWithDataset, Protocol):
+V = TypeVar("V")
+
+
+class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
     vectorizer_repository: VectorizerFilename
+    vectorizer: V | None = None
+
+    @classmethod
+    @abstractmethod
+    def load_vectorizer(cls) -> V:
+        ...
+
+    @classmethod
+    def get_vectorizer(cls) -> TfidfVectorizer:
+        if cls.vectorizer is None:
+            cls.vectorizer = cls.load_vectorizer()
+        return cls.vectorizer
+
+    @classmethod
+    def reset(cls):
+        cls.delete_model_files(cls.vectorizer_repository)
+        cls.vectorizer = None
+        super().reset()
+
+
+class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTokenizer):
     vectorizer: TfidfVectorizer | None = None
 
     @classmethod
@@ -220,22 +244,8 @@ class ModelWithVectorizer(ModelWithTokenizer, ModelWithDataset, Protocol):
             cls._fshelper().upload_file(vectorizer_local, cls.vectorizer_repository)
         return joblib.load(vectorizer_local)
 
-    @classmethod
-    def get_vectorizer(cls) -> TfidfVectorizer:
-        if cls.vectorizer is None:
-            cls.vectorizer = cls.load_vectorizer()
-        return cls.vectorizer
 
-    @classmethod
-    def reset(cls):
-        cls.delete_model_files(cls.vectorizer_repository)
-        cls.vectorizer = None
-        super().reset()
-
-
-class TrainableModel(
-    ModelWithVectorizer, ModelWithTokenizer, ModelWithDataset, Protocol
-):
+class TrainableModel(ModelWithDataset, Protocol):
     model_repository: ModelFilename
     model: Any | None = None
 
@@ -323,7 +333,7 @@ class ClassifierModel(TrainableModel):
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
 
-class SVMModel(ClassifierModel):
+class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, ClassifierModel):
     gamma = 0.4
     C = 10
 
