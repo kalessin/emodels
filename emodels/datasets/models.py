@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, Any, Protocol, Tuple, Generic, TypeVar, Iterable
+from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -15,6 +15,7 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sentencepiece import SentencePieceProcessor
 from shub_workflow.deliver.futils import FSHelper
@@ -142,7 +143,7 @@ class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
         ...
 
 
-class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Protocol):
+class ModelWithTokenizer(ModelWithDataset, Protocol):
     tokenizer_repository: TokenizerFilename
     converter_class: type[ResponseConverter]
 
@@ -184,6 +185,8 @@ class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Proto
         cls.tokenizer = None
         super().reset()
 
+
+class ModelWithResponseSamplesTokenizer(ModelWithTokenizer):
     @classmethod
     def get_features_from_body(cls, converter: ResponseConverter, body: str) -> str:
         tokenizer = cls.get_tokenizer()
@@ -198,13 +201,19 @@ class ModelWithTokenizer(ModelWithDataset[ExtractTextDatasetFilenameType], Proto
             yield cls.get_features_from_body(converter, row["body"])
 
 
-class VectorizerProtocol(Protocol):
+# Dataset sample fields (or input sample features)
+DF = TypeVar("DF", contravariant=True)
+# Vector (output) features
+VF = TypeVar("VF", covariant=True)
+
+
+class VectorizerProtocol(Generic[DF, VF], Protocol):
     @abstractmethod
-    def transform(self, Iterable) -> Iterable:
+    def transform(self, df: Sequence[DF]) -> Sequence[VF]:
         ...
 
     @abstractmethod
-    def fit(self, Iterable):
+    def fit(self, df: Sequence[DF]):
         ...
 
 
@@ -221,7 +230,7 @@ class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
         ...
 
     @classmethod
-    def get_vectorizer(cls) -> TfidfVectorizer:
+    def get_vectorizer(cls) -> V:
         if cls.vectorizer is None:
             cls.vectorizer = cls.load_vectorizer()
         return cls.vectorizer
@@ -235,6 +244,11 @@ class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
 
 class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTokenizer):
     vectorizer: TfidfVectorizer | None = None
+
+    @classmethod
+    @abstractmethod
+    def get_dataset_features(cls, dataset_bucket: pd.DataFrame) -> Generator[str, None, None]:
+        ...
 
     @classmethod
     def load_vectorizer(cls) -> TfidfVectorizer:
@@ -255,12 +269,28 @@ class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTo
         return joblib.load(vectorizer_local)
 
 
-class TrainableModel(ModelWithDataset, Protocol):
+# Label type
+L = TypeVar("L", contravariant=True)
+
+# Generic Feature type
+F = TypeVar("F", contravariant=True)
+
+
+class LowLevelModelProtocol(Generic[F, L], Protocol):
+    @abstractmethod
+    def fit(self, samples: Sequence[F], labels: Sequence[L]):
+        ...
+
+
+M = TypeVar("M", bound=LowLevelModelProtocol)
+
+
+class TrainableModel(Generic[M], ModelWithDataset, Protocol):
     model_repository: ModelFilename
-    model: Any | None = None
+    model: M | None = None
 
     @classmethod
-    def load_trained_model(cls) -> Any:
+    def load_trained_model(cls) -> M:
         model_local: ModelFilename = ModelFilename(cls.model_repository).local(cls.project)
         if cls._fshelper().exists(model_local):
             LOGGER.info(f"Found local copy of model {model_local}.")
@@ -275,14 +305,19 @@ class TrainableModel(ModelWithDataset, Protocol):
         return joblib.load(model_local)
 
     @classmethod
-    def get_trained_model(cls) -> Any:
+    def get_trained_model(cls) -> M:
         if cls.model is None:
             cls.model = cls.load_trained_model()
         return cls.model
 
     @classmethod
     @abstractmethod
-    def train(cls):
+    def train(cls) -> M:
+        ...
+
+    @classmethod
+    @abstractmethod
+    def instance_new_lowlevel_model(cls) -> M:
         ...
 
     @classmethod
@@ -292,7 +327,7 @@ class TrainableModel(ModelWithDataset, Protocol):
         super().reset()
 
 
-class ClassifierModel(TrainableModel):
+class ClassifierModel(TrainableModel[M]):
     @classmethod
     @abstractmethod
     def classify_response(cls, response: HtmlResponse) -> bool:
@@ -343,30 +378,39 @@ class ClassifierModel(TrainableModel):
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
 
+class ClassifierModelWithVectorizer(
+    Generic[DF, VF, V, M], ModelWithVectorizer[V], ClassifierModel[M], ModelWithDataset
+):
+    @classmethod
+    @abstractmethod
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
+        ...
+
+    @classmethod
+    def train(cls):
+        vectorizer: V = cls.get_vectorizer()
+
+        LOGGER.info("Training Random Forest classifier...")
+        model: M = cls.instance_new_lowlevel_model()
+
+        datasets = cls.load_dataset()
+
+        features: Sequence[DF] = cls.get_training_X_features(datasets.X_train)
+        vfeatures: Sequence[VF] = vectorizer.transform(features)
+        model.fit(vfeatures, datasets.Y_train)
+        return model
+
+
 S = TypeVar("S")
 
 
-class SVMModel(Generic[S, V], ModelWithVectorizer[V], ClassifierModel):
+class SVMModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, SVC]):
     gamma = 0.4
     C = 10
 
     @classmethod
-    def train(cls) -> None:
-        vectorizer = cls.get_vectorizer()
-
-        LOGGER.info("Training SVM classifier...")
-        model = SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
-        datasets = cls.load_dataset()
-
-        features = cls.get_training_X_features(datasets.X_train)
-        vfeatures = vectorizer.transform(features)
-        model.fit(vfeatures, datasets.Y_train)
-        return model
-
-    @classmethod
-    @abstractmethod
-    def get_training_X_features(cls, X_train: pd.DataFrame) -> Iterable:
-        ...
+    def instance_new_lowlevel_model(cls) -> SVC:
+        return SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
 
     @classmethod
     def classify_response(cls, response: HtmlResponse) -> bool:
@@ -375,21 +419,31 @@ class SVMModel(Generic[S, V], ModelWithVectorizer[V], ClassifierModel):
         vectorizer = cls.get_vectorizer()
         model = cls.get_trained_model()
 
-        X_features = cls.get_sample_features(response)
-        X_transformed = vectorizer.transform(X_features)
+        X_features: Sequence[DF] = cls.get_sample_features(response)
+        X_transformed: Sequence[VF] = vectorizer.transform(X_features)
         return model.predict(X_transformed)[0]
 
     @classmethod
     @abstractmethod
-    def get_sample_features(cls, sample: S) -> Iterable:
+    def get_sample_features(cls, sample: S) -> Sequence[DF]:
         ...
 
 
-class SVMModelWithTfidfVectorizer(ModelWithTfidfVectorizer, SVMModel[HtmlResponse, TfidfVectorizer]):
+class SVMModelWithTfidfResponseVectorizer(
+    ModelWithResponseSamplesTokenizer, ModelWithTfidfVectorizer, SVMModel[HtmlResponse, str, float, TfidfVectorizer]
+):
     @classmethod
-    def get_training_X_features(cls, X_train: pd.DataFrame) -> Iterable:
-        return cls.get_dataset_features(X_train)
+    def get_sample_features(cls, response: HtmlResponse) -> Sequence[str]:
+        return [cls.get_features_from_body(cls.converter_class(), response.text)]
 
     @classmethod
-    def get_sample_features(cls, response: HtmlResponse) -> Iterable:
-        return [cls.get_features_from_body(cls.converter_class(), response.text)]
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[str]:
+        return list(cls.get_dataset_features(X_train))
+
+
+class RandomForestModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, RandomForestClassifier]):
+    estimators = 100
+
+    @classmethod
+    def instance_new_lowlevel_model(cls) -> RandomForestClassifier:
+        return RandomForestClassifier(n_estimators=cls.estimators)
