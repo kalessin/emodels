@@ -200,6 +200,10 @@ class ModelWithResponseSamplesTokenizer(ModelWithTokenizer):
         for _, row in dataset_bucket.iterrows():
             yield cls.get_features_from_body(converter, row["body"])
 
+    @classmethod
+    def get_sample_features(cls, response: HtmlResponse) -> Sequence[str]:
+        return [cls.get_features_from_body(cls.converter_class(), response.text)]
+
 
 # Dataset sample fields (or input sample features)
 DF = TypeVar("DF", contravariant=True)
@@ -251,6 +255,10 @@ class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTo
         ...
 
     @classmethod
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[str]:
+        return list(cls.get_dataset_features(X_train))
+
+    @classmethod
     def load_vectorizer(cls) -> TfidfVectorizer:
         vectorizer_local: VectorizerFilename = VectorizerFilename(cls.vectorizer_repository).local(cls.project)
 
@@ -270,15 +278,16 @@ class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTo
 
 
 # Label type
-L = TypeVar("L", contravariant=True)
-
-# Generic Feature type
-F = TypeVar("F", contravariant=True)
+L = TypeVar("L")
 
 
-class LowLevelModelProtocol(Generic[F, L], Protocol):
+class LowLevelModelProtocol(Protocol):
     @abstractmethod
-    def fit(self, samples: Sequence[F], labels: Sequence[L]):
+    def fit(self, samples: Sequence[VF], labels: Sequence[L]):
+        ...
+
+    @abstractmethod
+    def predict(self, vectorized_samples: Sequence[VF]) -> Sequence[L]:
         ...
 
 
@@ -330,13 +339,8 @@ class TrainableModel(Generic[M], ModelWithDataset, Protocol):
 class ClassifierModel(TrainableModel[M]):
     @classmethod
     @abstractmethod
-    def classify_response(cls, response: HtmlResponse) -> bool:
-        ...
-
-    @classmethod
     def classify_from_row(cls, row: WebsiteSampleData) -> bool:
-        response = build_response_from_sample_data(row)
-        return cls.classify_response(response)
+        ...
 
     @classmethod
     def predict(cls, df: pd.DataFrame) -> pd.Series:
@@ -378,12 +382,20 @@ class ClassifierModel(TrainableModel[M]):
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
 
+S = TypeVar("S")
+
+
 class ClassifierModelWithVectorizer(
     Generic[DF, VF, V, M], ModelWithVectorizer[V], ClassifierModel[M], ModelWithDataset
 ):
     @classmethod
     @abstractmethod
     def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
+        ...
+
+    @classmethod
+    @abstractmethod
+    def get_sample_features(cls, sample: S) -> Sequence[DF]:
         ...
 
     @classmethod
@@ -401,7 +413,23 @@ class ClassifierModelWithVectorizer(
         return model
 
 
-S = TypeVar("S")
+class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF, V, M]):
+
+    @classmethod
+    def classify_from_row(cls, row: WebsiteSampleData) -> bool:
+        response = build_response_from_sample_data(row)
+        return cls.classify_response(response)
+
+    @classmethod
+    def classify_response(cls, response: HtmlResponse) -> bool:
+        """ """
+
+        vectorizer = cls.get_vectorizer()
+        model: M = cls.get_trained_model()
+
+        X_features: Sequence[DF] = cls.get_sample_features(response)
+        X_transformed: Sequence[VF] = vectorizer.transform(X_features)
+        return model.predict(X_transformed)[0]
 
 
 class SVMModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, SVC]):
@@ -412,33 +440,14 @@ class SVMModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, S
     def instance_new_lowlevel_model(cls) -> SVC:
         return SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
 
-    @classmethod
-    def classify_response(cls, response: HtmlResponse) -> bool:
-        """ """
-
-        vectorizer = cls.get_vectorizer()
-        model = cls.get_trained_model()
-
-        X_features: Sequence[DF] = cls.get_sample_features(response)
-        X_transformed: Sequence[VF] = vectorizer.transform(X_features)
-        return model.predict(X_transformed)[0]
-
-    @classmethod
-    @abstractmethod
-    def get_sample_features(cls, sample: S) -> Sequence[DF]:
-        ...
-
 
 class SVMModelWithTfidfResponseVectorizer(
-    ModelWithResponseSamplesTokenizer, ModelWithTfidfVectorizer, SVMModel[HtmlResponse, str, float, TfidfVectorizer]
+    ResponseClassifierModelWithVectorizer,
+    ModelWithResponseSamplesTokenizer,
+    ModelWithTfidfVectorizer,
+    SVMModel[HtmlResponse, str, float, TfidfVectorizer],
 ):
-    @classmethod
-    def get_sample_features(cls, response: HtmlResponse) -> Sequence[str]:
-        return [cls.get_features_from_body(cls.converter_class(), response.text)]
-
-    @classmethod
-    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[str]:
-        return list(cls.get_dataset_features(X_train))
+    pass
 
 
 class RandomForestModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, RandomForestClassifier]):
