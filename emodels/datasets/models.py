@@ -414,7 +414,6 @@ class ClassifierModelWithVectorizer(
 
 
 class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF, V, M]):
-
     @classmethod
     def classify_from_row(cls, row: WebsiteSampleData) -> bool:
         response = build_response_from_sample_data(row)
@@ -432,7 +431,7 @@ class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF
         return model.predict(X_transformed)[0]
 
 
-class SVMModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, SVC]):
+class SVMModelWithVectorizer(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, SVC]):
     gamma = 0.4
     C = 10
 
@@ -445,12 +444,14 @@ class SVMModelWithTfidfResponseVectorizer(
     ResponseClassifierModelWithVectorizer,
     ModelWithResponseSamplesTokenizer,
     ModelWithTfidfVectorizer,
-    SVMModel[HtmlResponse, str, float, TfidfVectorizer],
+    SVMModelWithVectorizer[HtmlResponse, str, float, TfidfVectorizer],
 ):
     pass
 
 
-class RandomForestModel(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, RandomForestClassifier]):
+class RandomForestModelWithVectorizer(
+    Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, RandomForestClassifier]
+):
     estimators = 100
 
     @classmethod
