@@ -27,15 +27,15 @@ from emodels.datasets.utils import (
     ResponseConverter,
     Filename,
     DatasetFilename,
+    WebsiteSampleData,
+    E,
 )
 from emodels.datasets.tokenizers import (
     extract_dataset_text,
     train_tokenizer,
     load_tokenizer_from_file,
     TokenizerFilename,
-    ExtractTextDatasetFilenameType,
 )
-from emodels.datasets.utils import WebsiteSampleData
 
 
 LOGGER = logging.getLogger(__name__)
@@ -50,14 +50,14 @@ class VectorizerFilename(Filename):
     pass
 
 
-class DatasetsPandas:
+class DatasetsPandas(Generic[E]):
     X_train: pd.DataFrame
     X_test: pd.Series
     Y_train: pd.DataFrame
     Y_test: pd.Series
 
     @classmethod
-    def from_datasetfilename(cls, filename: DatasetFilename, features: Tuple[str, ...], target_label: str) -> Self:
+    def from_datasetfilename(cls, filename: DatasetFilename[E], features: Tuple[str, ...], target_label: str) -> Self:
         df = pd.read_json(filename, lines=True, compression="gzip")
         df = df[~df[target_label].isnull()]
 
@@ -79,11 +79,11 @@ class DatasetsPandas:
         return obj
 
 
-class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
+class ModelWithDataset(Generic[E], Protocol):
     FSHELPER: FSHelper | None = None
-    datasets: DatasetsPandas | None = None
+    datasets: DatasetsPandas[E] | None = None
 
-    dataset_repository: ExtractTextDatasetFilenameType
+    dataset_repository: DatasetFilename[E]
     features: Tuple[str, ...]
     target_label: str
     project: str
@@ -104,8 +104,8 @@ class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
         return cls.FSHELPER
 
     @classmethod
-    def load_dataset(cls) -> DatasetsPandas:
-        dataset_local: ExtractTextDatasetFilenameType = cls.dataset_repository.local(cls.project)
+    def load_dataset(cls) -> DatasetsPandas[E]:
+        dataset_local: DatasetFilename[E] = cls.dataset_repository.local(cls.project)
 
         if cls._fshelper().exists(dataset_local):
             LOGGER.info(f"Found local copy of datasets {dataset_local}.")
@@ -114,12 +114,12 @@ class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
             cls._fshelper().download_file(cls.dataset_repository, dataset_local)
         else:
             LOGGER.info("Generating datasets...")
-            cls.download_labelled_samples(dataset_local)
+            cls.generate_dataset_from_labelled_samples(dataset_local)
             cls._fshelper().upload_file(dataset_local, cls.dataset_repository)
         return DatasetsPandas.from_datasetfilename(dataset_local, cls.features, cls.target_label)
 
     @classmethod
-    def get_dataset(cls) -> DatasetsPandas:
+    def get_dataset(cls) -> DatasetsPandas[E]:
         if cls.datasets is None:
             cls.datasets = cls.load_dataset()
         return cls.datasets
@@ -139,11 +139,11 @@ class ModelWithDataset(Generic[ExtractTextDatasetFilenameType], Protocol):
 
     @classmethod
     @abstractmethod
-    def download_labelled_samples(cls, target: DatasetFilename):
-        ...
+    def generate_dataset_from_labelled_samples(cls, target: DatasetFilename[E]):
+        """Generate dataset from raw labelled data"""
 
 
-class ModelWithTokenizer(ModelWithDataset, Protocol):
+class ModelWithTokenizer(ModelWithDataset[E], Protocol):
     tokenizer_repository: TokenizerFilename
     converter_class: type[ResponseConverter]
 
@@ -224,7 +224,7 @@ class VectorizerProtocol(Generic[DF, VF], Protocol):
 V = TypeVar("V", bound=VectorizerProtocol)
 
 
-class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
+class ModelWithVectorizer(Generic[E, V], ModelWithDataset[E], Protocol):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -246,7 +246,7 @@ class ModelWithVectorizer(Generic[V], ModelWithDataset, Protocol):
         super().reset()
 
 
-class ModelWithTfidfVectorizer(ModelWithVectorizer[TfidfVectorizer], ModelWithTokenizer):
+class ModelWithTfidfVectorizer(ModelWithVectorizer[E, TfidfVectorizer], ModelWithTokenizer):
     vectorizer: TfidfVectorizer | None = None
 
     @classmethod
@@ -294,7 +294,7 @@ class LowLevelModelProtocol(Protocol):
 M = TypeVar("M", bound=LowLevelModelProtocol)
 
 
-class TrainableModel(Generic[M], ModelWithDataset, Protocol):
+class TrainableModel(Generic[E, M], ModelWithDataset[E], Protocol):
     model_repository: ModelFilename
     model: M | None = None
 
@@ -336,10 +336,10 @@ class TrainableModel(Generic[M], ModelWithDataset, Protocol):
         super().reset()
 
 
-class ClassifierModel(TrainableModel[M]):
+class ClassifierModel(TrainableModel[E, M]):
     @classmethod
     @abstractmethod
-    def classify_from_row(cls, row: WebsiteSampleData) -> bool:
+    def classify_from_row(cls, row: E) -> bool:
         ...
 
     @classmethod
@@ -386,7 +386,7 @@ S = TypeVar("S")
 
 
 class ClassifierModelWithVectorizer(
-    Generic[DF, VF, V, M], ModelWithVectorizer[V], ClassifierModel[M], ModelWithDataset
+    Generic[E, DF, VF, V, M], ModelWithVectorizer[E, V], ClassifierModel[E, M], ModelWithDataset[E]
 ):
     @classmethod
     @abstractmethod
@@ -413,7 +413,7 @@ class ClassifierModelWithVectorizer(
         return model
 
 
-class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF, V, M]):
+class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[WebsiteSampleData, DF, VF, V, M]):
     @classmethod
     def classify_from_row(cls, row: WebsiteSampleData) -> bool:
         response = build_response_from_sample_data(row)
@@ -423,7 +423,7 @@ class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF
     def classify_response(cls, response: HtmlResponse) -> bool:
         """ """
 
-        vectorizer = cls.get_vectorizer()
+        vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
 
         X_features: Sequence[DF] = cls.get_sample_features(response)
@@ -431,7 +431,7 @@ class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[DF, VF
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, SVC]):
+class SVMModelWithVectorizer(Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, DF, VF, V, SVC]):
     gamma = 0.4
     C = 10
 
@@ -444,13 +444,13 @@ class SVMModelWithTfidfResponseVectorizer(
     ResponseClassifierModelWithVectorizer,
     ModelWithResponseSamplesTokenizer,
     ModelWithTfidfVectorizer,
-    SVMModelWithVectorizer[HtmlResponse, str, float, TfidfVectorizer],
+    SVMModelWithVectorizer[WebsiteSampleData, HtmlResponse, str, float, TfidfVectorizer],
 ):
     pass
 
 
 class RandomForestModelWithVectorizer(
-    Generic[S, DF, VF, V], ClassifierModelWithVectorizer[DF, VF, V, RandomForestClassifier]
+    Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, DF, VF, V, RandomForestClassifier]
 ):
     estimators = 100
 
