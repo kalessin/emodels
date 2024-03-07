@@ -13,7 +13,6 @@ from typing import (
     Protocol,
     cast,
     Dict,
-    Any,
     IO,
     TypedDict,
     Optional,
@@ -21,6 +20,8 @@ from typing import (
     TypeVar,
     Union,
     Generator,
+    Mapping,
+    Any,
 )
 
 from typing_extensions import Self
@@ -90,7 +91,8 @@ class Filename(str):
         os.remove(self.local(project_name))
 
 
-E = TypeVar("E")
+# Type of dataset samples
+E = TypeVar("E", bound=Mapping[str, Any])
 
 
 class DatasetFilename(Generic[E], Filename):
@@ -119,7 +121,7 @@ class DatasetFilename(Generic[E], Filename):
         line = next(self._file)
         return cast(E, json.loads(line))
 
-    def append(self, data: Dict[str, Any]):
+    def append(self, data: E):
         assert not self._file, "Already opened."
         folder = os.path.dirname(self)
         os.makedirs(folder, exist_ok=True)
@@ -356,4 +358,4 @@ def save_sample_data_from_response(response: TextResponse, filename: Union[str, 
     sampledata = build_sample_data_from_response(response)
     if not isinstance(filename, WebsiteDatasetFilename):
         filename = WebsiteDatasetFilename(filename)
-    filename.append(dict(sampledata))
+    filename.append(sampledata)

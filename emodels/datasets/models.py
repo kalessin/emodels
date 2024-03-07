@@ -114,7 +114,16 @@ class ModelWithDataset(Generic[E], Protocol):
             cls._fshelper().download_file(cls.dataset_repository, dataset_local)
         else:
             LOGGER.info("Generating datasets...")
-            cls.generate_dataset_from_labelled_samples(dataset_local)
+            for idx, sample in enumerate(cls.generate_dataset_samples()):
+                keys = set(sample.keys())
+                assert cls.target_label in keys, f"{cls.target_label} key not in sample #{idx}."
+                keys.remove(cls.target_label)
+                assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
+                bucket = sample["dataset_bucket"]
+                assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
+                missing_fields = set(cls.features).difference(keys)
+                assert not missing_fields, f"Missing fields in sample #{idx}: {missing_fields}"
+                dataset_local.append(sample)
             cls._fshelper().upload_file(dataset_local, cls.dataset_repository)
         return DatasetsPandas.from_datasetfilename(dataset_local, cls.features, cls.target_label)
 
@@ -139,8 +148,13 @@ class ModelWithDataset(Generic[E], Protocol):
 
     @classmethod
     @abstractmethod
-    def generate_dataset_from_labelled_samples(cls, target: DatasetFilename[E]):
-        """Generate dataset from raw labelled data"""
+    def generate_dataset_samples(cls) -> Generator[E, None, None]:
+        """Generate samples in order create the dataset.
+        This dataset must contain sample objects, each object containing
+        the features field (as specified by cls.features attribute), the target
+        field (as specified by cls.target_label attribute) and the field `dataset_bucket`
+        with a value being either "train" or "test".
+        """
 
 
 class ModelWithTokenizer(ModelWithDataset[E], Protocol):
@@ -386,7 +400,7 @@ S = TypeVar("S")
 
 
 class ClassifierModelWithVectorizer(
-    Generic[E, DF, VF, V, M], ModelWithVectorizer[E, V], ClassifierModel[E, M], ModelWithDataset[E]
+    Generic[E, S, DF, VF, V, M], ModelWithVectorizer[E, V], ClassifierModel[E, M], ModelWithDataset[E]
 ):
     @classmethod
     @abstractmethod
@@ -413,7 +427,9 @@ class ClassifierModelWithVectorizer(
         return model
 
 
-class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[WebsiteSampleData, DF, VF, V, M]):
+class ResponseClassifierModelWithVectorizer(
+    ClassifierModelWithVectorizer[WebsiteSampleData, HtmlResponse, DF, VF, V, M]
+):
     @classmethod
     def classify_from_row(cls, row: WebsiteSampleData) -> bool:
         response = build_response_from_sample_data(row)
@@ -431,7 +447,7 @@ class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[Websit
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, DF, VF, V, SVC]):
+class SVMModelWithVectorizer(Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, S, DF, VF, V, SVC]):
     gamma = 0.4
     C = 10
 
@@ -450,7 +466,7 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, DF, VF, V, RandomForestClassifier]
+    Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, S, DF, VF, V, RandomForestClassifier]
 ):
     estimators = 100
 
