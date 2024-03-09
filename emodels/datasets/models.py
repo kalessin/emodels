@@ -50,6 +50,41 @@ class VectorizerFilename(Filename):
     pass
 
 
+class LowLevelModelProtocol(Protocol):
+    @abstractmethod
+    def fit(self, samples: Sequence[Sequence[float]], labels: Sequence[float]):
+        ...
+
+    @abstractmethod
+    def predict(self, vectorized_samples: Sequence[Sequence[float]]) -> Sequence[float]:
+        ...
+
+
+# Sample coming from scraper
+S = TypeVar("S")
+# E: DatasetFilename samples type
+# Dataset sample fields (or input sample features)
+DF = TypeVar("DF", contravariant=True)
+
+
+class VectorizerProtocol(Generic[DF], Protocol):
+    @abstractmethod
+    def transform(self, df: Sequence[DF]) -> Sequence[Sequence[float]]:
+        ...
+
+    @abstractmethod
+    def fit(self, df: Sequence[DF]):
+        ...
+
+
+# Vectorizer class
+V = TypeVar("V", bound=VectorizerProtocol)
+
+
+# low level classifier model type (SVC, RandomForestClassifier, etc)
+M = TypeVar("M", bound=LowLevelModelProtocol)
+
+
 class DatasetsPandas(Generic[E]):
     X_train: pd.DataFrame
     X_test: pd.Series
@@ -219,25 +254,6 @@ class ModelWithResponseSamplesTokenizer(ModelWithTokenizer):
         return [cls.get_features_from_body(cls.converter_class(), response.text)]
 
 
-# Dataset sample fields (or input sample features)
-DF = TypeVar("DF", contravariant=True)
-# Vector (output) features
-VF = TypeVar("VF", covariant=True)
-
-
-class VectorizerProtocol(Generic[DF, VF], Protocol):
-    @abstractmethod
-    def transform(self, df: Sequence[DF]) -> Sequence[VF]:
-        ...
-
-    @abstractmethod
-    def fit(self, df: Sequence[DF]):
-        ...
-
-
-V = TypeVar("V", bound=VectorizerProtocol)
-
-
 class ModelWithVectorizer(Generic[E, V], ModelWithDataset[E], Protocol):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
@@ -291,23 +307,6 @@ class ModelWithTfidfVectorizer(ModelWithVectorizer[E, TfidfVectorizer], ModelWit
         return joblib.load(vectorizer_local)
 
 
-# Label type
-L = TypeVar("L")
-
-
-class LowLevelModelProtocol(Protocol):
-    @abstractmethod
-    def fit(self, samples: Sequence[VF], labels: Sequence[L]):
-        ...
-
-    @abstractmethod
-    def predict(self, vectorized_samples: Sequence[VF]) -> Sequence[L]:
-        ...
-
-
-M = TypeVar("M", bound=LowLevelModelProtocol)
-
-
 class TrainableModel(Generic[E, M], ModelWithDataset[E], Protocol):
     model_repository: ModelFilename
     model: M | None = None
@@ -353,7 +352,7 @@ class TrainableModel(Generic[E, M], ModelWithDataset[E], Protocol):
 class ClassifierModel(TrainableModel[E, M]):
     @classmethod
     @abstractmethod
-    def classify_from_row(cls, row: E) -> bool:
+    def classify_from_row(cls, row: E) -> float:
         ...
 
     @classmethod
@@ -396,11 +395,8 @@ class ClassifierModel(TrainableModel[E, M]):
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
 
-S = TypeVar("S")
-
-
 class ClassifierModelWithVectorizer(
-    Generic[E, S, DF, VF, V, M], ModelWithVectorizer[E, V], ClassifierModel[E, M], ModelWithDataset[E]
+    Generic[E, S, DF, V, M], ModelWithVectorizer[E, V], ClassifierModel[E, M], ModelWithDataset[E]
 ):
     @classmethod
     @abstractmethod
@@ -410,6 +406,13 @@ class ClassifierModelWithVectorizer(
     @classmethod
     @abstractmethod
     def get_sample_features(cls, sample: S) -> Sequence[DF]:
+        """Returns a length 1 sequence with the features taken from scraped sample.
+        This is an intermediate step between the sample and the vectorization that
+        is not always necessary. In many applications, the return value can just
+        be [S], but for example, with applications with a tokenizer, here is the
+        place where you tokenize the sample (See ModelWithTokenizer and
+        ModelWithResponseSamplesTokenizer)
+        """
         ...
 
     @classmethod
@@ -422,32 +425,32 @@ class ClassifierModelWithVectorizer(
         datasets = cls.load_dataset()
 
         features: Sequence[DF] = cls.get_training_X_features(datasets.X_train)
-        vfeatures: Sequence[VF] = vectorizer.transform(features)
+        vfeatures: Sequence[Sequence[float]] = vectorizer.transform(features)
         model.fit(vfeatures, datasets.Y_train)
         return model
 
 
 class ResponseClassifierModelWithVectorizer(
-    ClassifierModelWithVectorizer[WebsiteSampleData, HtmlResponse, DF, VF, V, M]
+    ClassifierModelWithVectorizer[WebsiteSampleData, HtmlResponse, DF, V, M]
 ):
     @classmethod
-    def classify_from_row(cls, row: WebsiteSampleData) -> bool:
+    def classify_from_row(cls, row: WebsiteSampleData) -> float:
         response = build_response_from_sample_data(row)
         return cls.classify_response(response)
 
     @classmethod
-    def classify_response(cls, response: HtmlResponse) -> bool:
+    def classify_response(cls, response: HtmlResponse) -> float:
         """ """
 
         vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
 
         X_features: Sequence[DF] = cls.get_sample_features(response)
-        X_transformed: Sequence[VF] = vectorizer.transform(X_features)
+        X_transformed: Sequence[Sequence[float]] = vectorizer.transform(X_features)
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, S, DF, VF, V, SVC]):
+class SVMModelWithVectorizer(Generic[E, S, DF, V], ClassifierModelWithVectorizer[E, S, DF, V, SVC]):
     gamma = 0.4
     C = 10
 
@@ -460,13 +463,13 @@ class SVMModelWithTfidfResponseVectorizer(
     ResponseClassifierModelWithVectorizer,
     ModelWithResponseSamplesTokenizer,
     ModelWithTfidfVectorizer,
-    SVMModelWithVectorizer[WebsiteSampleData, HtmlResponse, str, float, TfidfVectorizer],
+    SVMModelWithVectorizer[WebsiteSampleData, HtmlResponse, str, TfidfVectorizer],
 ):
     pass
 
 
 class RandomForestModelWithVectorizer(
-    Generic[E, S, DF, VF, V], ClassifierModelWithVectorizer[E, S, DF, VF, V, RandomForestClassifier]
+    Generic[E, S, DF, V], ClassifierModelWithVectorizer[E, S, DF, V, RandomForestClassifier]
 ):
     estimators = 100
 
