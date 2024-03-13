@@ -2,7 +2,7 @@
 """
 import logging
 from abc import abstractmethod
-from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence, Iterable
+from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -23,12 +23,12 @@ from shub_workflow.utils import get_project_settings
 from typing_extensions import Self
 
 from emodels.datasets.utils import (
-    build_response_from_sample_data,
     ResponseConverter,
     Filename,
     DatasetFilename,
     WebsiteSampleData,
     E,
+    build_sample_data_from_response,
 )
 from emodels.datasets.tokenizers import (
     extract_dataset_text,
@@ -74,19 +74,19 @@ DF = TypeVar("DF", contravariant=True)
 # So, the data transformation flux alternatives will be as follows:
 #
 #  Source: Dataset <----- generate_dataset_samples() <----- Samples (sequence of SAMPLE)
-#             |                                               |
-#             |                                               |
-#             E                                             SAMPLE (SAMPLE and E can eventually be the same type)
-#             |                                               |
-#  ModelWithDataset.get_dataset()                             |
-#             |                                               |
-#     pandas.DataFrame                                        |
-#             |                                               |
-#   get_dataset_features()                                    |
-#             |                                               |
-#             DF  < ------- get_sample_features() <------------ (DF and SAMPLE can be eventually be the same type)
+#             |                                                         |
+#             |                                                         |
+#    DatasetFilename,E                                      SAMPLE (SAMPLE and E can eventually be the same type)
+#             |                                                         |
+#    get_dataset()                                                      |
+#             |                                                         |
+# pandas.Dataframe, pandas.Series                                       |
+#             |                                                         |
+# get_features_from_dataframe(), get_features_from_dataframe_row()      |
+#             |                             |                           |
+#       Sequence[DF],DF  < ------- get_sample_features() <------ (DF and SAMPLE can be eventually be the same type)
 #             |
-#       vectorizer.transform()
+#   vectorizer.transform()
 #             |
 # Sequence[Sequence[float]] (i.e. numpy range 2 darray)
 
@@ -138,7 +138,7 @@ class DatasetsPandas(Generic[E]):
         return obj
 
 
-class ModelWithDataset(Generic[E], Protocol):
+class ModelWithDataset(Generic[SAMPLE, E]):
     FSHELPER: FSHelper | None = None
     datasets: DatasetsPandas[E] | None = None
 
@@ -206,6 +206,16 @@ class ModelWithDataset(Generic[E], Protocol):
                 pass
 
     @classmethod
+    def get_row_from_sample(cls, sample: SAMPLE) -> pd.Series:
+        sd: E = cls.get_sample_data_from_sample(sample)
+        return pd.Series(sd)
+
+    @classmethod
+    @abstractmethod
+    def get_sample_data_from_sample(cls, sample: SAMPLE) -> E:
+        ...
+
+    @classmethod
     @abstractmethod
     def generate_dataset_samples(cls) -> Generator[E, None, None]:
         """Generate samples in order create the dataset.
@@ -216,7 +226,7 @@ class ModelWithDataset(Generic[E], Protocol):
         """
 
 
-class ModelWithVectorizer(Generic[DF, E, V], ModelWithDataset[E]):
+class ModelWithVectorizer(Generic[DF, E, SAMPLE, V], ModelWithDataset[SAMPLE, E]):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -239,15 +249,21 @@ class ModelWithVectorizer(Generic[DF, E, V], ModelWithDataset[E]):
 
     @classmethod
     @abstractmethod
-    def get_dataset_features(cls, dataset_bucket: pd.DataFrame) -> Iterable[DF]:
+    def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[DF]:
         ...
 
+    @classmethod
+    def get_features_from_dataframe(cls, df: pd.DataFrame) -> Generator[DF, None, None]:
+        for _, row in df.iterrows():
+            yield cls.get_features_from_dataframe_row(row)[0]
 
-class ModelWithTokenizer(ModelWithDataset[E], Protocol):
+
+class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
     tokenizer_repository: TokenizerFilename
     converter_class: type[ResponseConverter]
 
     tokenizer: SentencePieceProcessor | None = None
+    converter: ResponseConverter
 
     @classmethod
     def load_tokenizer(cls) -> SentencePieceProcessor:
@@ -280,18 +296,22 @@ class ModelWithTokenizer(ModelWithDataset[E], Protocol):
         return cls.tokenizer
 
     @classmethod
+    def get_converter(cls) -> ResponseConverter:
+        if cls.converter is None:
+            cls.converter = cls.converter_class()
+        return cls.converter
+
+    @classmethod
     def reset(cls):
         cls.delete_model_files(cls.tokenizer_repository)
         cls.tokenizer = None
         super().reset()
 
 
-class ModelWithTfidfVectorizer(ModelWithVectorizer[str, E, TfidfVectorizer], ModelWithTokenizer):
+class ModelWithTfidfVectorizer(
+    Generic[SAMPLE, E], ModelWithVectorizer[str, E, SAMPLE, TfidfVectorizer], ModelWithTokenizer[SAMPLE, E]
+):
     vectorizer: TfidfVectorizer | None = None
-
-    @classmethod
-    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[str]:
-        return list(cls.get_dataset_features(X_train))
 
     @classmethod
     def load_vectorizer(cls) -> TfidfVectorizer:
@@ -306,32 +326,27 @@ class ModelWithTfidfVectorizer(ModelWithVectorizer[str, E, TfidfVectorizer], Mod
             LOGGER.info("Training vectorizer...")
             vectorizer = TfidfVectorizer(min_df=10, max_df=0.7, ngram_range=(1, 3))
             datasets = cls.load_dataset()
-            vectorizer.fit(cls.get_dataset_features(datasets.X_train))
+            vectorizer.fit(cls.get_features_from_dataframe(datasets.X_train))
             joblib.dump(vectorizer, vectorizer_local)
             cls._fshelper().upload_file(vectorizer_local, cls.vectorizer_repository)
         return joblib.load(vectorizer_local)
 
 
-class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer):
+class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, WebsiteSampleData]):
     @classmethod
-    def get_features_from_body(cls, converter: ResponseConverter, body: str) -> str:
+    def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[str]:
         tokenizer = cls.get_tokenizer()
-        text: str = " ".join(converter.response_to_valid_text(body))
+        converter = cls.get_converter()
+        text: str = " ".join(converter.response_to_valid_text(row["body"]))
         tokens: List[str] = tokenizer.encode_as_pieces(text)
-        return " ".join(tokens)
+        return (" ".join(tokens),)
 
     @classmethod
-    def get_dataset_features(cls, dataset_bucket: pd.DataFrame) -> Generator[str, None, None]:
-        converter = cls.converter_class()
-        for _, row in dataset_bucket.iterrows():
-            yield cls.get_features_from_body(converter, row["body"])
-
-    @classmethod
-    def get_sample_features(cls, response: HtmlResponse) -> Sequence[str]:
-        return [cls.get_features_from_body(cls.converter_class(), response.text)]
+    def get_sample_data_from_sample(cls, sample: HtmlResponse) -> WebsiteSampleData:
+        return build_sample_data_from_response(sample)
 
 
-class TrainableModel(Generic[E, M], ModelWithDataset[E], Protocol):
+class TrainableModel(Generic[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
     model_repository: ModelFilename
     model: M | None = None
 
@@ -373,11 +388,16 @@ class TrainableModel(Generic[E, M], ModelWithDataset[E], Protocol):
         super().reset()
 
 
-class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, M]):
+class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
     @classmethod
     @abstractmethod
-    def classify_from_row(cls, row: E) -> float:
+    def classify_from_row(cls, row: pd.Series) -> float:
         ...
+
+    @classmethod
+    def classify_sample(cls, sample: SAMPLE) -> float:
+        row = cls.get_row_from_sample(sample)
+        return cls.classify_from_row(row)
 
     @classmethod
     def predict(cls, df: pd.DataFrame) -> pd.Series:
@@ -418,31 +438,16 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, M]):
         print("Roc Auc:", _stat(roc_auc_score, y_test, predicted))
         print("Confusion matrix:\n", _print_confusion_matrix(y_test, predicted))
 
-    @classmethod
-    @abstractmethod
-    def classify_sample(cls, sample: SAMPLE) -> float:
-        ...
-
 
 class ClassifierModelWithVectorizer(
-    Generic[E, SAMPLE, DF, V, M], ModelWithVectorizer[DF, E, V], ClassifierModel[SAMPLE, E, M], ModelWithDataset[E]
+    Generic[E, SAMPLE, DF, V, M],
+    ModelWithVectorizer[DF, E, SAMPLE, V],
+    ClassifierModel[SAMPLE, E, M],
+    ModelWithDataset[SAMPLE, E],
 ):
     @classmethod
-    @abstractmethod
     def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
-        ...
-
-    @classmethod
-    @abstractmethod
-    def get_sample_features(cls, sample: SAMPLE) -> Sequence[DF]:
-        """Returns a length 1 sequence with the features taken from scraped sample.
-        This is an intermediate step between the sample and the vectorization that
-        is not always necessary. In many applications, the return value can just
-        be [S], but for example, with applications with a tokenizer, here is the
-        place where you tokenize the sample (See ModelWithTokenizer and
-        ModelWithResponseSamplesTokenizer)
-        """
-        ...
+        return list(cls.get_features_from_dataframe(X_train))
 
     @classmethod
     def train(cls):
@@ -459,21 +464,12 @@ class ClassifierModelWithVectorizer(
         return model
 
     @classmethod
-    def classify_sample(cls, sample: SAMPLE) -> float:
-        """ """
+    def classify_from_row(cls, row: pd.Series) -> float:
         vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
-
-        X_features: Sequence[DF] = cls.get_sample_features(sample)
+        X_features: Sequence[DF] = cls.get_features_from_dataframe_row(row)
         X_transformed: Sequence[Sequence[float]] = vectorizer.transform(X_features)
         return model.predict(X_transformed)[0]
-
-
-class ResponseClassifierModelWithVectorizer(ClassifierModelWithVectorizer[WebsiteSampleData, HtmlResponse, DF, V, M]):
-    @classmethod
-    def classify_from_row(cls, row: WebsiteSampleData) -> float:
-        response = build_response_from_sample_data(row)
-        return cls.classify_sample(response)
 
 
 class SVMModelWithVectorizer(Generic[E, SAMPLE, DF, V], ClassifierModelWithVectorizer[E, SAMPLE, DF, V, SVC]):
@@ -486,7 +482,6 @@ class SVMModelWithVectorizer(Generic[E, SAMPLE, DF, V], ClassifierModelWithVecto
 
 
 class SVMModelWithTfidfResponseVectorizer(
-    ResponseClassifierModelWithVectorizer,
     ModelWithResponseSamplesTokenizer,
     SVMModelWithVectorizer[WebsiteSampleData, HtmlResponse, str, TfidfVectorizer],
 ):
