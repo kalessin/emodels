@@ -260,10 +260,8 @@ class ModelWithVectorizer(Generic[DF, E, SAMPLE, V], ModelWithDataset[SAMPLE, E]
 
 class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
     tokenizer_repository: TokenizerFilename
-    converter_class: type[ResponseConverter]
 
     tokenizer: SentencePieceProcessor | None = None
-    converter: ResponseConverter
 
     @classmethod
     def load_tokenizer(cls) -> SentencePieceProcessor:
@@ -284,22 +282,21 @@ class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
             LOGGER.info("Training tokenizer model...")
             training_text_filename = Filename("sptokenizer_training_text.txt").local(cls.project)
             cls.load_dataset()
-            extract_dataset_text(cls.dataset_repository.local(cls.project), training_text_filename, cls.converter_class)
+            cls.generate_training_text_filename(training_text_filename)
             train_tokenizer(training_text_filename, tokenizer_local)
             cls._fshelper().upload_file(tokenizer_local, cls.tokenizer_repository)
         return load_tokenizer_from_file(tokenizer_local)
+
+    @classmethod
+    @abstractmethod
+    def generate_training_text_filename(cls, training_text_filename: Filename):
+        ...
 
     @classmethod
     def get_tokenizer(cls) -> SentencePieceProcessor:
         if cls.tokenizer is None:
             cls.tokenizer = cls.load_tokenizer()
         return cls.tokenizer
-
-    @classmethod
-    def get_converter(cls) -> ResponseConverter:
-        if cls.converter is None:
-            cls.converter = cls.converter_class()
-        return cls.converter
 
     @classmethod
     def reset(cls):
@@ -333,6 +330,18 @@ class ModelWithTfidfVectorizer(
 
 
 class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, WebsiteSampleData]):
+
+    converter: ResponseConverter | None = None
+
+    @classmethod
+    def get_converter(cls) -> ResponseConverter:
+        assert cls.converter is not None, "Response Converter not initialized"
+        return cls.converter
+
+    @classmethod
+    def generate_training_text_filename(cls, training_text_filename: Filename):
+        extract_dataset_text(cls.dataset_repository.local(cls.project), training_text_filename, cls.get_converter())
+
     @classmethod
     def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[str]:
         tokenizer = cls.get_tokenizer()
