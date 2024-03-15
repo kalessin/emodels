@@ -146,9 +146,12 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     features: Tuple[str, ...]
     target_label: str
     project: str
+    _self: Self | None = None
 
-    def __init__(self):
-        raise ValueError("Class must not be instantiated.")
+    def __new__(cls):
+        if cls._self is None:
+            cls._self = super().__new__(cls)
+        return cls._self
 
     @classmethod
     @abstractmethod
