@@ -1,7 +1,7 @@
 """
 """
 import logging
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence
 
 import joblib
@@ -138,7 +138,7 @@ class DatasetsPandas(Generic[E]):
         return obj
 
 
-class ModelWithDataset(Generic[SAMPLE, E]):
+class ModelWithDataset(Generic[SAMPLE, E], ABC):
     FSHELPER: FSHelper | None = None
     datasets: DatasetsPandas[E] | None = None
 
