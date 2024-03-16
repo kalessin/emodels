@@ -1,6 +1,7 @@
 """
 """
 import logging
+from functools import partial
 from abc import abstractmethod, ABC
 from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence
 
@@ -57,6 +58,10 @@ class LowLevelModelProtocol(Protocol):
 
     @abstractmethod
     def predict(self, vectorized_samples: Sequence[Sequence[float]]) -> Sequence[float]:
+        ...
+
+    @abstractmethod
+    def predict_proba(self, vectorized_samples: Sequence[Sequence[float]]) -> Sequence[Sequence[float]]:
         ...
 
 
@@ -403,17 +408,17 @@ class TrainableModel(Generic[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
 class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
     @classmethod
     @abstractmethod
-    def classify_from_row(cls, row: pd.Series) -> float:
+    def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
         ...
 
     @classmethod
-    def classify_sample(cls, sample: SAMPLE) -> float:
+    def classify_sample(cls, sample: SAMPLE, proba: int = -1) -> float:
         row = cls.get_row_from_sample(sample)
-        return cls.classify_from_row(row)
+        return cls.classify_from_row(row, proba)
 
     @classmethod
-    def predict(cls, df: pd.DataFrame) -> pd.Series:
-        return df.apply(cls.classify_from_row, axis=1)
+    def predict(cls, df: pd.DataFrame, proba: int = -1) -> pd.Series:
+        return df.apply(partial(cls.classify_from_row, proba=proba), axis=1)
 
     @classmethod
     def evaluate(cls):
@@ -476,11 +481,13 @@ class ClassifierModelWithVectorizer(
         return model
 
     @classmethod
-    def classify_from_row(cls, row: pd.Series) -> float:
+    def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
         vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
         X_features: Sequence[DF] = cls.get_features_from_dataframe_row(row)
         X_transformed: Sequence[Sequence[float]] = vectorizer.transform(X_features)
+        if proba >= 0:
+            return model.predict_proba(X_transformed)[0][proba]
         return model.predict(X_transformed)[0]
 
 
