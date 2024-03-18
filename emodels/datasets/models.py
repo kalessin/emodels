@@ -202,7 +202,7 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
 
     @classmethod
     def reset(cls):
-        pass
+        cls.delete_model_files(cls.dataset_repository)
 
     @classmethod
     def delete_model_files(cls, repository: Filename):
