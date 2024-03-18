@@ -3,7 +3,7 @@
 import logging
 from functools import partial
 from abc import abstractmethod, ABC
-from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence
+from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence, Dict, Any, Mapping
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -37,6 +37,7 @@ from emodels.datasets.tokenizers import (
     load_tokenizer_from_file,
     TokenizerFilename,
 )
+from emodels.datasets.stypes import DatasetBucket
 
 
 LOGGER = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ class LowLevelModelProtocol(Protocol):
 
 
 # Sample coming from scraper
-SAMPLE = TypeVar("SAMPLE")
+SAMPLE = TypeVar("SAMPLE", bound=Mapping[str, Any])
 # E: DatasetFilename samples type. If S is already a structured object, E and S will be the same.
 # Otherwise, E is typically a structured representation of the type S (i.e. when S is an HtmlResponse
 # and E a WebsiteSampleData, which is a dataset structure for representing an HtmlResponse)
@@ -147,8 +148,12 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     FSHELPER: FSHelper | None = None
     datasets: DatasetsPandas[E] | None = None
 
+    scraped_samples: Dict[DatasetBucket, DatasetFilename[SAMPLE]] = dict()
+    scraped_label: str
+
     dataset_repository: DatasetFilename[E]
     features: Tuple[str, ...]
+
     target_label: str
     project: str
     _self: Self | None = None
@@ -224,14 +229,25 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         ...
 
     @classmethod
-    @abstractmethod
+    def append_sample(cls, sample: SAMPLE, bucket: DatasetBucket):
+        """
+        Add sample to the specified dataset in cls.scraped_samples list.
+        """
+        cls.scraped_samples[bucket].append(sample)
+
+    @classmethod
     def generate_dataset_samples(cls) -> Generator[E, None, None]:
-        """Generate samples in order create the dataset.
+        """Generate samples from cls.scraped_samples in order create the dataset repository.
         This dataset must contain sample objects, each object containing
         the features field (as specified by cls.features attribute), the target
         field (as specified by cls.target_label attribute) and the field `dataset_bucket`
         with a value being either "train" or "test".
         """
+        for bucket, scrapes_dataset in cls.scraped_samples.items():
+            for sample in scrapes_dataset:
+                sd = cls.get_sample_data_from_sample(sample)
+                sd["dataset_bucket"] = bucket  # type: ignore
+                yield sd
 
 
 class ModelWithVectorizer(Generic[DF, E, SAMPLE, V], ModelWithDataset[SAMPLE, E]):
@@ -251,8 +267,9 @@ class ModelWithVectorizer(Generic[DF, E, SAMPLE, V], ModelWithDataset[SAMPLE, E]
 
     @classmethod
     def reset(cls):
-        cls.delete_model_files(cls.vectorizer_repository)
-        cls.vectorizer = None
+        if hasattr(cls, "vectorizer_repository"):
+            cls.delete_model_files(cls.vectorizer_repository)
+            cls.vectorizer = None
         super().reset()
 
     @classmethod
