@@ -250,7 +250,7 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
                 yield sd
 
 
-class ModelWithVectorizer(Generic[DF, E, SAMPLE, V], ModelWithDataset[SAMPLE, E]):
+class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -331,7 +331,7 @@ class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
 
 
 class ModelWithTfidfVectorizer(
-    Generic[SAMPLE, E], ModelWithVectorizer[str, E, SAMPLE, TfidfVectorizer], ModelWithTokenizer[SAMPLE, E]
+    Generic[SAMPLE, E], ModelWithVectorizer[SAMPLE, E, str, TfidfVectorizer], ModelWithTokenizer[SAMPLE, E]
 ):
     vectorizer: TfidfVectorizer | None = None
 
@@ -380,7 +380,7 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
         return build_sample_data_from_response(sample)
 
 
-class TrainableModel(Generic[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
+class TrainableModel(Generic[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
     model_repository: ModelFilename
     model: M | None = None
 
@@ -422,7 +422,7 @@ class TrainableModel(Generic[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
         super().reset()
 
 
-class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, SAMPLE, M], ModelWithDataset[SAMPLE, E]):
+class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
     @classmethod
     @abstractmethod
     def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
@@ -474,8 +474,8 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[E, SAMPLE, M], Model
 
 
 class ClassifierModelWithVectorizer(
-    Generic[E, SAMPLE, DF, V, M],
-    ModelWithVectorizer[DF, E, SAMPLE, V],
+    Generic[SAMPLE, E, DF, V, M],
+    ModelWithVectorizer[SAMPLE, E, DF, V],
     ClassifierModel[SAMPLE, E, M],
     ModelWithDataset[SAMPLE, E],
 ):
@@ -508,7 +508,7 @@ class ClassifierModelWithVectorizer(
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[E, SAMPLE, DF, V], ClassifierModelWithVectorizer[E, SAMPLE, DF, V, SVC]):
+class SVMModelWithVectorizer(Generic[SAMPLE, E, DF, V], ClassifierModelWithVectorizer[SAMPLE, E, DF, V, SVC]):
     gamma = 0.4
     C = 10
 
@@ -525,7 +525,7 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[E, SAMPLE, DF, V], ClassifierModelWithVectorizer[E, SAMPLE, DF, V, RandomForestClassifier]
+    Generic[SAMPLE, E, DF, V], ClassifierModelWithVectorizer[SAMPLE, E, DF, V, RandomForestClassifier]
 ):
     estimators = 100
 
