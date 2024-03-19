@@ -256,8 +256,33 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
 
     @classmethod
     @abstractmethod
-    def load_vectorizer(cls) -> V:
+    def instantiate_vectorizer(cls) -> V:
         ...
+
+    @classmethod
+    def load_vectorizer(cls) -> V:
+        """
+        Called only if cls.vectorizer is None
+        """
+        if not hasattr(cls, "vectorizer_repository"):
+            LOGGER.info("Instantiating no trainable vectorizer")
+            return cls.instantiate_vectorizer()
+
+        vectorizer_local: VectorizerFilename = VectorizerFilename(cls.vectorizer_repository).local(cls.project)
+
+        if cls._fshelper().exists(vectorizer_local):
+            LOGGER.info(f"Found local copy of vectorizer model {vectorizer_local}.")
+        elif cls._fshelper().exists(cls.vectorizer_repository):
+            LOGGER.info("Downloading vectorizer model...")
+            cls._fshelper().download_file(cls.vectorizer_repository, vectorizer_local)
+        else:
+            LOGGER.info("Training vectorizer...")
+            vectorizer = cls.instantiate_vectorizer()
+            datasets = cls.load_dataset()
+            vectorizer.fit(tuple(cls.get_features_from_dataframe(datasets.X_train)))
+            joblib.dump(vectorizer, vectorizer_local)
+            cls._fshelper().upload_file(vectorizer_local, cls.vectorizer_repository)
+        return joblib.load(vectorizer_local)
 
     @classmethod
     def get_vectorizer(cls) -> V:
@@ -275,7 +300,13 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
     @classmethod
     @abstractmethod
     def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[DF]:
-        ...
+        """
+        The most common implementation is just:
+
+            return (cast(DF, dict(row)),)
+
+        where you replace DF bu the corresponding class.
+        """
 
     @classmethod
     def get_features_from_dataframe(cls, df: pd.DataFrame) -> Generator[DF, None, None]:
@@ -336,26 +367,11 @@ class ModelWithTfidfVectorizer(
     vectorizer: TfidfVectorizer | None = None
 
     @classmethod
-    def load_vectorizer(cls) -> TfidfVectorizer:
-        vectorizer_local: VectorizerFilename = VectorizerFilename(cls.vectorizer_repository).local(cls.project)
-
-        if cls._fshelper().exists(vectorizer_local):
-            LOGGER.info(f"Found local copy of vectorizer model {vectorizer_local}.")
-        elif cls._fshelper().exists(cls.vectorizer_repository):
-            LOGGER.info("Downloading vectorizer model...")
-            cls._fshelper().download_file(cls.vectorizer_repository, vectorizer_local)
-        else:
-            LOGGER.info("Training vectorizer...")
-            vectorizer = TfidfVectorizer(min_df=10, max_df=0.7, ngram_range=(1, 3))
-            datasets = cls.load_dataset()
-            vectorizer.fit(cls.get_features_from_dataframe(datasets.X_train))
-            joblib.dump(vectorizer, vectorizer_local)
-            cls._fshelper().upload_file(vectorizer_local, cls.vectorizer_repository)
-        return joblib.load(vectorizer_local)
+    def instantiate_vectorizer(cls) -> TfidfVectorizer:
+        return TfidfVectorizer(min_df=10, max_df=0.7, ngram_range=(1, 3))
 
 
 class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, WebsiteSampleData]):
-
     converter: ResponseConverter | None = None
 
     @classmethod
