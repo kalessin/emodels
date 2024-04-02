@@ -15,6 +15,7 @@ from sklearn.metrics import (
     roc_auc_score,
     confusion_matrix,
 )
+import numpy
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
@@ -467,9 +468,11 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
         return df.apply(partial(cls.classify_from_row, proba=proba), axis=1)
 
     @classmethod
-    def evaluate(cls):
+    def evaluate(cls, proba: int = -1, proba_threshold: float = 0.5):
         datasets = cls.get_dataset()
-        predicted = cls.predict(datasets.X_train)
+        predicted = cls.predict(datasets.X_train, proba)
+        if proba >= 0:
+            predicted = (predicted > proba_threshold).astype(numpy.int64)
         y_train = datasets.Y_train
 
         def _stat(score_func, target, predicted):
@@ -490,7 +493,9 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
         print("Confusion matrix:\n", _print_confusion_matrix(y_train, predicted))
         print()
 
-        predicted = cls.predict(datasets.X_test)
+        predicted = cls.predict(datasets.X_test, proba)
+        if proba >= 0:
+            predicted = (predicted > proba_threshold).astype(numpy.int64)
         y_test = datasets.Y_test
 
         print("Test set scores")
