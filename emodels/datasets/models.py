@@ -176,6 +176,13 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         return cls.FSHELPER
 
     @classmethod
+    def _check_sample(cls, dsample: E, idx: int = 0):
+        keys = set(dsample.keys())
+        assert cls.target_label in keys, f"{cls.target_label} key not in sample #{idx}."
+        missing_fields = set(cls.features).difference(keys)
+        assert not missing_fields, f"Missing fields in sample #{idx}: {missing_fields}"
+
+    @classmethod
     def load_dataset(cls) -> DatasetsPandas[E]:
         dataset_local: DatasetFilename[E] = cls.dataset_repository.local(cls.project)
 
@@ -187,14 +194,11 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         else:
             LOGGER.info("Generating datasets...")
             for idx, sample in enumerate(cls.generate_dataset_samples()):
+                cls._check_sample(sample, idx)
                 keys = set(sample.keys())
-                assert cls.target_label in keys, f"{cls.target_label} key not in sample #{idx}."
-                keys.remove(cls.target_label)
                 assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
                 bucket = sample["dataset_bucket"]
                 assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
-                missing_fields = set(cls.features).difference(keys)
-                assert not missing_fields, f"Missing fields in sample #{idx}: {missing_fields}"
                 dataset_local.append(sample)
             cls._fshelper().upload_file(dataset_local, cls.dataset_repository)
         return DatasetsPandas.from_datasetfilename(dataset_local, cls.features, cls.target_label)
@@ -233,7 +237,16 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         """
         Add sample to the specified dataset in cls.scraped_samples list.
         """
+        dsample = cls.get_sample_data_from_sample(sample)
+        cls._check_sample(dsample)
         cls.scraped_samples[bucket].append(sample)
+
+    @classmethod
+    def rebalance_samples(cls, bucket: DatasetBucket):
+        """
+        Rebalance target sample dataset so all labels has similar count, by randomly removing
+        excess of samples with same label.
+        """
 
     @classmethod
     def generate_dataset_samples(cls) -> Generator[E, None, None]:
