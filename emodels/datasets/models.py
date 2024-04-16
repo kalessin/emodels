@@ -268,6 +268,11 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        if hasattr(cls, "vectorizer_repository") and cls.vectorizer_repository is not None:
+            assert cls.vectorizer is None, "model vectorizer must be initially None when you set vectorizer_repository"
+
     @classmethod
     @abstractmethod
     def instantiate_vectorizer(cls) -> V:
@@ -301,6 +306,9 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
     @classmethod
     def get_vectorizer(cls) -> V:
         if cls.vectorizer is None:
+            assert (
+                cls.vectorizer_repository is not None
+            ), "vectorizer_repository attribute is required when vectorizer is trainable."
             cls.vectorizer = cls.load_vectorizer()
         return cls.vectorizer
 
