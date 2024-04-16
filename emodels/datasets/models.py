@@ -306,9 +306,6 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
     @classmethod
     def get_vectorizer(cls) -> V:
         if cls.vectorizer is None:
-            assert (
-                cls.vectorizer_repository is not None
-            ), "vectorizer_repository attribute is required when vectorizer is trainable."
             cls.vectorizer = cls.load_vectorizer()
         return cls.vectorizer
 
