@@ -476,6 +476,11 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
         return df.apply(partial(cls.classify_from_row, proba=proba), axis=1)
 
     @classmethod
+    def predict_from_samples(cls, samples: List[SAMPLE], proba: int = -1) -> pd.Series:
+        df = pd.DataFrame([cls.get_row_from_sample(s) for s in samples])
+        return cls.predict(df, proba)
+
+    @classmethod
     def evaluate(cls, proba: int = -1, proba_threshold: float = 0.5):
         datasets = cls.get_dataset()
         predicted = cls.predict(datasets.X_train, proba)
@@ -541,6 +546,7 @@ class ClassifierModelWithVectorizer(
 
     @classmethod
     def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
+        row = row[list(cls.features)]
         vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
         X_features: Sequence[DF] = cls.get_features_from_dataframe_row(row)
