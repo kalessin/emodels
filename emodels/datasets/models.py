@@ -146,12 +146,12 @@ class DatasetsPandas(Generic[E]):
 
 
 class ModelWithDataset(Generic[SAMPLE, E], ABC):
-    FSHELPER: FSHelper | None = None
     datasets: DatasetsPandas[E] | None = None
 
     scraped_samples: Dict[DatasetBucket, DatasetFilename[SAMPLE]] = dict()
     scraped_label: str
 
+    FSHELPER: FSHelper | None = None
     dataset_repository: DatasetFilename[E]
     features: Tuple[str, ...]
 
@@ -160,6 +160,9 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     _self: Self | None = None
 
     def __new__(cls):
+        """
+        Ensure singleton per class
+        """
         if cls._self is None:
             cls._self = super().__new__(cls)
         return cls._self
@@ -213,6 +216,7 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     @classmethod
     def reset(cls):
         cls.delete_model_files(cls.dataset_repository)
+        cls.datasets = None
 
     @classmethod
     def delete_model_files(cls, repository: Filename):
@@ -313,7 +317,7 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
     def reset(cls):
         if hasattr(cls, "vectorizer_repository"):
             cls.delete_model_files(cls.vectorizer_repository)
-            cls.vectorizer = None
+        cls.vectorizer = None
         super().reset()
 
     @classmethod
@@ -454,6 +458,7 @@ class TrainableModel(Generic[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
     def reset(cls):
         """Remove datasets and model files, so a retrain will be forced."""
         cls.delete_model_files(cls.model_repository)
+        cls.model = None
         super().reset()
 
 
