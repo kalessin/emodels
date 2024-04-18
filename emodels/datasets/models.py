@@ -221,11 +221,9 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     @classmethod
     def delete_model_files(cls, repository: Filename):
         for fname in (repository, repository.local(cls.project)):
-            try:
+            if cls._fshelper().exists(fname):
                 cls._fshelper().rm_file(fname)
                 LOGGER.info(f"Deleted {fname}")
-            except FileNotFoundError:
-                pass
 
     @classmethod
     def get_row_from_sample(cls, sample: SAMPLE) -> pd.Series:
@@ -240,7 +238,7 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     @classmethod
     def append_sample(cls, sample: SAMPLE, bucket: DatasetBucket):
         """
-        Add sample to the specified dataset in cls.scraped_samples list.
+        Add sample (SAMPLE) to the specified scraped dataset in cls.scraped_samples list.
         """
         dsample = cls.get_sample_data_from_sample(sample)
         cls._check_sample(dsample)
