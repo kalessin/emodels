@@ -214,9 +214,13 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         return cls.datasets
 
     @classmethod
-    def reset(cls):
+    def reset_datasets(cls):
         cls.delete_model_files(cls.dataset_repository)
         cls.datasets = None
+
+    @classmethod
+    def reset(cls):
+        cls.reset_datasets()
 
     @classmethod
     def delete_model_files(cls, repository: Filename):
