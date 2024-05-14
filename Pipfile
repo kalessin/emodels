@@ -6,12 +6,15 @@ name = "pypi"
 [packages]
 scrapy = "*"
 dateparser = "*"
-datasets = "*"
+datasets = "==2.19.1"
 scikit-learn = "==1.2.1"
-sentencepiece = "*"
-transformers = {extras = ["torch"], version = "*"}
-torch = "*"
+sentencepiece = "==0.2.0"
+transformers = {extras = ["torch"], version = "==4.40.2"}
+torch = "==2.3.0"
 shub-workflow = "*"
+pillow = "*"
+einops = "==0.8.0"
+torchvision = "==0.18.0"
 
 [dev-packages]
 flake8 = "*"
