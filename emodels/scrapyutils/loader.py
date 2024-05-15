@@ -1,13 +1,14 @@
 import os
 import re
 import logging
+from glob import glob
 from typing import Optional
 
 from scrapy.loader import ItemLoader
 from scrapy.http import TextResponse
 from scrapy import Item
 
-from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS
+from emodels.config import EMODELS_ITEMS_DIR, EMODELS_SAVE_EXTRACT_ITEMS, EMODELS_ITEMS_FILENAME
 from emodels.datasets.utils import DatasetFilename
 from emodels.scrapyutils.response import ExtractTextResponse, DEFAULT_SKIP_PREFIX
 from emodels.datasets.stypes import ExtractDict, ItemSample
@@ -22,8 +23,16 @@ class ExtractItemLoader(ItemLoader):
         if not hasattr(cls, "savefile"):
             folder = os.path.join(EMODELS_ITEMS_DIR, obj.default_item_class.__name__)
             os.makedirs(folder, exist_ok=True)
-            findex = len(os.listdir(folder))
-            cls.savefile: DatasetFilename[ItemSample] = DatasetFilename(os.path.join(folder, f"{findex}.jl.gz"))
+            fname_prefix = EMODELS_ITEMS_FILENAME
+            complete_fname_prefix = os.path.join(folder, fname_prefix)
+            idx = len(glob(complete_fname_prefix + "*"))
+            if idx > 0:
+                if fname_prefix:
+                    complete_fname_prefix += "-"
+                complete_fname_prefix += str(idx)
+            complete_fname = complete_fname_prefix + ".jl.gz"
+            cls.savefile: DatasetFilename[ItemSample] = DatasetFilename(complete_fname)
+            LOG.info(f"Items will be saved to {cls.savefile}")
         return obj
 
     def _check_valid_response(self):

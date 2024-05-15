@@ -28,13 +28,14 @@ extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 
 Instead of subclass your item loaders from `scrapy.loader.ItemLoader`, use `emodels.scrapyutils.loader.ExtractItemLoader`. This action will not affect the working of itemloaders and will enable the
 properties just described above. In addition, in order to save the collected extraction data, it is required to set the environment variable `EMODELS_SAVE_EXTRACT_ITEMS` to 1. The collected
-extraction data will be stored at `<user home folder>/.datasets/items/<item class name>/<sequence number>.jl.gz`. The base folder `<user home folder>/.datasets` is the default one. You can
+extraction data will be stored by default at `<user home folder>/.datasets/items/<item class name>/<sequence number>.jl.gz`. Instead of a default sequence number you may want to use a custom filename.
+For that purpose you can use the environment variable `EMODELS_ITEMS_FILENAME`. The base folder `<user home folder>/.datasets` is the default one. You can
 customize it via the environment variable `EMODELS_REPOSITORY`.
 
 So, in order to maintain a clean and organized dataset, only enable extract items saving when you are sure you have the correct extraction selectors. Then run locally:
 
 ```
-EMODELS_SAVE_EXTRACT_ITEMS=1 scrapy crawl myspider
+EMODELS_SAVE_EXTRACT_ITEMS=1 [EMODELS_ITEMS_FILENAME=<custom filename>] scrapy crawl myspider
 ```
 
 In addition, in order to have your dataset organized, you may want to choose the same item class name for same item schema, even accross multiple projects. And avoid to repeat it among items with different
