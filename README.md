@@ -28,7 +28,7 @@ extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 
 Instead of subclass your item loaders from `scrapy.loader.ItemLoader`, use `emodels.scrapyutils.loader.ExtractItemLoader`. This action will not affect the working of itemloaders and will enable the
 properties just described above. In addition, in order to save the collected extraction data, it is required to set the environment variable `EMODELS_SAVE_EXTRACT_ITEMS` to 1. The collected
-extraction data will be stored by default at `<user home folder>/.datasets/items/<item class name>/<sequence number>.jl.gz`. Instead of a default sequence number you may want to use a custom filename.
+extraction data will be stored by default at `<user home folder>/.datasets/items/<item class name>/<caller module name>.jl.gz`. Instead of a default filename you may want to use a custom filename.
 For that purpose you can use the environment variable `EMODELS_ITEMS_FILENAME`. The base folder `<user home folder>/.datasets` is the default one. You can
 customize it via the environment variable `EMODELS_REPOSITORY`.
 

@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import inspect
 from glob import glob
 from typing import Optional
 
@@ -20,10 +21,16 @@ LOG = logging.getLogger(__name__)
 class ExtractItemLoader(ItemLoader):
     def __new__(cls, *args, **kwargs):
         obj = super().__new__(cls)
-        if not hasattr(cls, "savefile"):
+
+        if not hasattr(cls, "savefile") and EMODELS_SAVE_EXTRACT_ITEMS:
             folder = os.path.join(EMODELS_ITEMS_DIR, obj.default_item_class.__name__)
             os.makedirs(folder, exist_ok=True)
             fname_prefix = EMODELS_ITEMS_FILENAME
+            if not fname_prefix:
+                frm = inspect.stack()[1]
+                mod = inspect.getmodule(frm[0])
+                if mod is not None:
+                    fname_prefix = mod.__name__
             complete_fname_prefix = os.path.join(folder, fname_prefix)
             idx = len(glob(complete_fname_prefix + "*"))
             if idx > 0:
@@ -33,6 +40,7 @@ class ExtractItemLoader(ItemLoader):
             complete_fname = complete_fname_prefix + ".jl.gz"
             cls.savefile: DatasetFilename[ItemSample] = DatasetFilename(complete_fname)
             LOG.info(f"Items will be saved to {cls.savefile}")
+
         return obj
 
     def _check_valid_response(self):
