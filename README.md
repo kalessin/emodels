@@ -16,8 +16,14 @@ $ pip install e-models
 scrapyutils module provides two classes, one for extending `scrapy.http.TextResponse` and another for
 extending `scrapy.loader.ItemLoader`. The extensions provide methods that:
 
-1. Allow to extract item data in the text (markdown) domain instead of the html source domain.
-2. The main purpose of this approach is the generation of datasets suitable for training transformer models for text extraction (aka extractive question answering, EQA)
+1. Allow to extract item data in the text (markdown) domain instead of the html source domain (using `add_text_re`).
+2. Allow the generation of datasets suitable for training transformer models for text extraction (aka extractive question answering, EQA). The dataset records are generated through the usage of
+  any of `add_text_re()`, `add_css()` or `add_xpath()`. But while `add_text_re()` extraction is performed directly in the text (markdown) domain, `add_css()` and
+  `add_xpath()` operate on the html domain. So in the second case, extraction of data for dataset generation is computed by searching the extracted value from html, over the markdown. Because of this,
+  the extraction for dataset may not be the best in some cases, and even missing. In addition, `add_css()` and `add_xpath()` will only work if you don't use any input processing for the target field,
+  because the extraction data is generated via comparison between the item loader collected values and the text in the markdown version. That is why, for extracting the data for datasets building,
+  either avoid to use field input processors and use only output processors when possible, or just use `add_text_re()` when this is not possible. In most cases it is easy to migrate input processors
+  to output processors, in order to ensure that the final field value of the item will not change while you are still conserving the original unprocessed string at the input.
 3. As a secondary objective, it provides an alternative kind of selector to xpath and css selectors for extraction of data from the html source, that may be more suitable and readable for humans.
 4. In many situations, and specially when there is not an id or a class to spot accurately the text, the expresion in terms of regular expressions in the domain of markdown can be simpler.
 5. The additional cost of maintenance is zero. Even if you are introducing a new kind of selector that may be unknown for most people, this only characterizes single lines and does not condition
