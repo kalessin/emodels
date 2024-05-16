@@ -177,6 +177,8 @@ class ExtractDatasetFilename(DatasetFilename[ItemSample]):
                 f'open with {cls.__name__}.local_by_name("{localname}") or remove it for rebuilding'
             )
         for source in os.listdir(EMODELS_ITEMS_DIR):
+            if classes is not None and source not in classes:
+                continue
             randomizer = DatasetBucketRandomizer(dataset_ratio)
             files = os.listdir(os.path.join(EMODELS_ITEMS_DIR, source))
             shuffle(files)

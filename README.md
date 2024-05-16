@@ -153,7 +153,17 @@ At any moment, you can build a joint from all the individual files, with the fol
 > eds = ExtractDatasetFilename.build_from_items("myproject/items")
 ```
 
-The joint dataset will be saved to the dataset file represented by eds variable.
+You may also want to select only a specific class of items. For example:
+
+```python
+> from emodels.datasets.utils import ExtractDatasetFilename
+> eds = ExtractDatasetFilename.build_from_items("myproject/items", classes=("JobItem",))
+```
+
+will only select the dataset from the datasets subfolder "items/JobItem".
+
+
+The joint dataset will be saved to the dataset file represented by eds variable:
 
 ```python
 > eds
