@@ -285,7 +285,8 @@ if everything went ok, the score of the tunned model should be bigger than the p
 This evaluation is different than the one performed by trainer.evaluate() above. While the last evaluates by comparing
 indexes results, which are the output and target of the model, the one here evaluates actual results as extracted text.
 
-Results however should be similar.
+The above line performs a full evaluation on training and test buckets contained in the provided dataset. You can also perform
+partial evaluations, by specifying either training or test bucket, and the fields over which you want to perform the evaluation.
 
 ## html2text module
 

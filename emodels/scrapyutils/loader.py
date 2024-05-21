@@ -115,8 +115,10 @@ class ExtractItemLoader(ItemLoader):
 
     def add_xpath(self, field_name, xpath, *processors, **kw):
         super().add_xpath(field_name, xpath, *processors, **kw)
-        self._add_extraction_from_values(field_name)
+        if self.context["response"]:
+            self._add_extraction_from_values(field_name)
 
     def add_css(self, field_name, css, *processors, **kw):
         super().add_css(field_name, css, *processors, **kw)
-        self._add_extraction_from_values(field_name)
+        if self.context["response"]:
+            self._add_extraction_from_values(field_name)
