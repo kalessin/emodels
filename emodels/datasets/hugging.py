@@ -328,9 +328,9 @@ class QuestionAnswerer:
                     continue
                 tokens = self.tokenizer.convert_ids_to_tokens(inputs[best_idx])
                 best_answer = self.tokenizer.convert_tokens_to_string(tokens[answer_start:answer_end]).strip()
-                best_score = scores[best_idx]
+                best_score = float(scores[best_idx])
                 if best_score > score_threshold:
-                    return best_answer, float(scores[best_idx])
+                    return best_answer, best_score
                 if best_score > best_best_score:
                     best_best_score = best_score
                     best_best_answer = best_answer

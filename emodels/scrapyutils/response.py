@@ -3,13 +3,12 @@ import logging
 import difflib
 from typing import List, Optional, Tuple, Generator
 
-from scrapy.http import TextResponse
 try:
     # this is an ugly hack for supporting scrapy_zyte_api responses, but there doesn't seem
     # to be another better way to fix this with the approach taken in scrapy_zyte_api.
     from scrapy_zyte_api.responses import ZyteAPITextResponse as TextResponse
 except ImportError:
-    pass
+    from scrapy.http import TextResponse
 
 
 from emodels import html2text
