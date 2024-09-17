@@ -17,7 +17,7 @@ setup(
         "scikit-learn",
         "scrapy",
         "sentencepiece",
-        "shub-workflow",
+        "shub-workflow>=1.14.0.2",
     ),
     extras_require = {
         "with-transformers": ["datasets", "torch", "transformers[torch]"],

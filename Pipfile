@@ -11,7 +11,7 @@ scikit-learn = "==1.2.1"
 sentencepiece = "==0.2.0"
 transformers = {extras = ["torch"], version = "==4.40.2"}
 torch = "==2.3.0"
-shub-workflow = "*"
+shub-workflow = "==1.14.9.1"
 pillow = "*"
 einops = "==0.8.0"
 torchvision = "==0.18.0"

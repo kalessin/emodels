@@ -20,7 +20,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sentencepiece import SentencePieceProcessor
-from shub_workflow.deliver.futils import FSHelper
+from shub_workflow.utils.futils import FSHelper
 from shub_workflow.utils import get_project_settings
 from typing_extensions import Self
 
