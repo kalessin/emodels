@@ -104,11 +104,13 @@ class ExtractTextResponse(TextResponse):
 
     def _text_re(
         self,
-        reg: str = "(.+?)",
+        reg: Optional[str] = None,
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
     ) -> Generator[Tuple[str, int, int], None, None]:
+        if reg is None:
+            reg = "(.+?)"
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
         if tid:
@@ -147,7 +149,7 @@ class ExtractTextResponse(TextResponse):
 
     def text_re(
         self,
-        reg: str = "(.+?)",
+        reg: Optional[str] = None,
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,

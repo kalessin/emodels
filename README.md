@@ -72,7 +72,7 @@ The new kind of selector is based on regular expressions, but it also admits id 
     def add_text_re(
         self,
         attr: str,
-        reg: str = "(.+?)",
+        reg: Optional[str] = None,
         tid: Optional[str] = None,
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
