@@ -1,0 +1,419 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml"><head><title>
+	www.blberza.com
+</title><link rel="icon" href="../Content/Logo/favicon-light.svg"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous"><link href="/client/combined/css.css?v=89570939" rel="stylesheet" type="text/css">
+<meta name="description" content="Banjalučka berza hartija od vrijednosti, Banjaluka Stock Exchange">
+    
+
+<link rel="stylesheet" type="text/css" href="../client/highstock/css/stocktools/gui.css"><link rel="stylesheet" type="text/css" href="../client/highstock/css/annotations/popup.css"><link rel="preconnect" href="https://fonts.gstatic.com"><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script type="text/javascript">$.noConflict()</script>
+
+</head>
+
+<body>
+    <form name="aspnetForm" method="post" action="./issuerlist.aspx?market=officialmarket" id="aspnetForm">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="">
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="">
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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">
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="74E0CB73">
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="d5KOFO6QbmQL3ALFf2pqJODUI7J7p2FJs87JNmiDq5W9MsOUpwMaFE1Ov20Wa2+qNzotFN4l4mJg3fPkbh6PWYfuQPpStkHGeq0axpQJHw1L2xvE1JHU2PQPxjoRHt7XG+9Nht2xaHAh0FGAOfHDYc2G8kfWRpYYxXoqsApMW+6YEwieXUwvpWh6E+UQ0FpJllay8qhWTfOrd7c7UDDs0Yh5C/CWYab6T4022LPcy9XyrWf2tCKkDEXVirRKSMGKGsdBjcRwdK3NkquJlEbLmrEYqfgzO4XMjrDQs5An0Y+J4NAcMugeMIcRgTK9k5iIxxwIK5CLoLzK0Tiy0NgOjfdzeYmJJv17BDPhvXJgx23nIaft8OnckFQL7vzRhNFMCfLmjgkfLen6cGgfk1zB0jQh4G7AM5mZekCmCE5b+Yn3MuyzmhgNL0soaUHBRZJ359a0AQ3kIMPJzlIU0Wll5wYbYPg1T+cCZkFod4txNVCDuXSzkFxXNON/7b2zTPUodeFitii2hqL3pqgJGWR9Qxtc4QSYLA8sMzvjh2lv1HU=">
+</div>
+        <div id="wrapper" style="min-height: 100vh;">
+
+            <div class="d-flex flex-column" style="min-height: 100%">
+                <div class="position-sticky" style="top: 0; z-index: 10">
+                    <div class="container-xl bg-white grid-links-reset">
+                        <nav class="navbar navbar-expand-md navbar-default justify-content-between px-0">
+                            <div>
+                                <a href="/Pages/Default.aspx">
+                                    <img src="/Content/gridAssets/logo/berza-logo-3.svg" height="55">
+                                </a>
+                            </div>
+                            <div class="d-flex">
+                                <ul class="navbar-nav align-items-md-center flex-row">
+                                    <li class="nav-item d-none d-lg-inline-block">
+                                        <a class="nav-link grid-font-weight-500 grid-small-text grid-main-text-color hover" href="http://www.secrs.gov.ba/" target="_blank">Securities Commission</a>
+                                    </li>
+                                    <li class="nav-item d-none d-lg-inline-block">
+                                        <a class="nav-link grid-font-weight-500 grid-small-text grid-main-text-color hover" href="http://www.crhovrs.org/" target="_blank">Central Registry</a>
+                                    </li>
+                                    <li class="grid-divider-small primary mx-1 d-none d-lg-block"></li>
+                                    <li class="nav-item mr-4 d-none d-lg-inline-block" id="aboutus"><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(7,0)" data-toggle="dropdown" class="  nav-link grid-font-weight-500 grid-small-text dropdown-toggle grid-dropdown-toggle grid-main-text-color hover ">About us</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">BLSE</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp2" class="grid-submenu-item-link"><span>Profile</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp3" class="grid-submenu-item-link"><span>Strategy</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp4" class="grid-submenu-item-link"><span>History</span></a></p><p class="grid-secondary-text-color mb-2"><a href="annualreports.aspx" class="grid-submenu-item-link"><span>Annual Reports</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp9" class="grid-submenu-item-link"><span>International cooperation</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=donacije" class="grid-submenu-item-link"><span>Donations and Sponsorhips</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Trading</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp6" class="grid-submenu-item-link"><span>Trading systems</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=non-trading-days" class="grid-submenu-item-link"><span>Trading calendar</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp7" class="grid-submenu-item-link"><span>Clearing and settlement</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp8" class="grid-submenu-item-link"><span>Trading and listing commission</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Conferences and Seminars</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp80" class="grid-submenu-item-link"><span>Conferences</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=seminari" class="grid-submenu-item-link"><span>Seminars</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Education</h6><p class="grid-secondary-text-color mb-2"><a href="https://virtua.blberza.com/" target="_blank " class="grid-submenu-item-link"><span>Virtua</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/publikacije.html" target="_blank " class="grid-submenu-item-link"><span>Books</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/diplomski.html" target="_blank " class="grid-submenu-item-link"><span>Students' Thesis</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/" target="_blank " class="grid-submenu-item-link"><span>Students Competitions</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/interkont.html" target="_blank " class="grid-submenu-item-link"><span>Students  Accounting</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Publications</h6><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/download/Trziste_kapitala-Edukativni_materijal-v3.pdf" target="_blank " class="grid-submenu-item-link"><span>Textbook</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/download/Zbirka_zadataka_v3.pdf" target="_blank " class="grid-submenu-item-link"><span>Workbook</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/download/Sluzbeno_trziste_v1.pdf" target="_blank " class="grid-submenu-item-link"><span>Official market</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/download/IPO_brosura_v1.pdf?" target="_blank " class="grid-submenu-item-link"><span>Securities Issuance</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=scorecard" class="grid-submenu-item-link"><span>Corporate Governance</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp17" class="grid-submenu-item-link"><span>FAQ</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Links</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp15" class="grid-submenu-item-link"><span>Important Links</span></a></p></div></div></div></div></li>
+                                    <li class="nav-item d-flex">
+                                        <a id="ctl00_ctl00_lbLat" class="nav-link grid-font-weight-500 grid-small-text grid-main-text-color hover pr-1 grid-opacity-03" href="javascript:__doPostBack('ctl00$ctl00$lbLat','')">Lat</a>
+
+                                    </li>
+                                    <li class="nav-item">
+                                        <a id="ctl00_ctl00_lbCir" class="nav-link grid-font-weight-500 grid-small-text grid-main-text-color hover pr-1 grid-opacity-03" href="javascript:__doPostBack('ctl00$ctl00$lbCir','')">Ћир</a>
+                                    </li>
+                                    <li class="nav-item d-flex">
+                                        <a id="ctl00_ctl00_lbEng" class="nav-link grid-font-weight-500 grid-small-text grid-main-text-color hover pr-1" href="javascript:__doPostBack('ctl00$ctl00$lbEng','')">Eng</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </nav>
+                    </div>
+                    <div class="grid-main-bg-color grid-links-reset">
+                        <div class="container-xl px-0 px-lg-3">
+                            <div class="d-flex align-items-center justify-content-between position-relative flex-wrap">
+                                <div id="divMenu0" class="d-none d-lg-flex justify-content-between grid-menu align-items-center"><div class="flex-wrap"><a href="default.aspx" class="  top-menu-item ">Home</a><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(1,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item  tm-active ">Issuers</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Issuers</h6><p class="grid-secondary-text-color mb-2"><a href="issuerlist.aspx?market=officialmarket" class="grid-submenu-item-link active"><span>Official Market</span></a></p><p class="grid-secondary-text-color mb-2"><a href="issuerlist.aspx?market=freemarket" class="grid-submenu-item-link"><span>Free Market</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Documents</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=requests" class="grid-submenu-item-link"><span>Requests</span></a></p><p class="grid-secondary-text-color mb-2"><a href="http://edu.blberza.com/edukacija/download/IPO_brosura_v1.pdf" target="_blank " class="grid-submenu-item-link"><span>Initial Public Offering (IPO) </span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Financial Figures</h6><p class="grid-secondary-text-color mb-2"><a href="financialfiguressearch.aspx" class="grid-submenu-item-link"><span>Search</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Dividends and Coupons</h6><p class="grid-secondary-text-color mb-2"><a href="dividend.aspx" class="grid-submenu-item-link"><span>Dividends</span></a></p><p class="grid-secondary-text-color mb-2"><a href="bondcoupons.aspx" class="grid-submenu-item-link"><span>Coupons</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Other data</h6><p class="grid-secondary-text-color mb-2"><a href="othermarketinfo.aspx?group=1" class="grid-submenu-item-link"><span>Cumulative Financial Reports</span></a></p><p class="grid-secondary-text-color mb-2"><a href="othermarketinfo.aspx?group=2" class="grid-submenu-item-link"><span>Cumulative Reports for Funds</span></a></p><p class="grid-secondary-text-color mb-2"><a href="othermarketinfo.aspx?group=3" class="grid-submenu-item-link"><span>Ownership Structure</span></a></p><p class="grid-secondary-text-color mb-2"><a href="sellingsharesannouncementsarchive.aspx" class="grid-submenu-item-link"><span>Archive of Anouncements on Selling Shares</span></a></p><p class="grid-secondary-text-color mb-2"><a href="othermarketinfo.aspx?group=4" class="grid-submenu-item-link"><span>Other Documents</span></a></p></div></div></div></div><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(2,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item ">News</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Announcements</h6><p class="grid-secondary-text-color mb-2"><a href="news.aspx?kat=1" class="grid-submenu-item-link"><span>BLSE news</span></a></p><p class="grid-secondary-text-color mb-2"><a href="news.aspx?kat=2" class="grid-submenu-item-link"><span>Corporate news</span></a></p><p class="grid-secondary-text-color mb-2"><a href="corporatecalendar.aspx" class="grid-submenu-item-link"><span>Corporate calendar</span></a></p><p class="grid-secondary-text-color mb-2"><a href="news.aspx?kat=3" class="grid-submenu-item-link"><span>Financial News</span></a></p></div></div></div></div><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(3,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item ">Market</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Market Segmentation</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp5" class="grid-submenu-item-link"><span>Tiers</span></a></p><p class="grid-secondary-text-color mb-2"><a href="securitylist.aspx?tier=shares" class="grid-submenu-item-link"><span>Shares</span></a></p><p class="grid-secondary-text-color mb-2"><a href="securitylist.aspx?tier=bonds" class="grid-submenu-item-link"><span>Bonds</span></a></p><p class="grid-secondary-text-color mb-2"><a href="securitylist.aspx?tier=mm%3a24%2cmm%3a25" class="grid-submenu-item-link"><span>T-Bills</span></a></p><p class="grid-secondary-text-color mb-2"><a href="suspendedsecurities.aspx" class="grid-submenu-item-link"><span>Suspended securities</span></a></p><p class="grid-secondary-text-color mb-2"><a href="delistedsecurities.aspx" class="grid-submenu-item-link"><span>Delisted Securities</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Indices</h6><p class="grid-secondary-text-color mb-2"><a href="indexlist.aspx" class="grid-submenu-item-link"><span>BLSE Indices</span></a></p><p class="grid-secondary-text-color mb-2"><a href="indexprofile.aspx?code=birs" class="grid-submenu-item-link"><span>Profile</span></a></p><p class="grid-secondary-text-color mb-2"><a href="charts.aspx?type=index&amp;code=birs" class="grid-submenu-item-link"><span>Graph</span></a></p><p class="grid-secondary-text-color mb-2"><a href="indexvalues.aspx?code=birs" class="grid-submenu-item-link"><span>Index values</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Yield Curve</h6><p class="grid-secondary-text-color mb-2"><a href="yieldcurveprofile.aspx" class="grid-submenu-item-link"><span>Profile</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Price lists</h6><p class="grid-secondary-text-color mb-2"><a href="pricelisttext.aspx" class="grid-submenu-item-link"><span>Price list (.TXT)</span></a></p><p class="grid-secondary-text-color mb-2"><a href="pricelistexcel.aspx" class="grid-submenu-item-link"><span>Price list (.XLS)</span></a></p><p class="grid-secondary-text-color mb-2"><a href="pricelisthtml.aspx" class="grid-submenu-item-link"><span>Price list (.HTML)</span></a></p><p class="grid-secondary-text-color mb-2"><a href="pricelistperiod.aspx" class="grid-submenu-item-link"><span>Price List (period)</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Reports</h6><p class="grid-secondary-text-color mb-2"><a href="dailymediareports.aspx" class="grid-submenu-item-link"><span>Daily reports</span></a></p><p class="grid-secondary-text-color mb-2"><a href="weeklymediareports.aspx" class="grid-submenu-item-link"><span>Weekly reports</span></a></p><p class="grid-secondary-text-color mb-2"><a href="periodicalstatreports.aspx" class="grid-submenu-item-link"><span>Statistics</span></a></p><p class="grid-secondary-text-color mb-2"><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSqgiG5QdNzwPLSreEaCnqQChRHtsoNDX56MjVGsZk7gy-h0ErnM6GETcNE_rE47xMxyizCdYF-xb_i/pubhtml" target="_blank " class="grid-submenu-item-link"><span>Capital Market Statistics</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Market capitalization</h6><p class="grid-secondary-text-color mb-2"><a href="marketcapitalization.aspx" class="grid-submenu-item-link"><span>Value</span></a></p><p class="grid-secondary-text-color mb-2"><a href="charts.aspx?type=capitalization" class="grid-submenu-item-link"><span>Graphs</span></a></p><p class="grid-secondary-text-color mb-2"><a href="industryclassification.aspx" class="grid-submenu-item-link"><span>Classification by Industry</span></a></p><p class="grid-secondary-text-color mb-2"><a href="issuersbyindustry.aspx" class="grid-submenu-item-link"><span>Issuers by Industry</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Other turnover</h6><p class="grid-secondary-text-color mb-2"><a href="publicofferings.aspx" class="grid-submenu-item-link"><span>Public Offerings</span></a></p><p class="grid-secondary-text-color mb-2"><a href="auctionsshares.aspx" class="grid-submenu-item-link"><span>Auctions for Packet of Shares</span></a></p><p class="grid-secondary-text-color mb-2"><a href="auctionsstate.aspx" class="grid-submenu-item-link"><span>Auctions for State Owned Capital</span></a></p><p class="grid-secondary-text-color mb-2"><a href="blocktrades.aspx" class="grid-submenu-item-link"><span>Block Trades</span></a></p><p class="grid-secondary-text-color mb-2"><a href="takeovers.aspx" class="grid-submenu-item-link"><span>Takeovers</span></a></p><p class="grid-secondary-text-color mb-2"><a href="repotrades.aspx" class="grid-submenu-item-link"><span>REPO</span></a></p></div></div></div></div><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(4,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item ">Members</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Stock Exchange Members</h6><p class="grid-secondary-text-color mb-2"><a href="members.aspx" class="grid-submenu-item-link"><span>Regular Members</span></a></p><p class="grid-secondary-text-color mb-2"><a href="membersspec.aspx" class="grid-submenu-item-link"><span>Special Members</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=liquidity-providers" class="grid-submenu-item-link"><span>Liquidity providers</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Custody</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp78" class="grid-submenu-item-link"><span>List of Custody Banks</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Locations</h6><p class="grid-secondary-text-color mb-2"><a href="membersbycity.aspx" class="grid-submenu-item-link"><span>Where to Buy/Sell</span></a></p></div></div></div></div><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(5,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item ">Regulation</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">BLSE</h6><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=statut" class="grid-submenu-item-link"><span>Statute</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=pravila" class="grid-submenu-item-link"><span>Rules</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=naknade" class="grid-submenu-item-link"><span>Commissions</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=uputstva" class="grid-submenu-item-link"><span>Instructions</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=obrasci" class="grid-submenu-item-link"><span>Forms</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=zahtjevi" class="grid-submenu-item-link"><span>Requests</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=berza&amp;cat=arhiva" class="grid-submenu-item-link"><span>Archive</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Securites Commission</h6><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=khov&amp;cat=pravilnici" class="grid-submenu-item-link"><span>Rules</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=khov&amp;cat=naknade" class="grid-submenu-item-link"><span>Commissions</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=khov&amp;cat=standardi" class="grid-submenu-item-link"><span>Standards</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Laws</h6><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=zakoni&amp;cat=zakoni" class="grid-submenu-item-link"><span>Laws</span></a></p><p class="grid-secondary-text-color mb-2"><a href="regulations.aspx?prefix=zakoni&amp;cat=pravilnici" class="grid-submenu-item-link"><span>Rules</span></a></p></div></div></div></div><div class="dropdown d-flex position-unset"> <a href="#" onclick="javascript:selectMenu(6,0)" data-toggle="dropdown" class="  dropdown-toggle grid-dropdown-toggle top-menu-item ">Products and Services</a><div class="dropdown-menu grid-dropdown-menu m-0 pl-3 grid-shadow-heavy"><div class="d-flex flex-wrap align-content-between"><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Products</h6><p class="grid-secondary-text-color mb-2"><a href="https://sites.google.com/blberza.com/brokeroffice" target="_blank " class="grid-submenu-item-link"><span>Broker Office</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=mtrader" class="grid-submenu-item-link"><span>M Trader</span></a></p><p class="grid-secondary-text-color mb-2"><a href="https://mm.blberza.com/" target="_blank " class="grid-submenu-item-link"><span>Money Market</span></a></p><p class="grid-secondary-text-color mb-2"><a href="https://mlk.blberza.com/" target="_blank " class="grid-submenu-item-link"><span>MLC</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=acc" class="grid-submenu-item-link"><span>Interkont</span></a></p></div><div class="d-flex flex-column mr-5 pt-4"><h6 class="text-uppercase grid grid-main-text-color hover mb-3">Services</h6><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp57" class="grid-submenu-item-link"><span>Trading monitoring</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=sp99" class="grid-submenu-item-link"><span>Web Services</span></a></p><p class="grid-secondary-text-color mb-2"><a href="docview.aspx?page=vendors" class="grid-submenu-item-link"><span>Vendors</span></a></p></div></div></div></div></div></div>
+                                <div id="div-search" class="pl-lg-3 pl-2 py-1">
+                                    <div class="input-group position-relative rounded">
+                                        <input name="ctl00$ctl00$tbSearch" type="text" value="Securities Search" id="ctl00_ctl00_tbSearch" class="form-control rounded" onfocus="this.value=''; this.style.color='#000000'" style="color: gray">
+                                        <div class="grid-append-button-icon">
+                                            <input type="submit" name="ctl00$ctl00$btSearch" value="" id="ctl00_ctl00_btSearch" class="grid-search">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="navbar-toggler d-lg-none" style="outline: none" type="button" data-toggle="collapse" data-target="#navbarSupportedContent1" aria-controls="navbarSupportedContent1" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="navbar-button-icon secondary"></span>
+                                </button>
+                                <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent1">
+                                    <div class="d-flex d-lg-none text-white" id="mobileMenu1" style="max-height: 55vh; overflow-y: scroll;"><div class="flex-grow-1"><a href="default.aspx" class="  py-2  top-menu-item-mobile py-2 pl-2">Home</a><div> <a href="#" onclick="javascript:selectMenu(1,0)" data-toggle="collapse" data-target="#submenu-mobile-1" class="  top-menu-item-mobile py-2 pl-2 tm-active-mobile ">Issuers</a><div id="submenu-mobile-1" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-10">Issuers</span><div class="collapse" id="submenu-mobile-10"><p class="text-white mb-0"><a href="issuerlist.aspx?market=officialmarket" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Official Market</a></p><p class="text-white mb-0"><a href="issuerlist.aspx?market=freemarket" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Free Market</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-11">Documents</span><div class="collapse" id="submenu-mobile-11"><p class="text-white mb-0"><a href="docview.aspx?page=requests" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Requests</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/download/IPO_brosura_v1.pdf" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Initial Public Offering (IPO) </a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-12">Financial Figures</span><div class="collapse" id="submenu-mobile-12"><p class="text-white mb-0"><a href="financialfiguressearch.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Search</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-13">Dividends and Coupons</span><div class="collapse" id="submenu-mobile-13"><p class="text-white mb-0"><a href="dividend.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Dividends</a></p><p class="text-white mb-0"><a href="bondcoupons.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Coupons</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-14">Other data</span><div class="collapse" id="submenu-mobile-14"><p class="text-white mb-0"><a href="othermarketinfo.aspx?group=1" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Cumulative Financial Reports</a></p><p class="text-white mb-0"><a href="othermarketinfo.aspx?group=2" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Cumulative Reports for Funds</a></p><p class="text-white mb-0"><a href="othermarketinfo.aspx?group=3" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Ownership Structure</a></p><p class="text-white mb-0"><a href="sellingsharesannouncementsarchive.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Archive of Anouncements on Selling Shares</a></p><p class="text-white mb-0"><a href="othermarketinfo.aspx?group=4" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Other Documents</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(2,0)" data-toggle="collapse" data-target="#submenu-mobile-2" class="  top-menu-item-mobile py-2 pl-2">News</a><div id="submenu-mobile-2" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-20">Announcements</span><div class="collapse" id="submenu-mobile-20"><p class="text-white mb-0"><a href="news.aspx?kat=1" class="grid-submenu-item-mobile pl-4 py-2 d-flex">BLSE news</a></p><p class="text-white mb-0"><a href="news.aspx?kat=2" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Corporate news</a></p><p class="text-white mb-0"><a href="corporatecalendar.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Corporate calendar</a></p><p class="text-white mb-0"><a href="news.aspx?kat=3" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Financial News</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(3,0)" data-toggle="collapse" data-target="#submenu-mobile-3" class="  top-menu-item-mobile py-2 pl-2">Market</a><div id="submenu-mobile-3" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-30">Market Segmentation</span><div class="collapse" id="submenu-mobile-30"><p class="text-white mb-0"><a href="docview.aspx?page=sp5" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Tiers</a></p><p class="text-white mb-0"><a href="securitylist.aspx?tier=shares" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Shares</a></p><p class="text-white mb-0"><a href="securitylist.aspx?tier=bonds" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Bonds</a></p><p class="text-white mb-0"><a href="securitylist.aspx?tier=mm%3a24%2cmm%3a25" class="grid-submenu-item-mobile pl-4 py-2 d-flex">T-Bills</a></p><p class="text-white mb-0"><a href="suspendedsecurities.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Suspended securities</a></p><p class="text-white mb-0"><a href="delistedsecurities.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Delisted Securities</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-31">Indices</span><div class="collapse" id="submenu-mobile-31"><p class="text-white mb-0"><a href="indexlist.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">BLSE Indices</a></p><p class="text-white mb-0"><a href="indexprofile.aspx?code=birs" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Profile</a></p><p class="text-white mb-0"><a href="charts.aspx?type=index&amp;code=birs" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Graph</a></p><p class="text-white mb-0"><a href="indexvalues.aspx?code=birs" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Index values</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-32">Yield Curve</span><div class="collapse" id="submenu-mobile-32"><p class="text-white mb-0"><a href="yieldcurveprofile.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Profile</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-33">Price lists</span><div class="collapse" id="submenu-mobile-33"><p class="text-white mb-0"><a href="pricelisttext.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Price list (.TXT)</a></p><p class="text-white mb-0"><a href="pricelistexcel.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Price list (.XLS)</a></p><p class="text-white mb-0"><a href="pricelisthtml.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Price list (.HTML)</a></p><p class="text-white mb-0"><a href="pricelistperiod.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Price List (period)</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-34">Reports</span><div class="collapse" id="submenu-mobile-34"><p class="text-white mb-0"><a href="dailymediareports.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Daily reports</a></p><p class="text-white mb-0"><a href="weeklymediareports.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Weekly reports</a></p><p class="text-white mb-0"><a href="periodicalstatreports.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Statistics</a></p><p class="text-white mb-0"><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSqgiG5QdNzwPLSreEaCnqQChRHtsoNDX56MjVGsZk7gy-h0ErnM6GETcNE_rE47xMxyizCdYF-xb_i/pubhtml" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Capital Market Statistics</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-35">Market capitalization</span><div class="collapse" id="submenu-mobile-35"><p class="text-white mb-0"><a href="marketcapitalization.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Value</a></p><p class="text-white mb-0"><a href="charts.aspx?type=capitalization" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Graphs</a></p><p class="text-white mb-0"><a href="industryclassification.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Classification by Industry</a></p><p class="text-white mb-0"><a href="issuersbyindustry.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Issuers by Industry</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-36">Other turnover</span><div class="collapse" id="submenu-mobile-36"><p class="text-white mb-0"><a href="publicofferings.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Public Offerings</a></p><p class="text-white mb-0"><a href="auctionsshares.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Auctions for Packet of Shares</a></p><p class="text-white mb-0"><a href="auctionsstate.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Auctions for State Owned Capital</a></p><p class="text-white mb-0"><a href="blocktrades.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Block Trades</a></p><p class="text-white mb-0"><a href="takeovers.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Takeovers</a></p><p class="text-white mb-0"><a href="repotrades.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">REPO</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(4,0)" data-toggle="collapse" data-target="#submenu-mobile-4" class="  top-menu-item-mobile py-2 pl-2">Members</a><div id="submenu-mobile-4" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-40">Stock Exchange Members</span><div class="collapse" id="submenu-mobile-40"><p class="text-white mb-0"><a href="members.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Regular Members</a></p><p class="text-white mb-0"><a href="membersspec.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Special Members</a></p><p class="text-white mb-0"><a href="docview.aspx?page=liquidity-providers" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Liquidity providers</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-41">Custody</span><div class="collapse" id="submenu-mobile-41"><p class="text-white mb-0"><a href="docview.aspx?page=sp78" class="grid-submenu-item-mobile pl-4 py-2 d-flex">List of Custody Banks</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-42">Locations</span><div class="collapse" id="submenu-mobile-42"><p class="text-white mb-0"><a href="membersbycity.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Where to Buy/Sell</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(5,0)" data-toggle="collapse" data-target="#submenu-mobile-5" class="  top-menu-item-mobile py-2 pl-2">Regulation</a><div id="submenu-mobile-5" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-50">BLSE</span><div class="collapse" id="submenu-mobile-50"><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=statut" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Statute</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=pravila" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Rules</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=naknade" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Commissions</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=uputstva" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Instructions</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=obrasci" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Forms</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=zahtjevi" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Requests</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=berza&amp;cat=arhiva" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Archive</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-51">Securites Commission</span><div class="collapse" id="submenu-mobile-51"><p class="text-white mb-0"><a href="regulations.aspx?prefix=khov&amp;cat=pravilnici" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Rules</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=khov&amp;cat=naknade" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Commissions</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=khov&amp;cat=standardi" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Standards</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-52">Laws</span><div class="collapse" id="submenu-mobile-52"><p class="text-white mb-0"><a href="regulations.aspx?prefix=zakoni&amp;cat=zakoni" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Laws</a></p><p class="text-white mb-0"><a href="regulations.aspx?prefix=zakoni&amp;cat=pravilnici" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Rules</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(6,0)" data-toggle="collapse" data-target="#submenu-mobile-6" class="  top-menu-item-mobile py-2 pl-2">Products and Services</a><div id="submenu-mobile-6" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-60">Products</span><div class="collapse" id="submenu-mobile-60"><p class="text-white mb-0"><a href="https://sites.google.com/blberza.com/brokeroffice" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Broker Office</a></p><p class="text-white mb-0"><a href="docview.aspx?page=mtrader" class="grid-submenu-item-mobile pl-4 py-2 d-flex">M Trader</a></p><p class="text-white mb-0"><a href="https://mm.blberza.com/" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Money Market</a></p><p class="text-white mb-0"><a href="https://mlk.blberza.com/" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">MLC</a></p><p class="text-white mb-0"><a href="docview.aspx?page=acc" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Interkont</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-61">Services</span><div class="collapse" id="submenu-mobile-61"><p class="text-white mb-0"><a href="docview.aspx?page=sp57" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Trading monitoring</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp99" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Web Services</a></p><p class="text-white mb-0"><a href="docview.aspx?page=vendors" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Vendors</a></p></div></div></div></div><div> <a href="#" onclick="javascript:selectMenu(7,0)" data-toggle="collapse" data-target="#submenu-mobile-7" class="  top-menu-item-mobile py-2 pl-2">About us</a><div id="submenu-mobile-7" class="collapse  grid-secondary-bg-color"><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-70">BLSE</span><div class="collapse" id="submenu-mobile-70"><p class="text-white mb-0"><a href="docview.aspx?page=sp2" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Profile</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp3" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Strategy</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp4" class="grid-submenu-item-mobile pl-4 py-2 d-flex">History</a></p><p class="text-white mb-0"><a href="annualreports.aspx" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Annual Reports</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp9" class="grid-submenu-item-mobile pl-4 py-2 d-flex">International cooperation</a></p><p class="text-white mb-0"><a href="docview.aspx?page=donacije" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Donations and Sponsorhips</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-71">Trading</span><div class="collapse" id="submenu-mobile-71"><p class="text-white mb-0"><a href="docview.aspx?page=sp6" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Trading systems</a></p><p class="text-white mb-0"><a href="docview.aspx?page=non-trading-days" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Trading calendar</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp7" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Clearing and settlement</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp8" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Trading and listing commission</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-72">Conferences and Seminars</span><div class="collapse" id="submenu-mobile-72"><p class="text-white mb-0"><a href="docview.aspx?page=sp80" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Conferences</a></p><p class="text-white mb-0"><a href="docview.aspx?page=seminari" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Seminars</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-73">Education</span><div class="collapse" id="submenu-mobile-73"><p class="text-white mb-0"><a href="https://virtua.blberza.com/" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Virtua</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/publikacije.html" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Books</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/diplomski.html" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Students' Thesis</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Students Competitions</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/interkont.html" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Students  Accounting</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-74">Publications</span><div class="collapse" id="submenu-mobile-74"><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/download/Trziste_kapitala-Edukativni_materijal-v3.pdf" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Textbook</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/download/Zbirka_zadataka_v3.pdf" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Workbook</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/download/Sluzbeno_trziste_v1.pdf" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Official market</a></p><p class="text-white mb-0"><a href="http://edu.blberza.com/edukacija/download/IPO_brosura_v1.pdf?" target="_blank " class="grid-submenu-item-mobile pl-4 py-2 d-flex">Securities Issuance</a></p><p class="text-white mb-0"><a href="docview.aspx?page=scorecard" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Corporate Governance</a></p><p class="text-white mb-0"><a href="docview.aspx?page=sp17" class="grid-submenu-item-mobile pl-4 py-2 d-flex">FAQ</a></p></div></div><div class="d-flex flex-column border-bottom-white"><span class="text-white grid-small-text  py-2 pl-3 " data-toggle="collapse" data-target="#submenu-mobile-75">Links</span><div class="collapse" id="submenu-mobile-75"><p class="text-white mb-0"><a href="docview.aspx?page=sp15" class="grid-submenu-item-mobile pl-4 py-2 d-flex">Important Links</a></p></div></div></div></div></div></div>
+                                    <script>
+                                        document.getElementById('mobileMenu1').addEventListener('scroll', (e) => e.stopPropagation())
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script src="../client/combined/mootools-1.2.6.js?v=1" type="text/javascript"></script>
+                <script src="../client/combined/highstock-9.0.1.js?v=1" type="text/javascript"></script>
+                <script>
+                    Highcharts.theme = {
+                        colors: ['#3c3476', '#945fbe', '#090D48', '#039460', '#1926d4', '#e0e01b', '#de862f', '#66d4ed', '#6d8ead', '#Ed3911', '#585a83'],
+                        chart: {
+                            backgroundColor: "#f8f9fa",
+                            style: {
+                                fontFamily: 'Roboto'
+                            },
+                            width: null,
+                        },
+                        title: {
+                            style: {
+                                color: '#000',
+                                font: 'bold 16px "Roboto MS", Verdana, sans-serif'
+                            }
+                        },
+                    };
+                    // Apply the theme
+                    Highcharts.setOptions(Highcharts.theme);
+                </script>
+                <div class="grid-breadcrumbs container-xl"><nav class="breadcrumb p-0 bg-white pt-3 m-0 pl-0"><ol class="breadcrumb p-0 m-0 bg-white"><li class="breadcrumb-item grid-small-text">Issuers</li><li class="breadcrumb-item grid-small-text">Issuers</li><li class="breadcrumb-item active grid-small-text">Official Market</li></ol></nav></div>
+                <script src="/client/combined/js.js?v=89570939" type="text/javascript"></script>
+<script src="/client/combined/loc3.js?v=89570939" type="text/javascript"></script>
+
+                <script type="text/javascript">loadMenu(getMenuData(), "issuerlist.aspx?market=officialmarket", "issuerlist.aspx", {"indexcode":"BIRS","issuercode":"TLKM","securitycode":"TLKM-R-A"}); </script>
+                <script>
+                    jQuery(document).on('click', '.grid-dropdown-menu', function (e) {
+                        e.stopPropagation();
+                    });
+                </script>
+
+                <div id="pre-content" class="flex-grow-1 pt-3 pb-3 container-xl">
+                    
+                    
+                    
+            
+    <div id="ctl00_ctl00_Content_MainContent_divIssuers">
+        <h1 class="grid-column-header">
+            <img src="/Content/gridAssets/icons/icon-novosti.svg" class="grid-header-icon">
+            Official Market</h1>
+
+        <div>
+            <p>
+
+                Show
+                <select name="ctl00$ctl00$Content$MainContent$ddlIssuersPageSize" onchange="javascript:setTimeout('__doPostBack(\'ctl00$ctl00$Content$MainContent$ddlIssuersPageSize\',\'\')', 0)" id="ctl00_ctl00_Content_MainContent_ddlIssuersPageSize">
+	<option selected="selected" value="20">20</option>
+	<option value="100">100</option>
+	<option value="300">300</option>
+	<option value="10000">All</option>
+
+</select>
+            </p>
+        </div>
+        <div class="grid-table-outter-wrapper table-scrollable">
+
+            <div>
+	<table class="har pad3 novUL" cellspacing="0" border="0" id="ctl00_ctl00_Content_MainContent_gvIssuers" style="width:100%;border-collapse:collapse;">
+		<tbody><tr class="table-header">
+			<th class="hal" scope="col"><a href="javascript:__doPostBack('ctl00$ctl00$Content$MainContent$gvIssuers','Sort$Code')">Issuer code</a></th><th class="hal" scope="col"><a href="javascript:__doPostBack('ctl00$ctl00$Content$MainContent$gvIssuers','Sort$Description')">Issuer</a></th><th class="hal" scope="col">Address</th><th class="hal" scope="col">City</th>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=ALPR">ALPR</a></td><td class="hal">Alpro a.d. Vlasenica</td><td class="hal">NJEGOŠEVA BB</td><td class="hal">VLASENICA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=APBL">APBL</a></td><td class="hal">Autoprevoz a.d. Banja Luka</td><td class="hal">PUT SRPSKIH BRANILACA 35</td><td class="hal">BANJA LUKA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=AURO">AURO</a></td><td class="hal">Osiguranje Aura a.d. Banja Luka</td><td class="hal">VELJKA MLAĐENOVIĆA 7D</td><td class="hal">BANJA LUKA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=AURS">AURS</a></td><td class="hal">MKD Auris a.d. Banja Luka</td><td class="hal">Veljka Mlađenovića 7d</td><td class="hal">Banja Luka</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=BOKS">BOKS</a></td><td class="hal">Boksit a.d. Milići</td><td class="hal">LUKIĆ POLJE BB</td><td class="hal">MILIĆI</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=BVRU">BVRU</a></td><td class="hal">ZTC Banja Vrućica a.d. Teslić</td><td class="hal">BANJA VRUĆICA</td><td class="hal">TESLIĆ</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=CRES">CRES</a></td><td class="hal">MKD Credis a.d. Banja Luka</td><td class="hal">Mladena Stojanovića 111</td><td class="hal">Banja Luka</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=DEST">DEST</a></td><td class="hal">Hemijska industrija Destilacija a.d. Teslić</td><td class="hal">TESLIĆ</td><td class="hal">TESLIĆ</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=EDPL">EDPL</a></td><td class="hal">ODS Elektrodistribucija a.d. Pale</td><td class="hal">NIKOLE TESLE 12</td><td class="hal">PALE</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=EKBL">EKBL</a></td><td class="hal">Elektrokrajina a.d. Banja Luka</td><td class="hal">KRALJA PETRA I KARAĐORĐEVIĆA 95</td><td class="hal">BANJA LUKA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=EKHC">EKHC</a></td><td class="hal">ODS Elektrohercegovina a.d. Trebinje</td><td class="hal">JOVANA RAŠKOVIĆA BB</td><td class="hal">TREBINJE</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=ELBJ">ELBJ</a></td><td class="hal">ODS Elektro - Bijeljina a.d. Bijeljina</td><td class="hal">MAJEVIČKA 97</td><td class="hal">BIJELJINA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=ELDO">ELDO</a></td><td class="hal">ODS Elektro Doboj a.d. Doboj</td><td class="hal">Nikole Pašića 77</td><td class="hal">DOBOJ</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=GRBL">GRBL</a></td><td class="hal">Grad Banja Luka</td><td class="hal">Trg srpskih vladara 1</td><td class="hal">Banja Luka</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=GRPR">GRPR</a></td><td class="hal">Grad Prijedor</td><td class="hal">Trg oslobođenja 1</td><td class="hal">Prijedor</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=HEDR">HEDR</a></td><td class="hal">Hidroelektrane na Drini a.d. Višegrad</td><td class="hal">KOMPLEKS-ANDRIĆGRAD</td><td class="hal">VIŠEGRAD</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=HELV">HELV</a></td><td class="hal">Hidroelektrane na Vrbasu a.d. Mrkonjić Grad</td><td class="hal">SVETOG SAVE 13</td><td class="hal">MRKONJIĆ GRAD</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=HETR">HETR</a></td><td class="hal">Hidroelektrane na Trebišnjici a.d. Trebinje</td><td class="hal">LUKE VUKALOVIĆA 2</td><td class="hal">TREBINJE</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=JLLC">JLLC</a></td><td class="hal">Jelšingrad Livar Livnica čelika a.d. Banja Luka</td><td class="hal">BRAĆE PODGORNIKA 8</td><td class="hal">BANJA LUKA</td>
+		</tr><tr>
+			<td class="hal"><a href="IssuerRedirect.aspx?code=KDVO">KDVO</a></td><td class="hal">Dunav osiguranje a.d. Banja Luka</td><td class="hal">VESELINA MASLEŠE 28</td><td class="hal">BANJA LUKA</td>
+		</tr><tr class="table-pager">
+			<td colspan="4"><table border="0">
+				<tbody><tr>
+					<td><span>1</span></td><td><a href="javascript:__doPostBack('ctl00$ctl00$Content$MainContent$gvIssuers','Page$2')">2</a></td><td><a href="javascript:__doPostBack('ctl00$ctl00$Content$MainContent$gvIssuers','Page$3')">3</a></td>
+				</tr>
+			</tbody></table></td>
+		</tr>
+	</tbody></table>
+</div>
+        </div>
+    </div>
+    
+
+    
+
+
+            
+    <div class="pt-5">
+        
+
+<div class="row">
+    <div class="col-md-3">
+        <h2>
+            Search by first letter</h2>
+        <div class="mb-2">
+            <table class="letter-search-table grid-table-wrapper" cellpadding="0" cellspacing="0">
+                <tbody><tr>
+                    <td>
+                        <a href="IssuerList.aspx?search=A">A</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=B">B</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=C">C</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=D">D</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=E">E</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=F">F</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=G">G</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=H">H</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=I">I</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=J">J</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=K">K</a></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="IssuerList.aspx?search=L">L</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=M">M</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=N">N</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=O">O</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=P">P</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=R">R</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=S">S</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=T">T</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=U">U</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=V">V</a></td>
+                    <td>
+                        <a href="IssuerList.aspx?search=Z">Z</a></td>
+                </tr>
+            </tbody></table>
+        </div>
+    </div>
+    <div class="col-md-4  pt-md-0">
+        <h2>
+            Search by name</h2>
+        Enter at least one letter of issuer's name
+        <div class="d-flex" style="max-width: 300px;">
+            <input name="ctl00$ctl00$Content$SideContent$ctl00$tbNaziv" type="text" id="ctl00_ctl00_Content_SideContent_ctl00_tbNaziv" class="form-control mr-2" onkeypress="return clickButton(event,'ctl00_ctl00_Content_SideContent_ctl00_btnPoNazivu')">
+            <input type="submit" name="ctl00$ctl00$Content$SideContent$ctl00$btnPoNazivu" value="Search" id="ctl00_ctl00_Content_SideContent_ctl00_btnPoNazivu" class="grid-button">
+        </div>
+    </div>
+    <br>
+    <div class="col-md-4 pt-3 pt-md-0">
+        <h2>
+            Management and Supervisory Board</h2>
+        Enter at least three letters from the name of the member of menagement or supervisory board.
+        <div class="d-flex" style="max-width: 300px;">
+            <input name="ctl00$ctl00$Content$SideContent$ctl00$tbClanUNO" type="text" id="ctl00_ctl00_Content_SideContent_ctl00_tbClanUNO" class="form-control mr-2" onkeypress="return clickButton(event,'ctl00_ctl00_Content_SideContent_ctl00_btnPoClanuUNO')">
+            <input type="submit" name="ctl00$ctl00$Content$SideContent$ctl00$btnPoClanuUNO" value="Search" id="ctl00_ctl00_Content_SideContent_ctl00_btnPoClanuUNO" class="grid-button">
+        </div>
+    </div>
+</div>
+
+    </div>
+
+
+                </div>
+                <a id="back2Top" title="Back to top" href="#">
+                    <img src="/Content/gridAssets/icons/icon-arrow-upwrads.svg">
+                </a>
+                <script>
+                    jQuery(window).scroll(function () {
+                        var height = jQuery(window).scrollTop();
+                        if (height > 100) {
+                            jQuery('#back2Top').fadeIn();
+                        } else {
+                            jQuery('#back2Top').fadeOut();
+                        }
+                    });
+                    jQuery(document).ready(function () {
+                        jQuery("#back2Top").click(function (event) {
+                            event.preventDefault();
+                            jQuery("html, body").animate({ scrollTop: 0 }, "slow");
+                            return false;
+                        });
+                    });
+                </script>
+                <div class="grid-footer-wrapper grid-main-bg-color">
+                    <div class="container-xl py-4 grid-footer grid-links-reset">
+                        <div class="d-flex flex-column flex-lg-row flex-wrap justify-content-between align-items-start align-items-lg-center">
+                            <div class="d-flex flex-column flex-lg-row align-items-start align-items-lg-center grid-white-text-color">
+                                <a class="mb-2 mb-lg-0 grid-white-text-color hover d-lg-none" href="http://www.secrs.gov.ba/" target="_blank">Securities Commission</a>
+                                <a class="mb-3 mb-lg-0 grid-white-text-color hover d-lg-none" href="http://www.crhovrs.org/" target="_blank">Central Registry</a>
+                                <a class="pl-0 mb-2 mb-lg-0 grid-white-text-color hover" href="mailto:komentar@blberza.com?subject=Komentar na sajt" style="cursor: pointer;">
+                                    Comment on web site
+                                </a>
+                                <span class="grid-divider-small d-none d-lg-inline-block mx-3"></span>
+                                <a class="mb-3 mb-lg-0 grid-white-text-color hover" href="SiteMap.aspx">Site Map</a>
+                                <div class="d-lg-none mb-3">
+                                    <a id="ctl00_ctl00_LinkButton1" class="grid-font-weight-50 grid-small-text grid-white-text-color hover pr-2" href="javascript:__doPostBack('ctl00$ctl00$LinkButton1','')">Lat</a>
+                                    <a id="ctl00_ctl00_LinkButton2" class="grid-font-weight-50 grid-small-text grid-white-text-color hover pr-2" href="javascript:__doPostBack('ctl00$ctl00$LinkButton2','')">Ћир</a>
+                                    <a id="ctl00_ctl00_LinkButton3" class="grid-font-weight-50 grid-small-text grid-white-text-color hover" href="javascript:__doPostBack('ctl00$ctl00$LinkButton3','')">Eng</a>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="grid-white-text-color grid-small-text">
+                                    © 2021 Banja Luka Stock Exchange. All rights reserved.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    
+    
+    
+
+    <!-- Google tag (gtag.js) -->
+
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-1WXRLKX8GQ"></script>
+
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-1WXRLKX8GQ');
+    </script>
+    <script>
+        if (typeof jQuery != 'undefined') {
+            (function ($) {
+                $(document).ready(function () {
+                    $('.carousel').each(function (index, element) {
+                        $(this)[index].slide = null;
+                    });
+                });
+            })(jQuery);
+        }
+    </script>
+    <script>
+        function applyIcon(type) {
+            var link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+            link.type = 'image/x-icon';
+            link.rel = 'shortcut icon';
+
+            if (type === "dark") {
+                link.href = '../Content/Logo/favicon-dark.svg';
+            } else {
+                link.href = '../Content/Logo/favicon-light.svg';
+            }
+
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+
+        var dmQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var lmQuery = window.matchMedia("(prefers-color-scheme: light)");
+
+        // Check on initial load if dark mode is already there. Apply the dark
+        // mode favicon if true.
+        if (dmQuery.matches) {
+            applyIcon("dark");
+        }
+
+        dmQuery.addListener(function () {
+            applyIcon("dark")
+        });
+
+        lmQuery.addListener(function () {
+            applyIcon("light");
+        });
+    </script>
+
+
+
+</body></html>
