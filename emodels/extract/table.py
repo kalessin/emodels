@@ -45,7 +45,7 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_h
 
 def find_tables(
     tables: List[Selector], candidate_fields: Tuple[str, ...], max_tables=1
-) -> List[Tuple[Selector | None, List[str]]]:
+) -> List[Tuple[Selector, List[str]]]:
     # list of tuples (table selector, header, score1 score2)
     scored_tables: List[Tuple[Selector, List[str], int, int]] = []
     for table in tables[::-1]:
@@ -136,6 +136,7 @@ def parse_tables_from_response(
     columns: Columns,
     validate_result: Callable[[Result, Columns], bool] = default_validate_result,
     dedupe_keywords: Columns = Columns(()),
+    max_tables: int = 1,
 ) -> List[Result]:
     """
     Identifies and extracts data from an html table, based on the column names provided.
@@ -146,26 +147,27 @@ def parse_tables_from_response(
     dedupe_keywords - which columns use to deduplicate results (results with all same values in the same fields are
                       mutual dupes)
     """
-    all_results: List[Result] = []
-    fields: Set[str] = set()
     all_tables = response.xpath("//table")
+    all_results: List[Result] = []
     if all_tables:
-        candidate_table, headers = find_tables(all_tables, columns)[0]
-        if candidate_table is not None:
+        for _, headers in find_tables(all_tables, columns, max_tables=max_tables):
+            all_table_results: List[Result] = []
+            fields: Set[str] = set()
             for parse_method in parse_table, parse_table_ii:
-                all_results_method = []
+                all_table_results_method = []
                 seen: Set[Uid] = set()
                 for table in all_tables:
                     for result in parse_method(table, headers):
                         if validate_result(result, columns) and (uid := unique_id(result, dedupe_keywords)) not in seen:
                             if uid:
                                 seen.add(uid)
-                            all_results_method.append(result)
+                            all_table_results_method.append(result)
                             fields.update(result.keys())
-                if score_results(all_results_method) > score_results(all_results):
-                    all_results = all_results_method
-    for result in all_results:
-        for field in fields:
-            result.setdefault(field, "")
-    remove_all_empty_fields(all_results)
+                if score_results(all_table_results_method) > score_results(all_table_results):
+                    all_table_results = all_table_results_method
+            for result in all_table_results:
+                for field in fields:
+                    result.setdefault(field, "")
+            remove_all_empty_fields(all_table_results)
+            all_results.extend(all_table_results)
     return all_results

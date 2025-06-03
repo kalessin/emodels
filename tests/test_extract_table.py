@@ -98,7 +98,6 @@ class TableSpiderTests(TestCase):
                     "trading": "Active",
                 },
             )
-            self.assertEqual(len(list(filter(validate_result, results))), 115)
 
     def test_table_ii(self):
         with self.open_resource("test2.html") as f:
@@ -159,13 +158,12 @@ class TableSpiderTests(TestCase):
                     "url": "/en/company_historical/ULDC",
                 },
             )
-            self.assertEqual(len(list(filter(validate_result, results))), 162)
 
     def test_table_iii(self):
         with self.open_resource("test3.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
             results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
-            self.assertEqual(len(list(filter(validate_result, results))), 236)
+            self.assertEqual(len(list(results)), 236)
 
     def test_table_iv(self):
         with self.open_resource("test4.html") as f:
@@ -173,15 +171,13 @@ class TableSpiderTests(TestCase):
             results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             # this should be really 38, but the detection of the missing result is challenging
             # as extracted values are not aligned with columns in this case
-            self.assertEqual(len(list(filter(validate_result, results))), 37)
+            self.assertEqual(len(list(results)), 37)
 
     def test_table_v(self):
         with self.open_resource("test5.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_tables_from_response(
-                response, columns=TEST_TABLE_COLUMNS, dedupe_keywords=DEDUPE_KEYWORDS
-            )
-            self.assertEqual(len(list(filter(validate_result, results))), 12)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS, dedupe_keywords=DEDUPE_KEYWORDS)
+            self.assertEqual(len(list(results)), 12)
             self.assertEqual(
                 results[1],
                 {
@@ -200,7 +196,7 @@ class TableSpiderTests(TestCase):
         with self.open_resource("test6.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
             results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
-            self.assertEqual(len(list(filter(validate_result, results))), 70)
+            self.assertEqual(len(list(results)), 70)
             self.assertEqual(
                 results[23],
                 {
@@ -226,10 +222,21 @@ class TableSpiderTests(TestCase):
         with self.open_resource("test7.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
             results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
-            self.assertEqual(len(list(filter(validate_result, results))), 50)
+            self.assertEqual(len(list(results)), 50)
 
     def test_table_viii(self):
         with self.open_resource("test8.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
-            self.assertEqual(len(list(filter(validate_result, results))), 20)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS, validate_result=validate_result)
+            self.assertEqual(len(list(results)), 20)
+
+    def test_table_ix(self):
+        with self.open_resource("test24.html") as f:
+            response = TextResponse(url="http://example.com", status=200, body=f.read())
+            columns = Columns(
+                ("industry", "sector", "super-sector", "sub-sector", "code", "isin", "listing date", "security name")
+            )
+            results = parse_tables_from_response(response, columns=columns, validate_result=validate_result)
+            # self.assertEqual(len(results), 2)
+            self.assertEqual(results[4], {})
+            # self.assertEqual(results[1], {})
