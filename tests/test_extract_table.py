@@ -79,7 +79,7 @@ class TableSpiderTests(TestCase):
     def test_table_i(self):
         with self.open_resource("test1.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS, dedupe_keywords=DEDUPE_KEYWORDS)
             self.assertEqual(len(results), 115)
             for result in results:
                 self.assertEqual(
