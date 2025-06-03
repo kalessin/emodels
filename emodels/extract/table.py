@@ -1,11 +1,12 @@
 import re
+from operator import itemgetter
 from typing import List, Generator, Dict, Set, Tuple, Callable, NewType
 
 from scrapy.http import TextResponse
 from scrapy import Selector
 
 NUMBER_RE = re.compile(r"\d+$")
-MAX_HEADERS = 20
+MAX_HEADER_COLUMNS = 20
 
 Columns = NewType("Columns", Tuple[str, ...])
 Result = NewType("Result", Dict[str, str])
@@ -29,19 +30,17 @@ def iterate_rows(table: Selector) -> Generator[Tuple[List[str], str | None], Non
         yield extract_row_text(row), url
 
 
-def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...]) -> List[str]:
-    max_score_row = []
-    max_score = 0
+def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_headers=1) -> List[List[str]]:
+    score_rows: List[Tuple[List[str], int]] = []
     for rowtexts, _ in iterate_rows(table):
         row_score = 0
         lower_rowtexts = [t.lower() for t in rowtexts]
         for kw in candidate_fields:
             if kw in lower_rowtexts:
                 row_score += 1
-        if len(list(filter(None, rowtexts))) <= MAX_HEADERS and row_score > max_score:
-            max_score = row_score
-            max_score_row = rowtexts
-    return max_score_row
+        if len(list(filter(None, rowtexts))) <= MAX_HEADER_COLUMNS:
+            score_rows.append((rowtexts, row_score))
+    return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)][:max_headers]
 
 
 def findstocktable(tables: List[Selector], candidate_fields: Tuple[str, ...]) -> Selector | None:
@@ -55,13 +54,13 @@ def findstocktable(tables: List[Selector], candidate_fields: Tuple[str, ...]) ->
                 filter(
                     None,
                     set(candidate_fields).intersection(
-                        [f.lower() for f in find_table_headers(table, candidate_fields)]
+                        [f.lower() for f in find_table_headers(table, candidate_fields)[0]]
                     ),
                 )
             )
         )
-        score2 = len(list(filter(None, find_table_headers(table, candidate_fields))))
-        if score1 <= MAX_HEADERS and score1 > max_score1 or (score1 == max_score1 and score2 > max_score2):
+        score2 = len(list(filter(None, find_table_headers(table, candidate_fields)[0])))
+        if score1 <= MAX_HEADER_COLUMNS and score1 > max_score1 or (score1 == max_score1 and score2 > max_score2):
             max_score1 = score1
             max_score2 = score2
             max_score_table = table
@@ -156,7 +155,7 @@ def parse_stock_tables_from_response(
     if all_tables:
         stocktable = findstocktable(all_tables, columns)
         if stocktable is not None:
-            headers = find_table_headers(stocktable, columns)
+            headers = find_table_headers(stocktable, columns)[0]
             for parse_method in parse_stock_table, parse_stock_table_ii:
                 all_results_method = []
                 seen: Set[Uid] = set()
