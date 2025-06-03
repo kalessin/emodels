@@ -5,7 +5,7 @@ from typing import Dict
 
 from scrapy.http import TextResponse
 
-from emodels.extract.table import parse_stock_tables_from_response, Columns
+from emodels.extract.table import parse_tables_from_response, Columns
 
 
 NUMBER_RE = re.compile(r"\d+$")
@@ -71,15 +71,15 @@ def validate_result(result: Dict[str, str], candidate_fields: Columns = TEST_TAB
     return True
 
 
-class StockTableSpiderTests(TestCase):
+class TableSpiderTests(TestCase):
     def open_resource(self, name):
         rname = os.path.join(os.path.dirname(__file__), "extract_resources", name)
         return open(rname, "rb")
 
-    def testtable_i(self):
+    def test_table_i(self):
         with self.open_resource("test1.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(results), 115)
             for result in results:
                 self.assertEqual(
@@ -100,10 +100,10 @@ class StockTableSpiderTests(TestCase):
             )
             self.assertEqual(len(list(filter(validate_result, results))), 115)
 
-    def test_stock_table_ii(self):
+    def test_table_ii(self):
         with self.open_resource("test2.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(results), 162)
             for result in results:
                 self.assertEqual(
@@ -161,24 +161,24 @@ class StockTableSpiderTests(TestCase):
             )
             self.assertEqual(len(list(filter(validate_result, results))), 162)
 
-    def test_stock_table_iii(self):
+    def test_table_iii(self):
         with self.open_resource("test3.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(list(filter(validate_result, results))), 236)
 
-    def test_stock_table_iv(self):
+    def test_table_iv(self):
         with self.open_resource("test4.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             # this should be really 38, but the detection of the missing result is challenging
             # as extracted values are not aligned with columns in this case
             self.assertEqual(len(list(filter(validate_result, results))), 37)
 
-    def test_stock_table_v(self):
+    def test_table_v(self):
         with self.open_resource("test5.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(
+            results = parse_tables_from_response(
                 response, columns=TEST_TABLE_COLUMNS, dedupe_keywords=DEDUPE_KEYWORDS
             )
             self.assertEqual(len(list(filter(validate_result, results))), 12)
@@ -196,10 +196,10 @@ class StockTableSpiderTests(TestCase):
                 },
             )
 
-    def test_stock_table_vi(self):
+    def test_table_vi(self):
         with self.open_resource("test6.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(list(filter(validate_result, results))), 70)
             self.assertEqual(
                 results[23],
@@ -222,14 +222,14 @@ class StockTableSpiderTests(TestCase):
                 },
             )
 
-    def test_stock_table_vii(self):
+    def test_table_vii(self):
         with self.open_resource("test7.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(list(filter(validate_result, results))), 50)
 
-    def test_stock_table_viii(self):
+    def test_table_viii(self):
         with self.open_resource("test8.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
-            results = parse_stock_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
+            results = parse_tables_from_response(response, columns=TEST_TABLE_COLUMNS)
             self.assertEqual(len(list(filter(validate_result, results))), 20)

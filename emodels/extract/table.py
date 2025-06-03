@@ -43,7 +43,7 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_h
     return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)][:max_headers]
 
 
-def findstocktable(tables: List[Selector], candidate_fields: Tuple[str, ...]) -> Selector | None:
+def find_table(tables: List[Selector], candidate_fields: Tuple[str, ...]) -> Selector | None:
     max_score_table = None
     max_score1 = 0
     max_score2 = 0
@@ -67,10 +67,10 @@ def findstocktable(tables: List[Selector], candidate_fields: Tuple[str, ...]) ->
     return max_score_table
 
 
-def parse_stock_table(stocktable: Selector, headers: List[str]):
+def parse_table(table: Selector, headers: List[str]):
     header_find_status = False
     headers_lower = [h.lower() for h in headers]
-    for row, url in iterate_rows(stocktable):
+    for row, url in iterate_rows(table):
         if not header_find_status and row != headers:
             continue
         header_find_status = True
@@ -84,11 +84,11 @@ def parse_stock_table(stocktable: Selector, headers: List[str]):
         yield data
 
 
-def parse_stock_table_ii(stocktable: Selector, headers: List[str]):
+def parse_table_ii(table: Selector, headers: List[str]):
     headers = list(filter(None, headers))
     header_find_status = False
     headers_lower = [h.lower() for h in headers]
-    for row, url in iterate_rows(stocktable):
+    for row, url in iterate_rows(table):
         row = list(filter(None, row))
         if not header_find_status and row != headers:
             continue
@@ -134,7 +134,7 @@ def remove_all_empty_fields(results: List[Result]):
             result.pop(field)
 
 
-def parse_stock_tables_from_response(
+def parse_tables_from_response(
     response: TextResponse,
     columns: Columns,
     validate_result: Callable[[Result, Columns], bool] = default_validate_result,
@@ -153,10 +153,10 @@ def parse_stock_tables_from_response(
     fields: Set[str] = set()
     all_tables = response.xpath("//table")
     if all_tables:
-        stocktable = findstocktable(all_tables, columns)
-        if stocktable is not None:
-            headers = find_table_headers(stocktable, columns)[0]
-            for parse_method in parse_stock_table, parse_stock_table_ii:
+        candidate_table = find_table(all_tables, columns)
+        if candidate_table is not None:
+            headers = find_table_headers(candidate_table, columns)[0]
+            for parse_method in parse_table, parse_table_ii:
                 all_results_method = []
                 seen: Set[Uid] = set()
                 for table in all_tables:
