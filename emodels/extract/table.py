@@ -43,31 +43,25 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_h
     return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)][:max_headers]
 
 
-def find_table(tables: List[Selector], candidate_fields: Tuple[str, ...]) -> Tuple[Selector | None, List[str]]:
-    max_score_table = None
-    max_score1 = 0
-    max_score2 = 0
-    max_score_headers: List[str] = []
+def find_tables(
+    tables: List[Selector], candidate_fields: Tuple[str, ...], max_tables=1
+) -> List[Tuple[Selector | None, List[str]]]:
+    # list of tuples (table selector, header, score1 score2)
+    scored_tables: List[Tuple[Selector, List[str], int, int]] = []
     for table in tables[::-1]:
-        # score = len(list(filter(None, find_table_headers(table))))
-        headers = find_table_headers(table, candidate_fields)[0]
+        headers = find_table_headers(table, candidate_fields, max_headers=max_tables)[0]
         score1 = len(
             list(
                 filter(
                     None,
-                    set(candidate_fields).intersection(
-                        [f.lower() for f in headers]
-                    ),
+                    set(candidate_fields).intersection([f.lower() for f in headers]),
                 )
             )
         )
         score2 = len(list(filter(None, headers)))
-        if score1 <= MAX_HEADER_COLUMNS and score1 > max_score1 or (score1 == max_score1 and score2 > max_score2):
-            max_score1 = score1
-            max_score2 = score2
-            max_score_table = table
-            max_score_headers = headers
-    return max_score_table, max_score_headers
+        if score1 <= MAX_HEADER_COLUMNS:
+            scored_tables.append((table, headers, score1, score2))
+    return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)][:max_tables]
 
 
 def parse_table(table: Selector, headers: List[str]):
@@ -156,7 +150,7 @@ def parse_tables_from_response(
     fields: Set[str] = set()
     all_tables = response.xpath("//table")
     if all_tables:
-        candidate_table, headers = find_table(all_tables, columns)
+        candidate_table, headers = find_tables(all_tables, columns)[0]
         if candidate_table is not None:
             for parse_method in parse_table, parse_table_ii:
                 all_results_method = []
