@@ -111,13 +111,15 @@ def score_results(results: List[Result]) -> int:
     return score
 
 
-def unique_id(result: Dict[str, str], dedupe_keywords: Columns) -> Uid:
+def unique_id(result: Dict[str, str], dedupe_keywords: Columns) -> Tuple[Uid, Uid]:
     uid = []
-    for key in dedupe_keywords:
-        value = result.get(key)
+    full_uid = []
+    for key, value in result.items():
         if value:
-            uid.append((key, value))
-    return Uid(tuple(uid))
+            full_uid.append((key, value))
+            if key in dedupe_keywords:
+                uid.append((key, value))
+    return Uid(tuple(uid)), Uid(tuple(full_uid))
 
 
 def remove_all_empty_fields(results: List[Result]):
@@ -161,9 +163,12 @@ def parse_tables_from_response(
                 all_table_results_method = []
                 for table in all_tables:
                     for result in parse_method(table, headers):
-                        if validate_result(result, columns) and (uid := unique_id(result, dedupe_keywords)) not in seen:
+                        uid, fuid = unique_id(result, dedupe_keywords)
+                        if validate_result(result, columns) and uid not in seen and fuid not in seen:
                             if uid:
                                 seen.add(uid)
+                            if fuid:
+                                seen.add(fuid)
                             if constraints is not None and apply_constraints(result, constraints):
                                 continue
                             all_table_results_method.append(result)

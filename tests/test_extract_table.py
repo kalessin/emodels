@@ -244,8 +244,25 @@ class TableSpiderTests(TestCase):
                 validate_result=validate_result,
                 dedupe_keywords=DEDUPE_KEYWORDS,
                 constraints=Constraints({"listing date": "date_type", "isin": re.compile(r"^[a-z0-9]{12}$", re.I)}),
-                max_tables=3,
+                max_tables=2,
             )
-            # self.assertEqual(len(results), 2)
-            self.assertEqual(results, [])
-            # self.assertEqual(results[1], {})
+            self.assertEqual(
+                results,
+                [
+                    {
+                        "code": "TSH",
+                        "face value": "0.340(EUR)",
+                        "isin": "CY0006091512",
+                        "listing date": "1/11/2000",
+                        "no. of shares": "251,200,000",
+                        "security name": "A. TSOKKOS HOTELS PUBLIC LTD",
+                        "trading currency": "EUR",
+                    },
+                    {
+                        "industry": "Consumer Discretionary",
+                        "sector": "Travel and Leisure",
+                        "sub-sector": "Hotels and Motels",
+                        "super-sector": "Travel and Leisure",
+                    },
+                ],
+            )
