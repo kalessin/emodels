@@ -5,11 +5,12 @@ Cluster extraction algorithm
 import re
 from pprint import pformat
 from collections import defaultdict
-from typing import List, Dict, Tuple, Optional, Literal
+from typing import List, Dict, Tuple, Optional
 
-import dateparser
 from sklearn.cluster import KMeans
 import numpy as np
+
+from emodels.extract.utils import Constraints, apply_constraints
 
 
 def extract_by_keywords(  # noqa: C901
@@ -18,7 +19,7 @@ def extract_by_keywords(  # noqa: C901
     required_fields: Tuple[str, ...] = (),
     value_filters: Optional[Dict[str, Tuple[str, ...]]] = None,
     value_presets: Optional[Dict[str, str]] = None,
-    constraints: Optional[Dict[str, re.Pattern | Literal["date_type"]]] = None,
+    constraints: Optional[Constraints] = None,
     debug_mode=False,
     n_clusters: int = 0,  # this is a debug feature only
 ) -> Dict[str, str]:
@@ -89,13 +90,8 @@ def extract_by_keywords(  # noqa: C901
             if not any([re.search(vv, _select_group(m)) for vv in (value_filters or {}).get(k, [])])
         ]
         extracted_data = {f: _select_group(m) for f, m in results}
-        for k, pattern in (constraints or {}).items():
-            if isinstance(pattern, str):
-                if pattern == "date_type":
-                    if extracted_data.get(k) and dateparser.parse(extracted_data[k]) is None:
-                        extracted_data.pop(k)
-            elif extracted_data.get(k) and pattern.search(extracted_data[k]) is None:
-                extracted_data.pop(k)
+        if constraints is not None:
+            apply_constraints(extracted_data, constraints)
         score = len(extracted_data)
 
         for k, v in (value_presets or {}).items():

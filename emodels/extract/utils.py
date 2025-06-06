@@ -1,7 +1,26 @@
 import re
-from typing import Dict, Tuple
+from typing import Dict, Tuple, NewType, Literal
+
+import dateparser
 
 from emodels.scrapyutils.response import ExtractTextResponse
+
+
+Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type"]])
+
+
+def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
+    was_updated = False
+    for k, pattern in constraints.items():
+        if isinstance(pattern, str):
+            if pattern == "date_type":
+                if result.get(k) and dateparser.parse(result[k]) is None:
+                    result.pop(k)
+                    was_updated = True
+        elif result.get(k) and pattern.search(result[k]) is None:
+            result.pop(k)
+            was_updated = True
+    return was_updated
 
 
 def apply_additional_regexes(

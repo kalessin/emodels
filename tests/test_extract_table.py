@@ -6,6 +6,7 @@ from typing import Dict
 from scrapy.http import TextResponse
 
 from emodels.extract.table import parse_tables_from_response, Columns
+from emodels.extract.utils import Constraints
 
 
 NUMBER_RE = re.compile(r"\d+$")
@@ -231,12 +232,20 @@ class TableSpiderTests(TestCase):
             self.assertEqual(len(list(results)), 20)
 
     def test_table_ix(self):
+        self.maxDiff = None
         with self.open_resource("test24.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
             columns = Columns(
                 ("industry", "sector", "super-sector", "sub-sector", "code", "isin", "listing date", "security name")
             )
-            results = parse_tables_from_response(response, columns=columns, validate_result=validate_result)
+            results = parse_tables_from_response(
+                response,
+                columns=columns,
+                validate_result=validate_result,
+                dedupe_keywords=DEDUPE_KEYWORDS,
+                constraints=Constraints({"listing date": "date_type", "isin": re.compile(r"^[a-z0-9]{12}$", re.I)}),
+                max_tables=3,
+            )
             # self.assertEqual(len(results), 2)
-            self.assertEqual(results[4], {})
+            self.assertEqual(results, [])
             # self.assertEqual(results[1], {})

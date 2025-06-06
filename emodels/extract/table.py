@@ -1,9 +1,11 @@
 import re
 from operator import itemgetter
-from typing import List, Generator, Dict, Set, Tuple, Callable, NewType
+from typing import List, Generator, Dict, Set, Tuple, Callable, NewType, Optional
 
 from scrapy.http import TextResponse
 from scrapy import Selector
+
+from emodels.extract.utils import Constraints, apply_constraints
 
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
@@ -136,6 +138,7 @@ def parse_tables_from_response(
     columns: Columns,
     validate_result: Callable[[Result, Columns], bool] = default_validate_result,
     dedupe_keywords: Columns = Columns(()),
+    constraints: Optional[Constraints] = None,
     max_tables: int = 1,
 ) -> List[Result]:
     """
@@ -149,18 +152,20 @@ def parse_tables_from_response(
     """
     all_tables = response.xpath("//table")
     all_results: List[Result] = []
+    seen: Set[Uid] = set()
     if all_tables:
         for _, headers in find_tables(all_tables, columns, max_tables=max_tables):
             all_table_results: List[Result] = []
             fields: Set[str] = set()
             for parse_method in parse_table, parse_table_ii:
                 all_table_results_method = []
-                seen: Set[Uid] = set()
                 for table in all_tables:
                     for result in parse_method(table, headers):
                         if validate_result(result, columns) and (uid := unique_id(result, dedupe_keywords)) not in seen:
                             if uid:
                                 seen.add(uid)
+                            if constraints is not None and apply_constraints(result, constraints):
+                                continue
                             all_table_results_method.append(result)
                             fields.update(result.keys())
                 if score_results(all_table_results_method) > score_results(all_table_results):
