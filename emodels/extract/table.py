@@ -32,7 +32,7 @@ def iterate_rows(table: Selector) -> Generator[Tuple[List[str], str | None], Non
         yield extract_row_text(row), url
 
 
-def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_headers=1) -> List[List[str]]:
+def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...]) -> List[List[str]]:
     score_rows: List[Tuple[List[str], int]] = []
     for rowtexts, _ in iterate_rows(table):
         row_score = 0
@@ -42,16 +42,16 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...], max_h
                 row_score += 1
         if len(list(filter(None, rowtexts))) <= MAX_HEADER_COLUMNS:
             score_rows.append((rowtexts, row_score))
-    return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)][:max_headers]
+    return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)]
 
 
 def find_tables(
-    tables: List[Selector], candidate_fields: Tuple[str, ...], max_tables=1
+    tables: List[Selector], candidate_fields: Tuple[str, ...]
 ) -> List[Tuple[Selector, List[str]]]:
     # list of tuples (table selector, header, score1 score2)
     scored_tables: List[Tuple[Selector, List[str], int, int]] = []
     for table in tables[::-1]:
-        headers = find_table_headers(table, candidate_fields, max_headers=max_tables)[0]
+        headers = find_table_headers(table, candidate_fields)[0]
         score1 = len(
             list(
                 filter(
@@ -63,7 +63,7 @@ def find_tables(
         score2 = len(list(filter(None, headers)))
         if score1 <= MAX_HEADER_COLUMNS:
             scored_tables.append((table, headers, score1, score2))
-    return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)][:max_tables]
+    return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)]
 
 
 def parse_table(table: Selector, headers: List[str]):
@@ -155,8 +155,9 @@ def parse_tables_from_response(
     all_tables = response.xpath("//table")
     all_results: List[Result] = []
     seen: Set[Uid] = set()
+    table_count = 0
     if all_tables:
-        for _, headers in find_tables(all_tables, columns, max_tables=max_tables):
+        for _, headers in find_tables(all_tables, columns):
             all_table_results: List[Result] = []
             fields: Set[str] = set()
             for parse_method in parse_table, parse_table_ii:
@@ -179,5 +180,9 @@ def parse_tables_from_response(
                 for field in fields:
                     result.setdefault(field, "")
             remove_all_empty_fields(all_table_results)
-            all_results.extend(all_table_results)
+            if all_table_results:
+                all_results.extend(all_table_results)
+                table_count += 1
+                if table_count == max_tables:
+                    break
     return all_results
