@@ -14,7 +14,7 @@ class ClusterExtractTests(TestCase):
         rname = os.path.join(os.path.dirname(__file__), "extract_resources", name)
         return open(rname, "rb")
 
-    def test_stock_quote_i(self):
+    def test_cluster_i(self):
         with self.open_resource("test9.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(response.markdown, keywords=("^#", "industry", "sector", "stock"))
@@ -28,7 +28,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_ii(self):
+    def test_cluster_ii(self):
         with self.open_resource("test10.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
@@ -42,7 +42,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_iii(self):
+    def test_cluster_iii(self):
         with self.open_resource("test11.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
@@ -59,7 +59,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_iv(self):
+    def test_cluster_iv(self):
         with self.open_resource("test12.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
@@ -77,7 +77,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_v(self):
+    def test_cluster_v(self):
         with self.open_resource("test13.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
@@ -94,7 +94,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_vi(self):
+    def test_cluster_vi(self):
         with self.open_resource("test14.html") as f:
             response = ExtractTextResponse(url="http://www.ux.ua/en/issue.aspx?code=CEEN", status=200, body=f.read())
             result = extract_by_keywords(
@@ -114,7 +114,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_vii(self):
+    def test_cluster_vii(self):
         with self.open_resource("test15.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
@@ -144,7 +144,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_viii(self):
+    def test_cluster_viii(self):
         with self.open_resource("test16.html") as f:
             response = ExtractTextResponse(url="https://money.tmx.co/", status=200, body=f.read())
             result = extract_by_keywords(
@@ -173,7 +173,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_ix(self):
+    def test_cluster_ix(self):
         with self.open_resource("test17.html") as f:
             response = ExtractTextResponse(url="https://money.tmx.co/", status=200, body=f.read())
             result = extract_by_keywords(
@@ -191,7 +191,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_x(self):
+    def test_cluster_x(self):
         with self.open_resource("test18.html") as f:
             response = ExtractTextResponse(
                 url="https://www.boerse-duesseldorf.de/aktien/DE000A2P4HL9/123fahrschule-se-inhaber-aktien-o-n/",
@@ -216,7 +216,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_xi(self):
+    def test_cluster_xi(self):
         with self.open_resource("test19.html") as f:
             response = ExtractTextResponse(
                 url="https://www.bse.hu/pages/company_profile/$issuer/3439",
@@ -244,7 +244,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_xii(self):
+    def test_cluster_xii(self):
         with self.open_resource("test20.html") as f:
             response = ExtractTextResponse(
                 url="https://www.casablanca-bourse.com/en/live-market/emetteurs/AFI050112",
@@ -286,7 +286,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_xiii(self):
+    def test_cluster_xiii(self):
         with self.open_resource("test21.html") as f:
             response = ExtractTextResponse(
                 url="https://www.csx.ky/companies/equity.asp?SecId=01510001",
@@ -314,7 +314,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_xiv(self):
+    def test_cluster_xiv(self):
         with self.open_resource("test22.html") as f:
             response = ExtractTextResponse(
                 url="https://www.csx.ky/companies/equity.asp?SecId=01510001",
@@ -362,7 +362,7 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
-    def test_stock_quote_xv(self):
+    def test_cluster_xv(self):
         with self.open_resource("test23.html") as f:
             response = ExtractTextResponse(
                 url="https://www.cse.com.bd/company/companydetails/AIL",
@@ -394,5 +394,36 @@ class ClusterExtractTests(TestCase):
                     "trading code": "AIL",
                     "type of instrument": "",
                     "url": "https://www.cse.com.bd/company/companydetails/AIL",
+                },
+            )
+
+    def test_cluster_xvi(self):
+        with self.open_resource("test25.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.dsebd.org/displayCompany.php?name=AAMRANET",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response.markdown,
+                keywords=(
+                    "type of instrument",
+                    "debut trading date",
+                    "type of instrument",
+                    "trading code",
+                    "scrip code",
+                    "web address",
+                    "sector",
+                ),
+            )
+            self.assertEqual(
+                result,
+                {
+                    'debut trading date': '02 Oct, 2017',
+                    'scrip code': '22649',
+                    'sector': 'IT Sector',
+                    'trading code': 'AAMRANET',
+                    'type of instrument': 'Equity',
+                    'web address': '[ http://www.aamra.com.bd](http://www.aamra.com.bd)',
                 },
             )

@@ -101,7 +101,7 @@ def extract_by_keywords(  # noqa: C901
 
         for k, v in extracted_data.items():
             for j, w in extracted_data.items():
-                if k != j and v and w and (w in v or v in w):
+                if k != j and w and w in v:
                     score -= 1
                     if debug_mode:
                         print(f"Reducing score by one: {k}:{v} {j}:{w}")
@@ -138,4 +138,18 @@ def extract_by_keywords(  # noqa: C901
                             better_extra_candidate = m
             if better_extra_candidate is not None:
                 max_score_group[field] = _select_group(better_extra_candidate)
+
+    for k, v in list(max_score_group.items()):
+        for j, w in max_score_group.items():
+            if k != j and w and w in v:
+                vv = re.sub(w, "", v, flags=re.I)
+                if v == vv:
+                    continue
+                vvv = re.sub(j, "", vv, flags=re.I)
+                if vv == vvv:
+                    continue
+                vvvv = vvv.strip("*| :")
+                if vvvv != vvv and vvvv in v:
+                    max_score_group[k] = vvvv
+
     return max_score_group
