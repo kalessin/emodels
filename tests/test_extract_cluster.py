@@ -409,7 +409,6 @@ class ClusterExtractTests(TestCase):
                 keywords=(
                     "type of instrument",
                     "debut trading date",
-                    "type of instrument",
                     "trading code",
                     "scrip code",
                     "web address",
