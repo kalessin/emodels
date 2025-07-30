@@ -75,7 +75,6 @@ def extract_by_keywords(  # noqa: C901
         kmeans = KMeans(n_clusters=n_clusters or max_groups, random_state=0, n_init="auto").fit(features)
         for grp, mch in zip(kmeans.labels_, matches):
             groups[grp].append(mch)
-
     if debug_mode:
         print(pformat(groups))
     # score groups
@@ -120,7 +119,7 @@ def extract_by_keywords(  # noqa: C901
         print("Missing required fields stage 1:", missing_required_fields)
     # try to add missing fields from secondary groups
     # return max_score_group
-    if max_score_group and missing_required_fields:
+    if max_score_group and missing_required_fields and max_groups > 0:
         center = kmeans.cluster_centers_[max_score_group_idx]
         for field in missing_required_fields:
             if field.startswith("^#"):

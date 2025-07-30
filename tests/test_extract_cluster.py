@@ -426,3 +426,24 @@ class ClusterExtractTests(TestCase):
                     'web address': '[ http://www.aamra.com.bd](http://www.aamra.com.bd)',
                 },
             )
+
+    def test_cluster_xvii(self):
+        with self.open_resource("test26.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.ecseonline.com/profiles/GPCL/?type=equities",
+                status=200,
+                body=f.read(),
+            )
+            value_presets = {
+                "company name": "Grenreal Property Corporation Ltd.",
+                "isin": "GD3456401067",
+                "ticker": "GPCL",
+            }
+            result = extract_by_keywords(
+                response.markdown,
+                keywords=("symbol", "company name", "isin", "website"),
+                value_presets=value_presets,
+                debug_mode=True,
+            )
+            # nothing new was extracted
+            self.assertEqual(result, value_presets)
