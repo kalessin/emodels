@@ -11,6 +11,37 @@ from sklearn.cluster import KMeans
 import numpy as np
 
 from emodels.extract.utils import Constraints, apply_constraints
+from emodels.scrapyutils.response import ExtractTextResponse
+
+
+def tile_extraction(response: ExtractTextResponse, keywords: Tuple[str, ...], **extract_keywords_kwargs):
+    pass
+
+
+def apply_kmeans_clustering(
+    markdown: str, keywords: Tuple[str, ...], n_clusters: int = 0
+) -> Tuple[Dict[int, List[Tuple[str, re.Match]]], KMeans | None]:
+    # generate matches
+    matches: List[Tuple[str, re.Match]] = []
+    max_groups = 0
+    for keyword in keywords:
+        mlist = list(re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I))
+        if not mlist:
+            mlist = list(re.finditer(rf"{keyword}\s*([:|\s\n*]+)(.+)", markdown, flags=re.M | re.I))
+        matches.extend(("title" if "#" in keyword else keyword, m) for m in mlist)
+        max_groups = max(max_groups, len(mlist))
+
+    # group with k-means by position in text
+    groups: Dict[int, List[Tuple[str, re.Match]]] = defaultdict(list)
+    groups[-1] = []
+    kmeans = None
+    if max_groups > 0:
+        features = [m.span() for _, m in matches]
+        kmeans = KMeans(n_clusters=n_clusters or max_groups, random_state=0, n_init="auto").fit(features)
+        for grp, mch in zip(kmeans.labels_, matches):
+            groups[grp].append(mch)
+
+    return groups, kmeans
 
 
 def extract_by_keywords(  # noqa: C901
@@ -54,29 +85,13 @@ def extract_by_keywords(  # noqa: C901
         text = re.sub(r"\*\*$", "", text)
         return text
 
+    groups, kmeans = apply_kmeans_clustering(markdown, keywords, n_clusters)
+    if debug_mode:
+        print(pformat(groups))
+
     if keywords:
         required_fields += tuple(["title" if k.startswith("^#") else k for k in keywords])
 
-    # generate matches
-    matches: List[Tuple[str, re.Match]] = []
-    max_groups = 0
-    for keyword in keywords:
-        mlist = list(re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I))
-        if not mlist:
-            mlist = list(re.finditer(rf"{keyword}\s*([:|\s\n*]+)(.+)", markdown, flags=re.M | re.I))
-        matches.extend(("title" if "#" in keyword else keyword, m) for m in mlist)
-        max_groups = max(max_groups, len(mlist))
-
-    # group with k-means by position in text
-    groups: Dict[int, List[Tuple[str, re.Match]]] = defaultdict(list)
-    groups[-1] = []
-    if max_groups > 0:
-        features = [m.span() for _, m in matches]
-        kmeans = KMeans(n_clusters=n_clusters or max_groups, random_state=0, n_init="auto").fit(features)
-        for grp, mch in zip(kmeans.labels_, matches):
-            groups[grp].append(mch)
-    if debug_mode:
-        print(pformat(groups))
     # score groups
     max_score = -len(required_fields)
     max_score_group = {}
@@ -119,7 +134,7 @@ def extract_by_keywords(  # noqa: C901
         print("Missing required fields stage 1:", missing_required_fields)
     # try to add missing fields from secondary groups
     # return max_score_group
-    if max_score_group and missing_required_fields and max_groups > 0:
+    if max_score_group and missing_required_fields and kmeans is not None:
         center = kmeans.cluster_centers_[max_score_group_idx]
         for field in missing_required_fields:
             if field.startswith("^#"):
