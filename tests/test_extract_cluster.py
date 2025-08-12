@@ -2,7 +2,7 @@ import os
 from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.cluster import extract_by_keywords
+from emodels.extract.cluster import extract_by_keywords  # , tile_extraction
 from emodels.extract.utils import apply_additional_regexes
 
 
@@ -443,7 +443,20 @@ class ClusterExtractTests(TestCase):
                 response.markdown,
                 keywords=("symbol", "company name", "isin", "website"),
                 value_presets=value_presets,
-                debug_mode=True,
             )
             # nothing new was extracted
             self.assertEqual(result, value_presets)
+
+    def test_cluster_tile_i(self):
+        with self.open_resource("test27.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.ese.co.sz/issuers/securities/",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response.markdown,
+                keywords=("isin", "ticker", "founded", "listed"),
+                debug_mode=True,
+            )
+            self.assertEqual(result, [])

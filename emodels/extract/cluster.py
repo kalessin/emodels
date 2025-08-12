@@ -14,12 +14,27 @@ from emodels.extract.utils import Constraints, apply_constraints
 from emodels.scrapyutils.response import ExtractTextResponse
 
 
-def tile_extraction(response: ExtractTextResponse, keywords: Tuple[str, ...], **extract_keywords_kwargs):
-    pass
+def tile_extraction(
+    response: ExtractTextResponse, keywords: Tuple[str, ...], debug_mode: bool = False, **extract_kwargs
+):
+    # return extract_by_keywords(response.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
+    prev_groups = None
+    current_response = response
+    groups, kmeans = apply_kmeans_clustering(current_response.markdown, keywords, debug_mode=debug_mode)
+    return groups.values()
+    while True:
+        groups, kmeans = apply_kmeans_clustering(current_response.markdown, keywords)
+        if prev_groups is not None and len(groups) > len(prev_groups):
+            break
+        for grp in groups.values():
+            pass
+        prev_groups = groups
+
+    return prev_groups.values()
 
 
 def apply_kmeans_clustering(
-    markdown: str, keywords: Tuple[str, ...], n_clusters: int = 0
+    markdown: str, keywords: Tuple[str, ...], n_clusters: int = 0, debug_mode: bool = False
 ) -> Tuple[Dict[int, List[Tuple[str, re.Match]]], KMeans | None]:
     # generate matches
     matches: List[Tuple[str, re.Match]] = []
@@ -39,19 +54,22 @@ def apply_kmeans_clustering(
         features = [m.span() for _, m in matches]
         kmeans = KMeans(n_clusters=n_clusters or max_groups, random_state=0, n_init="auto").fit(features)
         for grp, mch in zip(kmeans.labels_, matches):
-            groups[grp].append(mch)
+            groups[int(grp)].append(mch)
+
+    if debug_mode:
+        print(pformat(groups))
 
     return groups, kmeans
 
 
-def extract_by_keywords(  # noqa: C901
+def extract_by_keywords(
     markdown: str,
     keywords: Tuple[str, ...],
     required_fields: Tuple[str, ...] = (),
     value_filters: Optional[Dict[str, Tuple[str, ...]]] = None,
     value_presets: Optional[Dict[str, str]] = None,
     constraints: Optional[Constraints] = None,
-    debug_mode=False,
+    debug_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
 ) -> Dict[str, str]:
     """
@@ -77,17 +95,35 @@ def extract_by_keywords(  # noqa: C901
       it can be used to understand how the algorithm behaves with different number of clusters
     """
 
-    def _select_group(m: re.Match):
+    def _select_group(m: re.Match) -> Tuple[str, int]:
         if m.groups()[0].startswith("| |"):
-            return ""
-        text = m.groups()[-1].strip().strip("| \n")
-        text = re.sub(r"^\*\*", "", text)
-        text = re.sub(r"\*\*$", "", text)
-        return text
+            return "", 0
+        score = 0
+        text = m.groups()[-1]
+        if (new_text := text.strip().strip("| \n")) != text:
+            score += 1
+            text = new_text
+        if (new_text := re.sub(r"^\*\*", "", text)) != text:
+            score += 1
+            text = new_text
+        if (text := re.sub(r"\*\*$", "", text)) != text:
+            score += 1
+            text = new_text
+        return text, score
 
-    groups, kmeans = apply_kmeans_clustering(markdown, keywords, n_clusters)
-    if debug_mode:
-        print(pformat(groups))
+    def _best_values_dict(extracted_data: Dict[str, List[Tuple[str, int]]]) -> Dict[str, str]:
+        result = {}
+        for k, vv_scores in extracted_data.items():
+            max_score = 0
+            best_value = ""
+            for vv, score in vv_scores:
+                if score >= max_score:
+                    max_score = score
+                    best_value = vv
+            result[k] = best_value
+        return result
+
+    groups, kmeans = apply_kmeans_clustering(markdown, keywords, n_clusters=n_clusters, debug_mode=debug_mode)
 
     if keywords:
         required_fields += tuple(["title" if k.startswith("^#") else k for k in keywords])
@@ -101,35 +137,41 @@ def extract_by_keywords(  # noqa: C901
         results = [
             (k, m)
             for k, m in results
-            if not any([re.search(vv, _select_group(m)) for vv in (value_filters or {}).get(k, [])])
+            if not any([re.search(vv, _select_group(m)[0]) for vv in (value_filters or {}).get(k, [])])
         ]
-        extracted_data = {f: _select_group(m) for f, m in results}
+        extracted_data: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
+        for k, m in results:
+            extracted_data[k].append(_select_group(m))
+        if debug_mode:
+            print("Candidate extraction:", pformat(dict(extracted_data)))
+        extracted_dict: Dict[str, str] = _best_values_dict(extracted_data)
         if constraints is not None:
-            apply_constraints(extracted_data, constraints)
-        score = len(extracted_data)
+            apply_constraints(extracted_dict, constraints)
+        score = len(extracted_dict)
 
         for k, v in (value_presets or {}).items():
-            if extracted_data.get(k) == v:
+            if extracted_dict.get(k) == v:
                 score += 1
-            extracted_data.setdefault(k, v)
+            extracted_dict.setdefault(k, v)
 
-        for k, v in extracted_data.items():
-            for j, w in extracted_data.items():
+        for k, v in extracted_dict.items():
+            for j, w in extracted_dict.items():
                 if k != j and w and w in v:
                     score -= 1
                     if debug_mode:
                         print(f"Reducing score by one: {k}:{v} {j}:{w}")
 
-        missing_required_fields = set(required_fields).difference(set(extracted_data.keys()))
+        missing_required_fields = set(required_fields).difference(set(extracted_dict.keys()))
         score -= len(missing_required_fields)
 
         if score > max_score:
             max_score = score
-            max_score_group = extracted_data
+            max_score_group = extracted_dict
             max_score_group_idx = idx
 
     missing_required_fields = set(required_fields).difference(set(max_score_group.keys()))
     if debug_mode:
+        print("Max score group:", pformat(max_score_group))
         print("Extracted fields on stage 1:", list(max_score_group.keys()))
         print("Missing required fields stage 1:", missing_required_fields)
     # try to add missing fields from secondary groups
@@ -151,7 +193,7 @@ def extract_by_keywords(  # noqa: C901
                             better_extra_candidate_distance = float(distance)
                             better_extra_candidate = m
             if better_extra_candidate is not None:
-                max_score_group[field] = _select_group(better_extra_candidate)
+                max_score_group[field] = _select_group(better_extra_candidate)[0]
 
     for k, v in list(max_score_group.items()):
         for j, w in max_score_group.items():
