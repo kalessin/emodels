@@ -2,12 +2,11 @@ import os
 from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.cluster import extract_by_keywords  # , tile_extraction
+from emodels.extract.cluster import extract_by_keywords, tile_extraction
 from emodels.extract.utils import apply_additional_regexes
 
 
 class ClusterExtractTests(TestCase):
-
     maxDiff = None
 
     def open_resource(self, name):
@@ -31,9 +30,7 @@ class ClusterExtractTests(TestCase):
     def test_cluster_ii(self):
         with self.open_resource("test10.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
-            result = extract_by_keywords(
-                response.markdown, keywords=("^#",), value_presets={"stock": "HDGE"}
-            )
+            result = extract_by_keywords(response.markdown, keywords=("^#",), value_presets={"stock": "HDGE"})
             self.assertEqual(
                 result,
                 {
@@ -418,12 +415,12 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result,
                 {
-                    'debut trading date': '02 Oct, 2017',
-                    'scrip code': '22649',
-                    'sector': 'IT Sector',
-                    'trading code': 'AAMRANET',
-                    'type of instrument': 'Equity',
-                    'web address': '[ http://www.aamra.com.bd](http://www.aamra.com.bd)',
+                    "debut trading date": "02 Oct, 2017",
+                    "scrip code": "22649",
+                    "sector": "IT Sector",
+                    "trading code": "AAMRANET",
+                    "type of instrument": "Equity",
+                    "web address": "[ http://www.aamra.com.bd](http://www.aamra.com.bd)",
                 },
             )
 
@@ -461,9 +458,27 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result,
                 {
-                    'founded': '1838',
-                    'isin': 'SZE000331064',
-                    'listed': '5th December, 2023',
-                     'ticker': 'FNBE',
-                }
+                    "founded": "1838",
+                    "isin": "SZE000331064",
+                    "listed": "5th December, 2023",
+                    "ticker": "FNBE",
+                },
+            )
+            result = tile_extraction(
+                response,
+                keywords=("isin", "ticker", "founded", "listed"),
+            )
+            self.assertEqual(
+                result,
+                [
+                    {"founded": "1838", "isin": "SZE000331064", "listed": "5th December, 2023", "ticker": "FNBE"},
+                    {"founded": "2009", "isin": "SZE000331023", "listed": "1st November, 2010", "ticker": "GRYS"},
+                    {"founded": "2017", "isin": "SZE000331049", "listed": "1st January, 2019", "ticker": "INALA"},
+                    {"founded": "1882", "isin": "SZ0005797904", "listed": "1st January, 1990", "ticker": "NED"},
+                    {"founded": "2007", "isin": "SZE000331056", "listed": "9th November, 2023", "ticker": "NPC"},
+                    {"founded": "1973", "isin": "SZ0005797920", "listed": "1st January, 1992", "ticker": "RSC"},
+                    {"founded": "2011", "isin": "SZE000331031", "listed": "10th February, 2014", "ticker": "SBC"},
+                    {"founded": "1998", "isin": "SZE000331015", "listed": "1st June, 2004", "ticker": "SEL"},
+                    {"founded": "1996", "isin": "SZ0005797946", "listed": "1st January, 1999", "ticker": "SWP"},
+                ],
             )

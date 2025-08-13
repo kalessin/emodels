@@ -17,20 +17,47 @@ from emodels.scrapyutils.response import ExtractTextResponse
 def tile_extraction(
     response: ExtractTextResponse, keywords: Tuple[str, ...], debug_mode: bool = False, **extract_kwargs
 ):
-    # return extract_by_keywords(response.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
-    prev_groups = None
-    current_response = response
-    groups, kmeans = apply_kmeans_clustering(current_response.markdown, keywords, debug_mode=debug_mode)
-    return groups.values()
+    results = []
+    current_responses = [response]
+    xpath = "."
     while True:
-        groups, kmeans = apply_kmeans_clustering(current_response.markdown, keywords)
-        if prev_groups is not None and len(groups) > len(prev_groups):
+        new_results = [
+            extract_by_keywords(cr.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
+            for cr in current_responses
+        ]
+        if not new_results:
             break
-        for grp in groups.values():
-            pass
-        prev_groups = groups
+        results = new_results
 
-    return prev_groups.values()
+        max_result = -1
+        for idx in range(len(new_results)):
+            if max_result == -1 or len(new_results[idx]) > len(new_results[max_result]):
+                max_result = idx
+
+        prev_xpath = xpath
+        for cidx, child in enumerate(response.xpath(xpath + "/*"), start=1):
+            for val in new_results[idx].values():
+                if val not in child.get():
+                    break
+            else:
+                xpath += f"/*[{cidx}]"
+                break
+
+        if xpath == prev_xpath:
+            break
+        current_responses = response.xpath_split(xpath)
+
+    while "[" in xpath:
+        xpath = xpath.rsplit("[", 1)[0]
+        new_current_responses = response.xpath_split(xpath)
+        if len(new_current_responses) > len(current_responses):
+            results = [
+                extract_by_keywords(cr.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
+                for cr in new_current_responses
+            ]
+            break
+
+    return results
 
 
 def apply_kmeans_clustering(
