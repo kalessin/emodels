@@ -95,20 +95,30 @@ def extract_by_keywords(
       it can be used to understand how the algorithm behaves with different number of clusters
     """
 
-    def _select_group(m: re.Match) -> Tuple[str, int]:
-        if m.groups()[0].startswith("| |"):
+    def _clean_group(m: re.Match, group_results: Optional[List[Tuple[str, re.Match]]] = None) -> Tuple[str, int]:
+        text = m.groups()[-1]
+        if text.startswith("| |"):
             return "", 0
         score = 0
-        text = m.groups()[-1]
-        if (new_text := text.strip().strip("| \n")) != text:
-            score += 1
-            text = new_text
-        if (new_text := re.sub(r"^\*\*", "", text)) != text:
-            score += 1
-            text = new_text
-        if (text := re.sub(r"\*\*$", "", text)) != text:
-            score += 1
-            text = new_text
+        for _, mm in group_results or []:
+            subtext = mm.group()
+            if subtext in text and subtext != text:
+                text = text.replace(subtext, "")
+        changed = True
+        while changed:
+            changed = False
+            if (new_text := re.sub(r"^\*\*", "", text)) != text:
+                score += 1
+                text = new_text
+                changed = True
+            if (text := re.sub(r"\*\*$", "", text)) != text:
+                score += 1
+                text = new_text
+                changed = True
+            if (new_text := text.strip().strip("| \n")) != text:
+                score += 1
+                text = new_text
+                changed = True
         return text, score
 
     def _best_values_dict(extracted_data: Dict[str, List[Tuple[str, int]]]) -> Dict[str, str]:
@@ -137,11 +147,11 @@ def extract_by_keywords(
         results = [
             (k, m)
             for k, m in results
-            if not any([re.search(vv, _select_group(m)[0]) for vv in (value_filters or {}).get(k, [])])
+            if not any([re.search(vv, _clean_group(m, results)[0]) for vv in (value_filters or {}).get(k, [])])
         ]
         extracted_data: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         for k, m in results:
-            extracted_data[k].append(_select_group(m))
+            extracted_data[k].append(_clean_group(m, results))
         if debug_mode:
             print("Candidate extraction:", pformat(dict(extracted_data)))
         extracted_dict: Dict[str, str] = _best_values_dict(extracted_data)
@@ -193,7 +203,7 @@ def extract_by_keywords(
                             better_extra_candidate_distance = float(distance)
                             better_extra_candidate = m
             if better_extra_candidate is not None:
-                max_score_group[field] = _select_group(better_extra_candidate)[0]
+                max_score_group[field] = _clean_group(better_extra_candidate)[0]
 
     for k, v in list(max_score_group.items()):
         for j, w in max_score_group.items():

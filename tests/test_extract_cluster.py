@@ -457,6 +457,13 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=("isin", "ticker", "founded", "listed"),
-                debug_mode=True,
             )
-            self.assertEqual(result, [])
+            self.assertEqual(
+                result,
+                {
+                    'founded': '1838',
+                    'isin': 'SZE000331064',
+                    'listed': '5th December, 2023',
+                     'ticker': 'FNBE',
+                }
+            )
