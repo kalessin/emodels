@@ -26,6 +26,7 @@ from typing import (
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
+from shub_workflow.utils.futils import FSHelper
 import lxml.html
 
 from emodels.config import EMODELS_REPOSITORY, EMODELS_ITEMS_DIR
@@ -79,16 +80,39 @@ class Filename(str):
     def open(self, mode="rt"):
         return open(self, mode)
 
-    @classmethod
-    def local_by_name(cls, localname: str) -> Self:
-        """
-        Returns a Filename object by project/name.
-        """
-        project, name = localname.split("/")
-        return cls(os.path.join(EMODELS_REPOSITORY, project, f"{name}.jl.gz"))
-
     def delete_local(self, project_name: str):
         os.remove(self.local(project_name))
+
+
+class CloudFilename(Filename):
+
+    project_name: str
+    fshelper: FSHelper
+
+    def __new__(cls, text, **kwargs):
+        assert kwargs.get("project_name"), "This class requires `project_name` keyword parameter."
+        obj = super().__new__(cls, text)
+        obj.project_name = kwargs.pop("project_name")
+        obj.fshelper = FSHelper(**kwargs)
+        return obj
+
+    def open(self, mode="rt"):
+        localname = self.local(self.project_name)
+        if not self.fshelper.exists(localname):
+            self.fshelper.cp_file(self, localname)
+        return open(localname, mode)
+
+    @property
+    def basename(self):
+        return Filename(os.path.basename(self))
+
+    def local(self, project_name: str):
+        """
+        Creates a local standard path to find a copy of the source file.
+        """
+        basedir = os.path.join(EMODELS_REPOSITORY, project_name)
+        os.makedirs(basedir, exist_ok=True)
+        return Filename(os.path.join(basedir, self.basename))
 
 
 # Type of dataset samples
@@ -136,6 +160,14 @@ class DatasetFilename(Generic[E], Filename):
                     break
             else:
                 yield sample
+
+    @classmethod
+    def local_by_name(cls, localname: str) -> Self:
+        """
+        Returns a Filename object by project/name.
+        """
+        project, name = localname.split("/")
+        return cls(os.path.join(EMODELS_REPOSITORY, project, f"{name}.jl.gz"))
 
 
 class WebsiteSampleData(TypedDict):
