@@ -98,21 +98,29 @@ class CloudFilename(str):
 
     def open(self, mode="rt"):
         localname = self.local()
-        if not self.fshelper.exists(localname):
-            self.fshelper.cp_file(self, localname)
         return open(localname, mode)
 
     @property
     def basename(self):
         return Filename(os.path.basename(self))
 
+    def compute_local(self):
+        basedir = os.path.join(EMODELS_REPOSITORY, self.project_name)
+        os.makedirs(basedir, exist_ok=True)
+        return Filename(os.path.join(basedir, self.basename))
+
     def local(self):
         """
         Creates a local standard path to find a copy of the source file.
         """
-        basedir = os.path.join(EMODELS_REPOSITORY, self.project_name)
-        os.makedirs(basedir, exist_ok=True)
-        return Filename(os.path.join(basedir, self.basename))
+        localname = self.compute_local()
+        if not self.fshelper.exists(localname):
+            self.fshelper.cp_file(self, localname)
+        return localname
+
+    def delete_local(self):
+        localname = self.compute_local()
+        os.remove(localname)
 
 
 # Type of dataset samples
