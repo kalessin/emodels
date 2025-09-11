@@ -84,7 +84,7 @@ class Filename(str):
         os.remove(self.local(project_name))
 
 
-class CloudFilename(Filename):
+class CloudFilename(str):
 
     project_name: str
     fshelper: FSHelper
@@ -97,7 +97,7 @@ class CloudFilename(Filename):
         return obj
 
     def open(self, mode="rt"):
-        localname = self.local(self.project_name)
+        localname = self.local()
         if not self.fshelper.exists(localname):
             self.fshelper.cp_file(self, localname)
         return open(localname, mode)
@@ -106,11 +106,11 @@ class CloudFilename(Filename):
     def basename(self):
         return Filename(os.path.basename(self))
 
-    def local(self, project_name: str):
+    def local(self):
         """
         Creates a local standard path to find a copy of the source file.
         """
-        basedir = os.path.join(EMODELS_REPOSITORY, project_name)
+        basedir = os.path.join(EMODELS_REPOSITORY, self.project_name)
         os.makedirs(basedir, exist_ok=True)
         return Filename(os.path.join(basedir, self.basename))
 
