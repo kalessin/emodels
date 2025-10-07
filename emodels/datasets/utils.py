@@ -66,10 +66,10 @@ class Filename(str):
     """
 
     @property
-    def basename(self):
+    def basename(self) -> Self:
         return self.__class__(os.path.basename(self))
 
-    def local(self, project_name: str):
+    def local(self, project_name: str) -> Self:
         """
         Creates a local standard path to find a copy of the source file.
         """
@@ -77,7 +77,7 @@ class Filename(str):
         os.makedirs(basedir, exist_ok=True)
         return self.__class__(os.path.join(basedir, self.basename))
 
-    def open(self, mode="rt"):
+    def open(self, mode="rt") -> IO:
         return open(self, mode)
 
     def delete_local(self, project_name: str):
@@ -96,20 +96,20 @@ class CloudFilename(str):
         obj.fshelper = FSHelper(**kwargs)
         return obj
 
-    def open(self, mode="rt"):
+    def open(self, mode="rt") -> IO:
         localname = self.local()
         return open(localname, mode)
 
     @property
-    def basename(self):
+    def basename(self) -> Filename:
         return Filename(os.path.basename(self))
 
-    def compute_local(self):
+    def compute_local(self) -> Filename:
         basedir = os.path.join(EMODELS_REPOSITORY, self.project_name)
         os.makedirs(basedir, exist_ok=True)
         return Filename(os.path.join(basedir, self.basename))
 
-    def local(self):
+    def local(self) -> Filename:
         """
         Creates a local standard path to find a copy of the source file.
         """
@@ -141,7 +141,7 @@ class DatasetFilename(Generic[E], Filename):
         obj._file = None
         return obj
 
-    def open(self, mode="rt"):
+    def open(self, mode="rt") -> IO:
         return gzip.open(self, mode)
 
     def __iter__(self):
@@ -182,14 +182,6 @@ class WebsiteSampleData(TypedDict):
     url: str
     body: str
     status: int
-
-
-class WebsiteDatasetFilename(DatasetFilename[WebsiteSampleData]):
-    """
-    Website Datasets contain a collection of WebsiteSampleData
-    """
-
-    ...
 
 
 class ExtractDatasetFilename(DatasetFilename[ItemSample]):
@@ -396,8 +388,6 @@ def build_sample_data_from_response(response: TextResponse) -> WebsiteSampleData
     return sampledata
 
 
-def save_sample_data_from_response(response: TextResponse, filename: Union[str, WebsiteDatasetFilename]):
+def save_sample_data_from_response(response: TextResponse, filename: DatasetFilename[WebsiteSampleData]):
     sampledata = build_sample_data_from_response(response)
-    if not isinstance(filename, WebsiteDatasetFilename):
-        filename = WebsiteDatasetFilename(filename)
     filename.append(sampledata)

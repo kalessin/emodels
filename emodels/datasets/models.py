@@ -33,7 +33,7 @@ from emodels.datasets.utils import (
     build_sample_data_from_response,
 )
 from emodels.datasets.tokenizers import (
-    extract_dataset_text,
+    extract_dataset_text_from_website_sampledata,
     train_tokenizer,
     load_tokenizer_from_file,
     TokenizerFilename,
@@ -406,7 +406,9 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
 
     @classmethod
     def generate_training_text_filename(cls, training_text_filename: Filename):
-        extract_dataset_text(cls.dataset_repository.local(cls.project), training_text_filename, cls.get_converter())
+        extract_dataset_text_from_website_sampledata(
+            cls.dataset_repository.local(cls.project), training_text_filename, cls.get_converter()
+        )
 
     @classmethod
     def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[str]:

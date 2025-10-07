@@ -18,8 +18,8 @@ from datasets.builder import DatasetGenerationError
 from sklearn.metrics import f1_score
 
 
-from emodels.datasets.utils import ExtractDatasetFilename
 from emodels.datasets.stypes import DatasetBucket, ItemSample
+from emodels.datasets.utils import DatasetFilename
 
 
 class ExtractSample(TypedDict):
@@ -41,7 +41,7 @@ def _adapt_attribute(attr: str) -> str:
 
 
 def to_hfdataset(
-    target: ExtractDatasetFilename, **kwargs
+    target: DatasetFilename[ItemSample], **kwargs
 ) -> HuggingFaceDatasetDict:
     """
     Convert to HuggingFace Dataset suitable for usage in transformers

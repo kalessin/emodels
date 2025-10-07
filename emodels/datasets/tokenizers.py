@@ -2,53 +2,51 @@
 """
 import os
 import shutil
-from typing import Optional, TypeVar
 
 import sentencepiece as spm
 
 from .utils import (
     ResponseConverter,
+    DatasetFilename,
+    WebsiteSampleData,
     build_response_from_sample_data,
     Filename,
-    WebsiteDatasetFilename,
-    ExtractDatasetFilename,
 )
+from .stypes import ItemSample
 
 
 class TokenizerFilename(Filename):
     pass
 
 
-ExtractTextDatasetFilenameType = TypeVar(
-    "ExtractTextDatasetFilenameType", WebsiteDatasetFilename, ExtractDatasetFilename
-)
-
-
-def extract_dataset_text(
-    dataset_filename: ExtractTextDatasetFilenameType,
+def extract_dataset_text_from_website_sampledata(
+    dataset_filename: DatasetFilename[WebsiteSampleData],
     output_filename: Filename,
-    response_converter: Optional[ResponseConverter] = None,
+    response_converter: ResponseConverter,
 ):
     """
-    Extracts text from a dataset, suitable for usage in training tokenizer.
+    Extracts text from a website sample dataset, suitable for usage in training tokenizer.
     The text is extracted using the specified ResponseConverter class, and saved into an output file
     for further tokenizer processing.
     """
-    if isinstance(dataset_filename, WebsiteDatasetFilename):
-        assert (
-            response_converter is not None
-        ), "response_converter parameter cannot be None for WebsiteDatasetFilename"
-        with output_filename.open("w") as output:
-            for data in dataset_filename:
-                response = build_response_from_sample_data(data)
-                text_pieces = response_converter.response_to_valid_text(response.text)
-                print(" ".join(text_pieces), file=output)
-    elif isinstance(dataset_filename, ExtractDatasetFilename):
-        with output_filename.open("w") as output:
-            for data in dataset_filename:
-                print(data["markdown"], file=output)
-    else:
-        raise ValueError(f"dataset of type {type(dataset_filename)} is not supported.")
+    with output_filename.open("w") as output:
+        for data in dataset_filename:
+            response = build_response_from_sample_data(data)
+            text_pieces = response_converter.response_to_valid_text(response.text)
+            print(" ".join(text_pieces), file=output)
+
+
+def extract_dataset_text_from_item_sample(
+    dataset_filename: DatasetFilename[ItemSample],
+    output_filename: Filename,
+):
+    """
+    Extracts text from an item sample dataset, suitable for usage in training tokenizer.
+    """
+
+    with output_filename.open("w") as output:
+        for data in dataset_filename:
+            print(data["markdown"], file=output)
 
 
 def train_tokenizer(tokenizer_training_text: Filename, model_filename: TokenizerFilename):
