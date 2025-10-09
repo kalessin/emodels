@@ -219,6 +219,11 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
     def reset_datasets(cls):
         cls.delete_model_files(cls.dataset_repository)
         cls.datasets = None
+        if hasattr(cls, "raw_dataset_source"):
+            for fname in cls.scraped_samples.values():
+                if cls._fshelper().exists(fname):
+                    cls._fshelper().rm_file(fname)
+                    LOGGER.info(f"Deleted {fname}")
 
     @classmethod
     def reset(cls):
