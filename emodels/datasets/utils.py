@@ -22,6 +22,7 @@ from typing import (
     Generator,
     Mapping,
     Any,
+    Literal,
 )
 
 from typing_extensions import Self
@@ -88,16 +89,20 @@ class CloudFilename(str):
 
     project_name: str
     fshelper: FSHelper
+    file_format: Literal["", "gzip"]
 
     def __new__(cls, text, **kwargs):
         assert kwargs.get("project_name"), "This class requires `project_name` keyword parameter."
         obj = super().__new__(cls, text)
         obj.project_name = kwargs.pop("project_name")
+        obj.file_format = kwargs.pop("file_format", "")
         obj.fshelper = FSHelper(**kwargs)
         return obj
 
     def open(self, mode="rt") -> IO:
         localname = self.local()
+        if self.file_format == "gzip":
+            return gzip.open(localname, mode)
         return open(localname, mode)
 
     @property
@@ -125,6 +130,34 @@ class CloudFilename(str):
 
 # Type of dataset samples
 E = TypeVar("E", bound=Mapping[str, Any])
+
+
+class CloudDatasetFilename(Generic[E], CloudFilename):
+
+    _file: Union[None, IO]
+
+    def __new__(cls, text, **kwargs):
+        obj = super().__new__(cls, text, **kwargs)
+        obj._file = None
+        return obj
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> E:
+        if self._file is None:
+            self._file = self.open()
+        line = next(self._file)
+        return cast(E, json.loads(line))
+
+    def iter(self, **kwargs) -> Generator[E, None, None]:
+        df = self.__class__(self)
+        for sample in df:
+            for key, val in kwargs.items():
+                if sample.get(key, None) != val:
+                    break
+            else:
+                yield sample
 
 
 class DatasetFilename(Generic[E], Filename):

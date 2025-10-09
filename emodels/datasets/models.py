@@ -3,7 +3,7 @@
 import logging
 from functools import partial
 from abc import abstractmethod, ABC
-from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence, Dict, Any, Mapping
+from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence, Dict, Any, Mapping, get_args
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -28,6 +28,7 @@ from emodels.datasets.utils import (
     ResponseConverter,
     Filename,
     DatasetFilename,
+    CloudDatasetFilename,
     WebsiteSampleData,
     E,
     build_sample_data_from_response,
@@ -148,6 +149,7 @@ class DatasetsPandas(Generic[E]):
 class ModelWithDataset(Generic[SAMPLE, E], ABC):
     datasets: DatasetsPandas[E] | None = None
 
+    raw_dataset_source: CloudDatasetFilename[SAMPLE]
     scraped_samples: Dict[DatasetBucket, DatasetFilename[SAMPLE]] = dict()
     scraped_label: str
 
@@ -263,6 +265,13 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
         field (as specified by cls.target_label attribute) and the field `dataset_bucket`
         with a value being either "train" or "test".
         """
+        if hasattr(cls, "raw_dataset_source"):
+            idx = 0
+            for sample in cls.raw_dataset_source:
+                bucket = sample["dataset_bucket"]
+                assert bucket in get_args(DatasetBucket), f"Invalid bucket for raw sample #{idx}: {bucket}"
+                cls.append_sample(sample, bucket)
+                idx += 1
         for bucket, scrapes_dataset in cls.scraped_samples.items():
             for sample in scrapes_dataset:
                 sd = cls.get_sample_data_from_sample(sample)
