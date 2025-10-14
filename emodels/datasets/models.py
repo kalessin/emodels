@@ -120,8 +120,10 @@ M = TypeVar("M", bound=LowLevelModelProtocol)
 class DatasetsPandas(Generic[E]):
     X_train: pd.DataFrame
     X_test: pd.Series
+    X_validation: pd.Series
     Y_train: pd.DataFrame
     Y_test: pd.Series
+    Y_validation: pd.Series
 
     @classmethod
     def from_datasetfilename(cls, filename: DatasetFilename[E], features: Tuple[str, ...], target_label: str) -> Self:
@@ -130,6 +132,7 @@ class DatasetsPandas(Generic[E]):
 
         df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
         df_test = df[df.dataset_bucket == "test"].drop("dataset_bucket", axis=1)
+        df_validation = df[df.dataset_bucket == "validation"].drop("dataset_bucket", axis=1)
 
         df_X_train = df_train[list(features)]
         df_Y_train = df_train[target_label]
@@ -137,11 +140,16 @@ class DatasetsPandas(Generic[E]):
         df_X_test = df_test[list(features)]
         df_Y_test = df_test[target_label]
 
+        df_X_validation = df_validation[list(features)]
+        df_Y_validation = df_validation[target_label]
+
         obj = cls()
         obj.X_train = df_X_train
         obj.X_test = df_X_test
+        obj.X_validation = df_X_validation
         obj.Y_train = df_Y_train
         obj.Y_test = df_Y_test
+        obj.Y_validation = df_Y_validation
 
         return obj
 
@@ -502,11 +510,6 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
 
     @classmethod
     def evaluate(cls, proba: int = -1, proba_threshold: float = 0.5):
-        datasets = cls.get_dataset()
-        predicted = cls.predict(datasets.X_train, proba)
-        if proba >= 0:
-            predicted = (predicted > proba_threshold).astype(numpy.int64)
-        y_train = datasets.Y_train
 
         def _stat(score_func, target, predicted):
             return str(round(score_func(target, predicted) * 100, 2)) + "%"
@@ -517,6 +520,12 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
             result += f" FN={cm[1, 0]} TP={cm[1, 1]}"
             return result
 
+        datasets = cls.get_dataset()
+        predicted = cls.predict(datasets.X_train, proba)
+        if proba >= 0:
+            predicted = (predicted > proba_threshold).astype(numpy.int64)
+        y_train = datasets.Y_train
+
         print("Train set scores")
         print("----------------")
         print("Recall:", _stat(recall_score, y_train, predicted))
@@ -525,6 +534,22 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
         print("Roc Auc:", _stat(roc_auc_score, y_train, predicted))
         print("Confusion matrix:\n", _print_confusion_matrix(y_train, predicted))
         print()
+
+        if not datasets.X_validation.empty:
+            predicted = cls.predict(datasets.X_validation, proba)
+            if proba >= 0:
+                predicted = (predicted > proba_threshold).astype(numpy.int64)
+            y_validation = datasets.Y_validation
+
+            print("Validation set scores")
+            print("---------------")
+            print("Recall:", _stat(recall_score, y_validation, predicted))
+            print("Precision:", _stat(precision_score, y_validation, predicted))
+            print("Accuracy:", _stat(accuracy_score, y_validation, predicted))
+            print("Roc Auc:", _stat(roc_auc_score, y_validation, predicted))
+            print("Confusion matrix:\n", _print_confusion_matrix(y_validation, predicted))
+            print()
+
 
         predicted = cls.predict(datasets.X_test, proba)
         if proba >= 0:
@@ -579,10 +604,11 @@ class ClassifierModelWithVectorizer(
 class SVMModelWithVectorizer(Generic[SAMPLE, E, DF, V], ClassifierModelWithVectorizer[SAMPLE, E, DF, V, SVC]):
     gamma = 0.4
     C = 10
+    kernel = "rbf"
 
     @classmethod
     def instance_new_lowlevel_model(cls) -> SVC:
-        return SVC(kernel="rbf", C=cls.C, gamma=cls.gamma)
+        return SVC(kernel=cls.kernel, C=cls.C, gamma=cls.gamma)
 
 
 class SVMModelWithTfidfResponseVectorizer(
