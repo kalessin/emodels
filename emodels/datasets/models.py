@@ -69,22 +69,24 @@ class LowLevelModelProtocol(Protocol):
 
 
 # Sample coming from scraper
-SAMPLE = TypeVar("SAMPLE", bound=Mapping[str, Any])
-# E: DatasetFilename samples type. If S is already a structured object, E and S will be the same.
-# Otherwise, E is typically a structured representation of the type S (i.e. when S is an HtmlResponse
-# and E a WebsiteSampleData, which is a dataset structure for representing an HtmlResponse)
+RAW_SAMPLE = TypeVar("RAW_SAMPLE", bound=Mapping[str, Any])
+# E: DatasetFilename samples type, used for model sample If RAW_SAMPLE is already a structured object, E and
+# RAW_SAMPLE will be the same. Otherwise, E is typically a structured representation of the type RAW_SAMPLE
+# (i.e. when RAW_SAMPLE is an HtmlResponse and E a WebsiteSampleData, which is a dataset structure for representing
+# an HtmlResponse)
 
-# The vectorizer input. This is typically the same as E, and so as S in many applications, but in special
-# cases, like those with tokenizer, there is an intermediate step that converts S and E to tokens before
-# vectorization.
+# The vectorizer input. This is typically the same as E (minus some dataset specific fields like dataset_bucket and
+# target),  and so as RAW_SAMPLE in many applications, but in special cases, like those with tokenizer, there is an
+# intermediate step that converts RAW_SAMPLE and E to tokens before vectorization.
 DF = TypeVar("DF", contravariant=True)
 
 # So, the data transformation flux alternatives will be as follows:
 #
-#  Source: Dataset <----- generate_dataset_samples() <----- Samples (sequence of SAMPLE)
+#  Source: Dataset <----- generate_dataset_samples() <----- Samples (sequence of RAW_SAMPLE)
 #             |                                                         |
 #             |                                                         |
-#    DatasetFilename,E                                      SAMPLE (SAMPLE and E can eventually be the same type)
+#             E  <------- get_model_sample_from_raw_sample() <----- RAW_SAMPLE
+#             |                                      (RAW_SAMPLE and E can eventually be the same type)
 #             |                                                         |
 #    get_dataset()                                                      |
 #             |                                                         |
@@ -92,7 +94,7 @@ DF = TypeVar("DF", contravariant=True)
 #             |                                                         |
 # get_features_from_dataframe(), get_features_from_dataframe_row()      |
 #             |                             |                           |
-#       Sequence[DF],DF  < ------- get_sample_features() <------ (DF and SAMPLE can be eventually be the same type)
+#       Sequence[DF],DF  < ----- get_sample_features() <--- (DF and RAW_SAMPLE can be eventually be the same type)
 #             |
 #   vectorizer.transform()
 #             |
@@ -154,11 +156,11 @@ class DatasetsPandas(Generic[E]):
         return obj
 
 
-class ModelWithDataset(Generic[SAMPLE, E], ABC):
+class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
     datasets: DatasetsPandas[E] | None = None
 
-    raw_dataset_source: CloudDatasetFilename[SAMPLE]
-    scraped_samples: Dict[DatasetBucket, DatasetFilename[SAMPLE]] = dict()
+    raw_dataset_source: CloudDatasetFilename[RAW_SAMPLE]
+    scraped_samples: Dict[DatasetBucket, DatasetFilename[RAW_SAMPLE]] = dict()
     scraped_label: str
 
     FSHELPER: FSHelper | None = None
@@ -245,21 +247,21 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
                 LOGGER.info(f"Deleted {fname}")
 
     @classmethod
-    def get_row_from_sample(cls, sample: SAMPLE) -> pd.Series:
-        sd: E = cls.get_sample_data_from_sample(sample)
+    def get_row_from_sample(cls, sample: RAW_SAMPLE) -> pd.Series:
+        sd: E = cls.get_model_sample_from_raw_sample(sample)
         return pd.Series(sd)
 
     @classmethod
     @abstractmethod
-    def get_sample_data_from_sample(cls, sample: SAMPLE) -> E:
+    def get_model_sample_from_raw_sample(cls, sample: RAW_SAMPLE) -> E:
         ...
 
     @classmethod
-    def append_sample(cls, sample: SAMPLE, bucket: DatasetBucket):
+    def append_sample(cls, sample: RAW_SAMPLE, bucket: DatasetBucket):
         """
-        Add sample (SAMPLE) to the specified scraped dataset in cls.scraped_samples list.
+        Add sample (RAW_SAMPLE) to the specified scraped dataset in cls.scraped_samples list.
         """
-        dsample = cls.get_sample_data_from_sample(sample)
+        dsample = cls.get_model_sample_from_raw_sample(sample)
         cls._check_sample(dsample)
         cls.scraped_samples[bucket].append(sample)
 
@@ -287,12 +289,12 @@ class ModelWithDataset(Generic[SAMPLE, E], ABC):
                 idx += 1
         for bucket, scrapes_dataset in cls.scraped_samples.items():
             for sample in scrapes_dataset:
-                sd = cls.get_sample_data_from_sample(sample)
+                sd = cls.get_model_sample_from_raw_sample(sample)
                 sd["dataset_bucket"] = bucket  # type: ignore
                 yield sd
 
 
-class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]):
+class ModelWithVectorizer(Generic[RAW_SAMPLE, E, DF, V], ModelWithDataset[RAW_SAMPLE, E]):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -361,7 +363,7 @@ class ModelWithVectorizer(Generic[SAMPLE, E, DF, V], ModelWithDataset[SAMPLE, E]
             yield cls.get_features_from_dataframe_row(row)[0]
 
 
-class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
+class ModelWithTokenizer(ModelWithDataset[RAW_SAMPLE, E]):
     tokenizer_repository: TokenizerFilename
 
     tokenizer: SentencePieceProcessor | None = None
@@ -409,7 +411,7 @@ class ModelWithTokenizer(ModelWithDataset[SAMPLE, E]):
 
 
 class ModelWithTfidfVectorizer(
-    Generic[SAMPLE, E], ModelWithVectorizer[SAMPLE, E, str, TfidfVectorizer], ModelWithTokenizer[SAMPLE, E]
+    Generic[RAW_SAMPLE, E], ModelWithVectorizer[RAW_SAMPLE, E, str, TfidfVectorizer], ModelWithTokenizer[RAW_SAMPLE, E]
 ):
     vectorizer: TfidfVectorizer | None = None
 
@@ -441,11 +443,11 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
         return (" ".join(tokens),)
 
     @classmethod
-    def get_sample_data_from_sample(cls, sample: HtmlResponse) -> WebsiteSampleData:
+    def get_model_sample_from_raw_sample(cls, sample: HtmlResponse) -> WebsiteSampleData:
         return build_sample_data_from_response(sample)
 
 
-class TrainableModel(Generic[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
+class TrainableModel(Generic[RAW_SAMPLE, E, M], ModelWithDataset[RAW_SAMPLE, E]):
     model_repository: ModelFilename
     model: M | None = None
 
@@ -488,14 +490,14 @@ class TrainableModel(Generic[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
         super().reset()
 
 
-class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], ModelWithDataset[SAMPLE, E]):
+class ClassifierModel(Generic[RAW_SAMPLE, E, M], TrainableModel[RAW_SAMPLE, E, M], ModelWithDataset[RAW_SAMPLE, E]):
     @classmethod
     @abstractmethod
     def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
         ...
 
     @classmethod
-    def classify_sample(cls, sample: SAMPLE, proba: int = -1) -> float:
+    def classify_sample(cls, sample: RAW_SAMPLE, proba: int = -1) -> float:
         row = cls.get_row_from_sample(sample)
         return cls.classify_from_row(row, proba)
 
@@ -504,13 +506,12 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
         return df.apply(partial(cls.classify_from_row, proba=proba), axis=1)
 
     @classmethod
-    def predict_from_samples(cls, samples: List[SAMPLE], proba: int = -1) -> pd.Series:
+    def predict_from_samples(cls, samples: List[RAW_SAMPLE], proba: int = -1) -> pd.Series:
         df = pd.DataFrame([cls.get_row_from_sample(s) for s in samples])
         return cls.predict(df, proba)
 
     @classmethod
     def evaluate(cls, proba: int = -1, proba_threshold: float = 0.5):
-
         def _stat(score_func, target, predicted):
             return str(round(score_func(target, predicted) * 100, 2)) + "%"
 
@@ -550,7 +551,6 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
             print("Confusion matrix:\n", _print_confusion_matrix(y_validation, predicted))
             print()
 
-
         predicted = cls.predict(datasets.X_test, proba)
         if proba >= 0:
             predicted = (predicted > proba_threshold).astype(numpy.int64)
@@ -566,10 +566,10 @@ class ClassifierModel(Generic[SAMPLE, E, M], TrainableModel[SAMPLE, E, M], Model
 
 
 class ClassifierModelWithVectorizer(
-    Generic[SAMPLE, E, DF, V, M],
-    ModelWithVectorizer[SAMPLE, E, DF, V],
-    ClassifierModel[SAMPLE, E, M],
-    ModelWithDataset[SAMPLE, E],
+    Generic[RAW_SAMPLE, E, DF, V, M],
+    ModelWithVectorizer[RAW_SAMPLE, E, DF, V],
+    ClassifierModel[RAW_SAMPLE, E, M],
+    ModelWithDataset[RAW_SAMPLE, E],
 ):
     @classmethod
     def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
@@ -601,7 +601,7 @@ class ClassifierModelWithVectorizer(
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[SAMPLE, E, DF, V], ClassifierModelWithVectorizer[SAMPLE, E, DF, V, SVC]):
+class SVMModelWithVectorizer(Generic[RAW_SAMPLE, E, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, E, DF, V, SVC]):
     gamma = 0.4
     C = 10
     kernel = "rbf"
@@ -619,7 +619,7 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[SAMPLE, E, DF, V], ClassifierModelWithVectorizer[SAMPLE, E, DF, V, RandomForestClassifier]
+    Generic[RAW_SAMPLE, E, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, E, DF, V, RandomForestClassifier]
 ):
     estimators = 100
 
