@@ -16,8 +16,12 @@ from typing import (
     Mapping,
     get_args,
     NewType,
-    TypedDict,
+    Optional,
+    Iterator,
+    ClassVar,
 )
+from dataclasses import dataclass, Field
+import collections.abc
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -36,7 +40,7 @@ from sklearn.svm import SVC
 from sentencepiece import SentencePieceProcessor
 from shub_workflow.utils.futils import FSHelper
 from shub_workflow.utils import get_project_settings
-from typing_extensions import Self, NotRequired
+from typing_extensions import Self
 
 from emodels.datasets.utils import (
     ResponseConverter,
@@ -95,13 +99,44 @@ MODEL_SAMPLE = TypeVar("MODEL_SAMPLE", bound=Mapping[str, Any])
 Target = NewType("Target", int)
 
 
-class RawDatasetSample(TypedDict, Generic[RAW_SAMPLE]):
+class DataclassMappingMixin(collections.abc.Mapping):
+    """
+    A mixin that makes a dataclass behave like a read-only
+    Mapping of its own fields.
+
+    It accesses the '__dataclass_fields__' attribute provided
+    by the @dataclass decorator.
+    """
+
+    __dataclass_fields__: ClassVar[Dict[str, Field]]
+
+    def __getitem__(self, key: str) -> Any:
+        """Access a field's value using dictionary syntax."""
+        # Check that the key is a real field name
+        if key not in self.__dataclass_fields__:
+            raise KeyError(f"'{key}' is not a field of this dataclass.")
+
+        # Return the attribute's value
+        return getattr(self, key)
+
+    def __iter__(self) -> Iterator[str]:
+        """Iterate over the field names."""
+        return iter(self.__dataclass_fields__)
+
+    def __len__(self) -> int:
+        """Return the number of fields."""
+        return len(self.__dataclass_fields__)
+
+
+@dataclass
+class RawDatasetSample(DataclassMappingMixin, Generic[RAW_SAMPLE]):
     payload: RAW_SAMPLE
-    dataset_bucket: NotRequired[DatasetBucket]
-    target: NotRequired[Target]
+    dataset_bucket: Optional[DatasetBucket] = None
+    target: Optional[Target] = None
 
 
-class ModelDatasetSample(TypedDict, Generic[MODEL_SAMPLE]):
+@dataclass
+class ModelDatasetSample(DataclassMappingMixin, Generic[MODEL_SAMPLE]):
     payload: MODEL_SAMPLE
     dataset_bucket: DatasetBucket
     target: Target
