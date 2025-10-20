@@ -90,6 +90,7 @@ MODEL_SAMPLE = TypeVar("MODEL_SAMPLE", bound=Mapping[str, Any])
 # RAW_SAMPLE could be either the same. Otherwise, MODEL_SAMPLE is typically a structured representation of the type
 # RAW_SAMPLE (i.e. when RAW_SAMPLE is an HtmlResponse and MODEL_SAMPLE a WebsiteSampleData, which is a dataset
 # structure for representing an HtmlResponse)
+# In simpler applications, MODEL_SAMPLE can also be the same as VECTORIZER_INPUT TypeVar(see below)
 
 Target = NewType("Target", int)
 
@@ -109,7 +110,7 @@ class ModelDatasetSample(TypedDict, Generic[MODEL_SAMPLE]):
 # The vectorizer input. This is typically the features dict in many applications, but in special
 # cases, like those with tokenizer, there is an intermediate step that converts MODEL_SAMPLE and RAW_SAMPLE to
 # tokens before vectorization. So in cases with tokenizer, it will be a sequence of tokens.
-DF = TypeVar("DF", contravariant=True)
+VECTORIZER_INPUT = TypeVar("VECTORIZER_INPUT", contravariant=True)
 
 # So, the data transformation flux alternatives will be as follows:
 #
@@ -118,27 +119,27 @@ DF = TypeVar("DF", contravariant=True)
 #             |                                                         |
 #             E  <------- get_model_sample_from_raw_sample() <----- RAW_SAMPLE
 #             |                                      (RAW_SAMPLE and E can eventually be the same type)
-#             |                                                         |
-#    get_dataset()                                                      |
-#             |                                                         |
-# pandas.Dataframe, pandas.Series                                       |
-#             |                                                         |
-# get_features_from_dataframe(), get_features_from_dataframe_row()      |
-#             |                             |                           |
-#       Sequence[DF],DF  < ----- get_sample_features() <--- (DF and RAW_SAMPLE can be eventually be the same type)
+#             |
+#      get_dataset()
+#             |
+# pandas.Dataframe, pandas.Series
+#             |
+# get_features_from_dataframe(), get_features_from_dataframe_row()
+#             |                             |
+#  Sequence[VECTORIZER_INPUT],      VECTORIZER_INPUT
 #             |
 #   vectorizer.transform()
 #             |
 # Sequence[Sequence[float]] (i.e. numpy range 2 darray)
 
 
-class VectorizerProtocol(Generic[DF], Protocol):
+class VectorizerProtocol(Generic[VECTORIZER_INPUT], Protocol):
     @abstractmethod
-    def transform(self, df: Sequence[DF]) -> Sequence[Sequence[float]]:
+    def transform(self, vi: Sequence[VECTORIZER_INPUT]) -> Sequence[Sequence[float]]:
         ...
 
     @abstractmethod
-    def fit(self, df: Sequence[DF]):
+    def fit(self, vi: Sequence[VECTORIZER_INPUT]):
         ...
 
 
@@ -160,7 +161,9 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
 
     @classmethod
     def from_datasetfilename(
-        cls, filename: DatasetFilename[ModelDatasetSample[MODEL_SAMPLE]], features: Tuple[str, ...],
+        cls,
+        filename: DatasetFilename[ModelDatasetSample[MODEL_SAMPLE]],
+        features: Tuple[str, ...],
     ) -> Self:
         df = pd.read_json(filename, lines=True, compression="gzip")
         df = df[~df["target"].isnull()]
@@ -337,7 +340,9 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
                 yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=sample["target"])
 
 
-class ModelWithVectorizer(Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]):
+class ModelWithVectorizer(
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]
+):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -391,17 +396,17 @@ class ModelWithVectorizer(Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V], ModelWithDat
 
     @classmethod
     @abstractmethod
-    def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[DF]:
+    def get_features_from_dataframe_row(cls, row: pd.Series) -> Tuple[VECTORIZER_INPUT]:
         """
         The most common implementation is just:
 
-            return (cast(DF, dict(row)),)
+            return (cast(VECTORIZER_INPUT, dict(row)),)
 
-        where you replace DF bu the corresponding class.
+        where you replace VECTORIZER_INPUT bu the corresponding class.
         """
 
     @classmethod
-    def get_features_from_dataframe(cls, df: pd.DataFrame) -> Generator[DF, None, None]:
+    def get_features_from_dataframe(cls, df: pd.DataFrame) -> Generator[VECTORIZER_INPUT, None, None]:
         for _, row in df.iterrows():
             yield cls.get_features_from_dataframe_row(row)[0]
 
@@ -478,7 +483,7 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
         extract_dataset_text_from_website_sampledata(
             (sample["payload"] for sample in cls.dataset_repository.local(cls.project)),
             training_text_filename,
-            cls.get_converter()
+            cls.get_converter(),
         )
 
     @classmethod
@@ -617,13 +622,13 @@ class ClassifierModel(
 
 
 class ClassifierModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V, M],
-    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, M],
+    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
     ClassifierModel[RAW_SAMPLE, MODEL_SAMPLE, M],
     ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE],
 ):
     @classmethod
-    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
+    def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[VECTORIZER_INPUT]:
         return list(cls.get_features_from_dataframe(X_train))
 
     @classmethod
@@ -635,7 +640,7 @@ class ClassifierModelWithVectorizer(
 
         datasets = cls.load_dataset()
 
-        features: Sequence[DF] = cls.get_training_X_features(datasets.X_train)
+        features: Sequence[VECTORIZER_INPUT] = cls.get_training_X_features(datasets.X_train)
         vfeatures: Sequence[Sequence[float]] = vectorizer.transform(features)
         model.fit(vfeatures, datasets.Y_train)
         return model
@@ -645,7 +650,7 @@ class ClassifierModelWithVectorizer(
         row = row[list(cls.features)]
         vectorizer: V = cls.get_vectorizer()
         model: M = cls.get_trained_model()
-        X_features: Sequence[DF] = cls.get_features_from_dataframe_row(row)
+        X_features: Sequence[VECTORIZER_INPUT] = cls.get_features_from_dataframe_row(row)
         X_transformed: Sequence[Sequence[float]] = vectorizer.transform(X_features)
         if proba >= 0:
             return model.predict_proba(X_transformed)[0][proba]
@@ -653,7 +658,8 @@ class ClassifierModelWithVectorizer(
 
 
 class SVMModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V, SVC]
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
+    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, SVC],
 ):
     gamma = 0.4
     C = 10
@@ -672,8 +678,8 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V],
-    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V, RandomForestClassifier],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
+    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, RandomForestClassifier],
 ):
     estimators = 100
 
