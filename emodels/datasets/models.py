@@ -3,7 +3,21 @@
 import logging
 from functools import partial
 from abc import abstractmethod, ABC
-from typing import Generator, List, Protocol, Tuple, Generic, TypeVar, Sequence, Dict, Any, Mapping, get_args
+from typing import (
+    Generator,
+    List,
+    Protocol,
+    Tuple,
+    Generic,
+    TypeVar,
+    Sequence,
+    Dict,
+    Any,
+    Mapping,
+    get_args,
+    NewType,
+    TypedDict,
+)
 
 import joblib
 from scrapy.http import HtmlResponse
@@ -22,7 +36,7 @@ from sklearn.svm import SVC
 from sentencepiece import SentencePieceProcessor
 from shub_workflow.utils.futils import FSHelper
 from shub_workflow.utils import get_project_settings
-from typing_extensions import Self
+from typing_extensions import Self, NotRequired
 
 from emodels.datasets.utils import (
     ResponseConverter,
@@ -30,7 +44,6 @@ from emodels.datasets.utils import (
     DatasetFilename,
     CloudDatasetFilename,
     WebsiteSampleData,
-    E,
     build_sample_data_from_response,
 )
 from emodels.datasets.tokenizers import (
@@ -70,14 +83,32 @@ class LowLevelModelProtocol(Protocol):
 
 # Sample coming from scraper
 RAW_SAMPLE = TypeVar("RAW_SAMPLE", bound=Mapping[str, Any])
-# E: DatasetFilename samples type, used for model sample If RAW_SAMPLE is already a structured object, E and
-# RAW_SAMPLE will be the same. Otherwise, E is typically a structured representation of the type RAW_SAMPLE
-# (i.e. when RAW_SAMPLE is an HtmlResponse and E a WebsiteSampleData, which is a dataset structure for representing
-# an HtmlResponse)
+# MODEL_SAMPLE: DatasetFilename samples type, used for model sample. It may already contain the features for the model
+# training
+MODEL_SAMPLE = TypeVar("MODEL_SAMPLE", bound=Mapping[str, Any])
+# If RAW_SAMPLE is already a structured object, MODEL_SAMPLE and
+# RAW_SAMPLE could be either the same. Otherwise, MODEL_SAMPLE is typically a structured representation of the type
+# RAW_SAMPLE (i.e. when RAW_SAMPLE is an HtmlResponse and MODEL_SAMPLE a WebsiteSampleData, which is a dataset
+# structure for representing an HtmlResponse)
 
-# The vectorizer input. This is typically the same as E (minus some dataset specific fields like dataset_bucket and
-# target),  and so as RAW_SAMPLE in many applications, but in special cases, like those with tokenizer, there is an
-# intermediate step that converts RAW_SAMPLE and E to tokens before vectorization.
+Target = NewType("Target", int)
+
+
+class RawDatasetSample(TypedDict, Generic[RAW_SAMPLE]):
+    payload: RAW_SAMPLE
+    dataset_bucket: NotRequired[DatasetBucket]
+    target: NotRequired[Target]
+
+
+class ModelDatasetSample(TypedDict, Generic[MODEL_SAMPLE]):
+    payload: MODEL_SAMPLE
+    dataset_bucket: DatasetBucket
+    target: Target
+
+
+# The vectorizer input. This is typically the features dict in many applications, but in special
+# cases, like those with tokenizer, there is an intermediate step that converts MODEL_SAMPLE and RAW_SAMPLE to
+# tokens before vectorization. So in cases with tokenizer, it will be a sequence of tokens.
 DF = TypeVar("DF", contravariant=True)
 
 # So, the data transformation flux alternatives will be as follows:
@@ -119,7 +150,7 @@ V = TypeVar("V", bound=VectorizerProtocol)
 M = TypeVar("M", bound=LowLevelModelProtocol)
 
 
-class DatasetsPandas(Generic[E]):
+class DatasetsPandas(Generic[MODEL_SAMPLE]):
     X_train: pd.DataFrame
     X_test: pd.Series
     X_validation: pd.Series
@@ -128,22 +159,24 @@ class DatasetsPandas(Generic[E]):
     Y_validation: pd.Series
 
     @classmethod
-    def from_datasetfilename(cls, filename: DatasetFilename[E], features: Tuple[str, ...], target_label: str) -> Self:
+    def from_datasetfilename(
+        cls, filename: DatasetFilename[ModelDatasetSample[MODEL_SAMPLE]], features: Tuple[str, ...],
+    ) -> Self:
         df = pd.read_json(filename, lines=True, compression="gzip")
-        df = df[~df[target_label].isnull()]
+        df = df[~df["target"].isnull()]
 
         df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
         df_test = df[df.dataset_bucket == "test"].drop("dataset_bucket", axis=1)
         df_validation = df[df.dataset_bucket == "validation"].drop("dataset_bucket", axis=1)
 
         df_X_train = df_train[list(features)]
-        df_Y_train = df_train[target_label]
+        df_Y_train = df_train["target"]
 
         df_X_test = df_test[list(features)]
-        df_Y_test = df_test[target_label]
+        df_Y_test = df_test["target"]
 
         df_X_validation = df_validation[list(features)]
-        df_Y_validation = df_validation[target_label]
+        df_Y_validation = df_validation["target"]
 
         obj = cls()
         obj.X_train = df_X_train
@@ -156,18 +189,17 @@ class DatasetsPandas(Generic[E]):
         return obj
 
 
-class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
-    datasets: DatasetsPandas[E] | None = None
+class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
+    datasets: DatasetsPandas[MODEL_SAMPLE] | None = None
 
     raw_dataset_source: CloudDatasetFilename[RAW_SAMPLE]
-    scraped_samples: Dict[DatasetBucket, DatasetFilename[RAW_SAMPLE]] = dict()
+    scraped_samples: Dict[DatasetBucket, DatasetFilename[RawDatasetSample[RAW_SAMPLE]]] = dict()
     scraped_label: str
 
     FSHELPER: FSHelper | None = None
-    dataset_repository: DatasetFilename[E]
+    dataset_repository: DatasetFilename[ModelDatasetSample[MODEL_SAMPLE]]
     features: Tuple[str, ...]
 
-    target_label: str
     project: str
     _self: Self | None = None
 
@@ -192,15 +224,31 @@ class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
         return cls.FSHELPER
 
     @classmethod
-    def _check_sample(cls, dsample: E, idx: int = 0):
-        keys = set(dsample.keys())
-        assert cls.target_label in keys, f"{cls.target_label} key not in sample #{idx}."
+    def _check_model_dataset_sample(cls, dsample: ModelDatasetSample[MODEL_SAMPLE], idx: int = 0):
+        keys = dsample.keys()
+        assert "target" in keys, f"'target' key not in sample #{idx}."
+        assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
+        bucket = dsample["dataset_bucket"]
+        assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
+        cls._check_model_sample(dsample["payload"])
+
+    @classmethod
+    def _check_model_sample(cls, sample: MODEL_SAMPLE, idx: int = 0):
+        keys = set(sample.keys())
         missing_fields = set(cls.features).difference(keys)
         assert not missing_fields, f"Missing fields in sample #{idx}: {missing_fields}"
 
     @classmethod
-    def load_dataset(cls) -> DatasetsPandas[E]:
-        dataset_local: DatasetFilename[E] = cls.dataset_repository.local(cls.project)
+    def _check_raw_dataset_sample(cls, rsample: RawDatasetSample[RAW_SAMPLE], idx: int = 0):
+        keys = rsample.keys()
+        assert "target" in keys, f"'target' key not in sample #{idx}."
+        assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
+        bucket = rsample["dataset_bucket"]
+        assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
+
+    @classmethod
+    def load_dataset(cls) -> DatasetsPandas[MODEL_SAMPLE]:
+        dataset_local: DatasetFilename[ModelDatasetSample[MODEL_SAMPLE]] = cls.dataset_repository.local(cls.project)
 
         if cls._fshelper().exists(dataset_local):
             LOGGER.info(f"Found local copy of datasets {dataset_local}.")
@@ -210,17 +258,13 @@ class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
         else:
             LOGGER.info("Generating datasets...")
             for idx, sample in enumerate(cls.generate_dataset_samples()):
-                cls._check_sample(sample, idx)
-                keys = set(sample.keys())
-                assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
-                bucket = sample["dataset_bucket"]
-                assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
+                cls._check_model_dataset_sample(sample, idx)
                 dataset_local.append(sample)
             cls._fshelper().upload_file(dataset_local, cls.dataset_repository)
-        return DatasetsPandas.from_datasetfilename(dataset_local, cls.features, cls.target_label)
+        return DatasetsPandas.from_datasetfilename(dataset_local, cls.features)
 
     @classmethod
-    def get_dataset(cls) -> DatasetsPandas[E]:
+    def get_dataset(cls) -> DatasetsPandas[MODEL_SAMPLE]:
         if cls.datasets is None:
             cls.datasets = cls.load_dataset()
         return cls.datasets
@@ -248,21 +292,20 @@ class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
 
     @classmethod
     def get_row_from_sample(cls, sample: RAW_SAMPLE) -> pd.Series:
-        sd: E = cls.get_model_sample_from_raw_sample(sample)
+        sd: MODEL_SAMPLE = cls.get_model_sample_from_raw_sample(sample)
         return pd.Series(sd)
 
     @classmethod
     @abstractmethod
-    def get_model_sample_from_raw_sample(cls, sample: RAW_SAMPLE) -> E:
+    def get_model_sample_from_raw_sample(cls, sample: RAW_SAMPLE) -> MODEL_SAMPLE:
         ...
 
     @classmethod
-    def append_sample(cls, sample: RAW_SAMPLE, bucket: DatasetBucket):
+    def append_sample(cls, sample: RawDatasetSample[RAW_SAMPLE], bucket: DatasetBucket):
         """
-        Add sample (RAW_SAMPLE) to the specified scraped dataset in cls.scraped_samples list.
+        Add sample (RawDatasetSample) to the specified scraped dataset in cls.scraped_samples list.
         """
-        dsample = cls.get_model_sample_from_raw_sample(sample)
-        cls._check_sample(dsample)
+        cls._check_raw_dataset_sample(sample)
         cls.scraped_samples[bucket].append(sample)
 
     @classmethod
@@ -273,28 +316,28 @@ class ModelWithDataset(Generic[RAW_SAMPLE, E], ABC):
         """
 
     @classmethod
-    def generate_dataset_samples(cls) -> Generator[E, None, None]:
+    def generate_dataset_samples(cls) -> Generator[ModelDatasetSample[MODEL_SAMPLE], None, None]:
         """Generate samples from cls.scraped_samples in order create the dataset repository.
         This dataset must contain sample objects, each object containing
-        the features field (as specified by cls.features attribute), the target
-        field (as specified by cls.target_label attribute) and the field `dataset_bucket`
-        with a value being either "train" or "test".
+        the features field (as specified by cls.features attribute), 'the target'
+        field the field `dataset_bucket`with a value being either "train", "validation" or "test".
         """
         if hasattr(cls, "raw_dataset_source"):
             idx = 0
             for sample in cls.raw_dataset_source:
+                #  for now lets assume that RawDatasetSample_bucket field.
+                #  TODO: if it doesn't come with the field, use bucket randomizer.
                 bucket = sample["dataset_bucket"]
                 assert bucket in get_args(DatasetBucket), f"Invalid bucket for raw sample #{idx}: {bucket}"
                 cls.append_sample(sample, bucket)
                 idx += 1
         for bucket, scrapes_dataset in cls.scraped_samples.items():
             for sample in scrapes_dataset:
-                sd = cls.get_model_sample_from_raw_sample(sample)
-                sd["dataset_bucket"] = bucket  # type: ignore
-                yield sd
+                ms = cls.get_model_sample_from_raw_sample(sample)
+                yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=sample["target"])
 
 
-class ModelWithVectorizer(Generic[RAW_SAMPLE, E, DF, V], ModelWithDataset[RAW_SAMPLE, E]):
+class ModelWithVectorizer(Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]):
     vectorizer_repository: VectorizerFilename
     vectorizer: V | None = None
 
@@ -363,7 +406,7 @@ class ModelWithVectorizer(Generic[RAW_SAMPLE, E, DF, V], ModelWithDataset[RAW_SA
             yield cls.get_features_from_dataframe_row(row)[0]
 
 
-class ModelWithTokenizer(ModelWithDataset[RAW_SAMPLE, E]):
+class ModelWithTokenizer(ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]):
     tokenizer_repository: TokenizerFilename
 
     tokenizer: SentencePieceProcessor | None = None
@@ -411,7 +454,9 @@ class ModelWithTokenizer(ModelWithDataset[RAW_SAMPLE, E]):
 
 
 class ModelWithTfidfVectorizer(
-    Generic[RAW_SAMPLE, E], ModelWithVectorizer[RAW_SAMPLE, E, str, TfidfVectorizer], ModelWithTokenizer[RAW_SAMPLE, E]
+    Generic[RAW_SAMPLE, MODEL_SAMPLE],
+    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, str, TfidfVectorizer],
+    ModelWithTokenizer[RAW_SAMPLE, MODEL_SAMPLE],
 ):
     vectorizer: TfidfVectorizer | None = None
 
@@ -431,7 +476,9 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
     @classmethod
     def generate_training_text_filename(cls, training_text_filename: Filename):
         extract_dataset_text_from_website_sampledata(
-            cls.dataset_repository.local(cls.project), training_text_filename, cls.get_converter()
+            (sample["payload"] for sample in cls.dataset_repository.local(cls.project)),
+            training_text_filename,
+            cls.get_converter()
         )
 
     @classmethod
@@ -447,7 +494,7 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
         return build_sample_data_from_response(sample)
 
 
-class TrainableModel(Generic[RAW_SAMPLE, E, M], ModelWithDataset[RAW_SAMPLE, E]):
+class TrainableModel(Generic[RAW_SAMPLE, MODEL_SAMPLE, M], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]):
     model_repository: ModelFilename
     model: M | None = None
 
@@ -490,7 +537,11 @@ class TrainableModel(Generic[RAW_SAMPLE, E, M], ModelWithDataset[RAW_SAMPLE, E])
         super().reset()
 
 
-class ClassifierModel(Generic[RAW_SAMPLE, E, M], TrainableModel[RAW_SAMPLE, E, M], ModelWithDataset[RAW_SAMPLE, E]):
+class ClassifierModel(
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, M],
+    TrainableModel[RAW_SAMPLE, MODEL_SAMPLE, M],
+    ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE],
+):
     @classmethod
     @abstractmethod
     def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
@@ -566,10 +617,10 @@ class ClassifierModel(Generic[RAW_SAMPLE, E, M], TrainableModel[RAW_SAMPLE, E, M
 
 
 class ClassifierModelWithVectorizer(
-    Generic[RAW_SAMPLE, E, DF, V, M],
-    ModelWithVectorizer[RAW_SAMPLE, E, DF, V],
-    ClassifierModel[RAW_SAMPLE, E, M],
-    ModelWithDataset[RAW_SAMPLE, E],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V, M],
+    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V],
+    ClassifierModel[RAW_SAMPLE, MODEL_SAMPLE, M],
+    ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE],
 ):
     @classmethod
     def get_training_X_features(cls, X_train: pd.DataFrame) -> Sequence[DF]:
@@ -601,7 +652,9 @@ class ClassifierModelWithVectorizer(
         return model.predict(X_transformed)[0]
 
 
-class SVMModelWithVectorizer(Generic[RAW_SAMPLE, E, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, E, DF, V, SVC]):
+class SVMModelWithVectorizer(
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V, SVC]
+):
     gamma = 0.4
     C = 10
     kernel = "rbf"
@@ -619,7 +672,8 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[RAW_SAMPLE, E, DF, V], ClassifierModelWithVectorizer[RAW_SAMPLE, E, DF, V, RandomForestClassifier]
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, DF, V],
+    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, DF, V, RandomForestClassifier],
 ):
     estimators = 100
 

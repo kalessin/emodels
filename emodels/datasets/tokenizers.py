@@ -2,6 +2,7 @@
 """
 import os
 import shutil
+from typing import Iterator
 
 import sentencepiece as spm
 
@@ -20,7 +21,7 @@ class TokenizerFilename(Filename):
 
 
 def extract_dataset_text_from_website_sampledata(
-    dataset_filename: DatasetFilename[WebsiteSampleData],
+    dataset: Iterator[WebsiteSampleData],
     output_filename: Filename,
     response_converter: ResponseConverter,
 ):
@@ -30,7 +31,7 @@ def extract_dataset_text_from_website_sampledata(
     for further tokenizer processing.
     """
     with output_filename.open("w") as output:
-        for data in dataset_filename:
+        for data in dataset:
             response = build_response_from_sample_data(data)
             text_pieces = response_converter.response_to_valid_text(response.text)
             print(" ".join(text_pieces), file=output)
