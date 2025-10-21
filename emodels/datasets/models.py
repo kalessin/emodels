@@ -179,7 +179,7 @@ class VectorizerProtocol(Generic[VECTORIZER_INPUT], Protocol):
 
 
 # Vectorizer class
-V = TypeVar("V", bound=VectorizerProtocol)
+VECTORIZER = TypeVar("VECTORIZER", bound=VectorizerProtocol)
 
 
 # low level classifier model type (SVC, RandomForestClassifier, etc)
@@ -376,10 +376,10 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
 
 
 class ModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]
 ):
     vectorizer_repository: VectorizerFilename
-    vectorizer: V | None = None
+    vectorizer: VECTORIZER | None = None
 
     def __init_subclass__(cls):
         super().__init_subclass__()
@@ -388,11 +388,11 @@ class ModelWithVectorizer(
 
     @classmethod
     @abstractmethod
-    def instantiate_vectorizer(cls) -> V:
+    def instantiate_vectorizer(cls) -> VECTORIZER:
         ...
 
     @classmethod
-    def load_vectorizer(cls) -> V:
+    def load_vectorizer(cls) -> VECTORIZER:
         """
         Called only if cls.vectorizer is None
         """
@@ -417,7 +417,7 @@ class ModelWithVectorizer(
         return joblib.load(vectorizer_local)
 
     @classmethod
-    def get_vectorizer(cls) -> V:
+    def get_vectorizer(cls) -> VECTORIZER:
         if cls.vectorizer is None:
             cls.vectorizer = cls.load_vectorizer()
         return cls.vectorizer
@@ -657,8 +657,8 @@ class ClassifierModel(
 
 
 class ClassifierModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, M],
-    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER, M],
+    ModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER],
     ClassifierModel[RAW_SAMPLE, MODEL_SAMPLE, M],
     ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE],
 ):
@@ -668,7 +668,7 @@ class ClassifierModelWithVectorizer(
 
     @classmethod
     def train(cls):
-        vectorizer: V = cls.get_vectorizer()
+        vectorizer: VECTORIZER = cls.get_vectorizer()
 
         LOGGER.info("Training Random Forest classifier...")
         model: M = cls.instance_new_lowlevel_model()
@@ -683,7 +683,7 @@ class ClassifierModelWithVectorizer(
     @classmethod
     def classify_from_row(cls, row: pd.Series, proba: int = -1) -> float:
         row = row[list(cls.features)]
-        vectorizer: V = cls.get_vectorizer()
+        vectorizer: VECTORIZER = cls.get_vectorizer()
         model: M = cls.get_trained_model()
         X_features: Sequence[VECTORIZER_INPUT] = cls.get_features_from_dataframe_row(row)
         X_transformed: Sequence[Sequence[float]] = vectorizer.transform(X_features)
@@ -693,8 +693,8 @@ class ClassifierModelWithVectorizer(
 
 
 class SVMModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
-    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, SVC],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER],
+    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER, SVC],
 ):
     gamma = 0.4
     C = 10
@@ -713,8 +713,8 @@ class SVMModelWithTfidfResponseVectorizer(
 
 
 class RandomForestModelWithVectorizer(
-    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V],
-    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, V, RandomForestClassifier],
+    Generic[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER],
+    ClassifierModelWithVectorizer[RAW_SAMPLE, MODEL_SAMPLE, VECTORIZER_INPUT, VECTORIZER, RandomForestClassifier],
 ):
     estimators = 100
 
