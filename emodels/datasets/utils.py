@@ -24,6 +24,7 @@ from typing import (
     Any,
     Literal,
 )
+import dataclasses
 
 from typing_extensions import Self
 from scrapy.http import TextResponse
@@ -191,7 +192,10 @@ class DatasetFilename(Generic[E], Filename):
         folder = os.path.dirname(self)
         os.makedirs(folder, exist_ok=True)
         with self.open("at") as fz:
-            print(json.dumps(data), file=fz)
+            if dataclasses.is_dataclass(data):
+                print(json.dumps(dataclasses.asdict(data)), file=fz)
+            else:
+                print(json.dumps(data), file=fz)
 
     def iter(self, **kwargs) -> Generator[E, None, None]:
         df = self.__class__(self)

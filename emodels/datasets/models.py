@@ -201,6 +201,7 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
         features: Tuple[str, ...],
     ) -> Self:
         df = pd.read_json(filename, lines=True, compression="gzip")
+        df = df['payload'].apply(pd.Series).assign(target=df["target"], dataset_bucket=df["dataset_bucket"])
         df = df[~df["target"].isnull()]
 
         df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
@@ -230,7 +231,7 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
 class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     datasets: DatasetsPandas[MODEL_SAMPLE] | None = None
 
-    raw_dataset_source: CloudDatasetFilename[RAW_SAMPLE]
+    raw_dataset_source: CloudDatasetFilename[RawDatasetSample[RAW_SAMPLE]]
     scraped_samples: Dict[DatasetBucket, DatasetFilename[RawDatasetSample[RAW_SAMPLE]]] = dict()
     scraped_label: str
 
@@ -278,11 +279,10 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
 
     @classmethod
     def _check_raw_dataset_sample(cls, rsample: RawDatasetSample[RAW_SAMPLE], idx: int = 0):
-        keys = rsample.keys()
-        assert "target" in keys, f"'target' key not in sample #{idx}."
-        assert "dataset_bucket" in keys, f"dataset_bucket key not in sample #{idx}."
+        assert "target" in rsample.keys(), f"'target' key not in sample #{idx}."
+        assert "dataset_bucket" in rsample.keys(), f"dataset_bucket key not in sample #{idx}."
         bucket = rsample["dataset_bucket"]
-        assert bucket in ("train", "test", "validation"), f"Invalid bucket for sample #{idx}: {bucket}"
+        assert bucket in get_args(DatasetBucket), f"Invalid bucket for sample #{idx}: {bucket}"
 
     @classmethod
     def load_dataset(cls) -> DatasetsPandas[MODEL_SAMPLE]:
@@ -339,12 +339,13 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
         ...
 
     @classmethod
-    def append_sample(cls, sample: RawDatasetSample[RAW_SAMPLE], bucket: DatasetBucket):
+    def append_sample(cls, sample: RawDatasetSample[RAW_SAMPLE]):
         """
-        Add sample (RawDatasetSample) to the specified scraped dataset in cls.scraped_samples list.
+        Add raw sample to the specified scraped dataset in cls.scraped_samples list.
         """
         cls._check_raw_dataset_sample(sample)
-        cls.scraped_samples[bucket].append(sample)
+        dsample = dict(sample)
+        cls.scraped_samples[dsample["dataset_bucket"]].append(RawDatasetSample(**dsample))
 
     @classmethod
     def rebalance_samples(cls, bucket: DatasetBucket):
@@ -362,17 +363,16 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
         """
         if hasattr(cls, "raw_dataset_source"):
             idx = 0
+            # for some reason, mypy is not understanding that raw_dataset_source yields RawDatasetSample
+            # so we need to make explicit.
+            sample: RawDatasetSample[RAW_SAMPLE]
             for sample in cls.raw_dataset_source:
-                #  for now lets assume that RawDatasetSample_bucket field.
-                #  TODO: if it doesn't come with the field, use bucket randomizer.
-                bucket = sample["dataset_bucket"]
-                assert bucket in get_args(DatasetBucket), f"Invalid bucket for raw sample #{idx}: {bucket}"
-                cls.append_sample(sample, bucket)
+                cls.append_sample(sample)
                 idx += 1
         for bucket, scrapes_dataset in cls.scraped_samples.items():
-            for sample in scrapes_dataset:
-                ms = cls.get_model_sample_from_raw_sample(sample)
-                yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=sample["target"])
+            for rsample in scrapes_dataset:
+                ms = cls.get_model_sample_from_raw_sample(rsample["payload"])
+                yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=rsample["target"])
 
 
 class ModelWithVectorizer(
