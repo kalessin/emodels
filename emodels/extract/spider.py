@@ -24,21 +24,20 @@ class ExtractionSpider(Spider):
     # a dict of field -> tuple of regexes to define patterns that makes any matching item to be completely dropped out.
     drop_items: Dict[str, Tuple[str]] = {}
     # - in listing mode, it will try to extract stocks data from a listing table from each visited page.
-    # - in quote mode, it will try to extract stock quote data from each visited page (that is, a single stock per page)
+    # - in item mode, it will try to extract item-like data from each visited page (that is, a single item per page)
     # - in any mode, it will first try to assume each page is a listing, and if nothing is extracted, it will try to
-    #   extract using quote mode.
-    # - in hybrid mode, first listing extraction is applied. If the items has a quote url, or quote_url_template
-    #   attribute is set, it is followed and the data is completed with the data extracted from quote page.
-    # - In combined mode, extraction is tried both with listing and quote mode, but in this case from the same page
+    #   extract using item mode.
+    # - in hybrid mode, first listing extraction is applied. If the items has an item url, or item_url_template
+    #   attribute is set, it is followed and the data is completed with the data extracted from the item page.
+    # - In combined mode, extraction is tried both with listing and item mode, but in this case from the same page
     #   (not additional request) and then combined. This mode also supports combining extraction from more than one
     #   listing table into same result (by default, only the best scored listing table is used to extract the results,
     #   see max_tables parameter)
-    extract_mode: Literal["listing", "quote", "any", "hybrid", "combined", "tiles"] = "listing"
-    # in hybrid mode, build quote url by using a python format template that will
+    # - in tiles mode, the target page consists of items with repeated fields, organized in tiles.
+    extract_mode: Literal["listing", "item", "any", "hybrid", "combined", "tiles"] = "listing"
+    # in hybrid mode, build item url by using a python format template that will
     # receive each result as parameters dict.
-    quote_url_template: str = ""
-
-    # # # Parameters for fine tunning quote extraction mode  # # #
+    item_url_template: str = ""
 
     fields: Tuple[str, ...] = ()
     # the specified fields must be present in order for a candidate to be accepted
@@ -49,7 +48,7 @@ class ExtractionSpider(Spider):
     # A dict (field -> list of patterns)
     # filter out given fields with values with any of the given list of patterns
     value_filters: Dict[str, Tuple[str, ...]] | None = None
-    # A mapping (field -> regexes) for additional extraction capabilities in quote mode
+    # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode
     # regexes is a list. Each element in regexes is used in the response.text_re() function provided by
     # ExtractTextResponse. For each field, you can provide a list of alternatives. The first one extracting something
     # will be the value used. Remaining ones will be discarded.
@@ -140,27 +139,27 @@ class ExtractionSpider(Spider):
             for result in self.extract_listing(response):
                 yield result
                 has_results = True
-        if self.extract_mode in ("any", "quote", "tiles") and not has_results:
-            for result in self.parse_quote_from_response(response):
+        if self.extract_mode in ("any", "item", "tiles") and not has_results:
+            for result in self.parse_item_from_response(response):
                 yield result
         if self.extract_mode == "hybrid":
             for result in self.extract_listing(response):
-                if self.quote_url_template:
+                if self.item_url_template:
                     try:
-                        url = self.quote_url_template.format(**result)
+                        url = self.item_url_template.format(**result)
                         if url:
                             result["url"] = url
                     except Exception as e:
-                        self.logger.warning(f"Cannot build quote url: {e!r} from '{result}'")
+                        self.logger.warning(f"Cannot build item url: {e!r} from '{result}'")
                 if "url" in result:
                     yield self.request_factory(
-                        url=result["url"], callback=self.parse_quote_from_response, cb_kwargs=result
+                        url=result["url"], callback=self.parse_item_from_response, cb_kwargs=result
                     )
         if self.extract_mode == "combined":
             results_to_combine = []
             for result in self.extract_listing(response):
                 results_to_combine.append(result)
-            for result in self.parse_quote_from_response(response):
+            for result in self.parse_item_from_response(response):
                 results_to_combine.append(result)
             if results_to_combine:
                 results_to_combine, final_result = results_to_combine[:-1], results_to_combine[-1]
@@ -201,7 +200,7 @@ class ExtractionSpider(Spider):
                 self.all_results.append(result)
             yield result
 
-    def extract_quote_page(
+    def extract_item_page(
         self,
         markdown: str,
         keywords: Tuple[str, ...],
@@ -222,7 +221,7 @@ class ExtractionSpider(Spider):
             result["name"] = result.pop("title")
         return result
 
-    def parse_quote_from_response(self, response: TextResponse, **kwargs) -> Iterable[Dict[str, str]]:
+    def parse_item_from_response(self, response: TextResponse, **kwargs) -> Iterable[Dict[str, str]]:
         response = response.replace(cls=ExtractTextResponse)
 
         value_filters = (self.value_filters or {}).copy()
@@ -239,7 +238,7 @@ class ExtractionSpider(Spider):
                 debug_mode=self.debug,
             )
         else:
-            result = self.extract_quote_page(
+            result = self.extract_item_page(
                 response.markdown,
                 keywords=self.fields,
                 required_fields=self.required_fields,
