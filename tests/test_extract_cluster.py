@@ -464,12 +464,12 @@ class ClusterExtractTests(TestCase):
                     "ticker": "FNBE",
                 },
             )
-            result = tile_extraction(
+            result_list = tile_extraction(
                 response,
                 keywords=("isin", "ticker", "founded", "listed"),
             )
             self.assertEqual(
-                result,
+                result_list,
                 [
                     {"founded": "1838", "isin": "SZE000331064", "listed": "5th December, 2023", "ticker": "FNBE"},
                     {"founded": "2009", "isin": "SZE000331023", "listed": "1st November, 2010", "ticker": "GRYS"},

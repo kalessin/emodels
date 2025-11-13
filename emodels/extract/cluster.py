@@ -10,14 +10,14 @@ from typing import List, Dict, Tuple, Optional
 from sklearn.cluster import KMeans
 import numpy as np
 
-from emodels.extract.utils import Constraints, apply_constraints
+from emodels.extract.utils import Constraints, apply_constraints, Result
 from emodels.scrapyutils.response import ExtractTextResponse
 
 
 def tile_extraction(
     response: ExtractTextResponse, keywords: Tuple[str, ...], debug_mode: bool = False, **extract_kwargs
-):
-    results = []
+) -> List[Result]:
+    results: List[Result] = []
     current_responses = [response]
     xpath = "."
     while True:
@@ -98,7 +98,7 @@ def extract_by_keywords(
     constraints: Optional[Constraints] = None,
     debug_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
-) -> Dict[str, str]:
+) -> Result:
     """
     Extracts fields from markdown text, based on keyword search and data clustering.
 
@@ -167,7 +167,7 @@ def extract_by_keywords(
 
     # score groups
     max_score = -len(required_fields)
-    max_score_group = {}
+    max_score_group: Result = Result({})
     max_score_group_idx = -1
 
     for idx, results in groups.items():
@@ -203,7 +203,7 @@ def extract_by_keywords(
 
         if score > max_score:
             max_score = score
-            max_score_group = extracted_dict
+            max_score_group = Result(extracted_dict)
             max_score_group_idx = idx
 
     missing_required_fields = set(required_fields).difference(set(max_score_group.keys()))

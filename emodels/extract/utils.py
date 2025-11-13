@@ -7,6 +7,7 @@ from emodels.scrapyutils.response import ExtractTextResponse
 
 
 Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type"]])
+Result = NewType("Result", Dict[str, str])
 
 
 def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:

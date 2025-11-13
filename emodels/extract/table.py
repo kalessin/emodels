@@ -5,13 +5,12 @@ from typing import List, Generator, Dict, Set, Tuple, Callable, NewType, Optiona
 from scrapy.http import TextResponse
 from scrapy import Selector
 
-from emodels.extract.utils import Constraints, apply_constraints
+from emodels.extract.utils import Constraints, apply_constraints, Result
 
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
 
 Columns = NewType("Columns", Tuple[str, ...])
-Result = NewType("Result", Dict[str, str])
 Uid = NewType("Uid", Tuple[Tuple[str, str], ...])
 
 
