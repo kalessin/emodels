@@ -231,7 +231,7 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
 class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     datasets: DatasetsPandas[MODEL_SAMPLE] | None = None
 
-    # if you use base_data_source as base dataset, you need to define
+    # if you use base_data_source as base dataset, you need to define free_sample_to_raw_sample()
     base_data_source: CloudDatasetFilename[Dict[str, Any]]
     # if you use raw_dataset_source as base dataset, the dataset requires a specific standard
     raw_dataset_source: CloudDatasetFilename[RawDatasetSample[RAW_SAMPLE]]
