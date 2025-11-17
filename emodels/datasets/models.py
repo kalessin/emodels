@@ -231,7 +231,11 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
 class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     datasets: DatasetsPandas[MODEL_SAMPLE] | None = None
 
+    # if you use base_data_source as base dataset, you need to define
+    base_data_source: CloudDatasetFilename[Dict[str, Any]]
+    # if you use raw_dataset_source as base dataset, the dataset requires a specific standard
     raw_dataset_source: CloudDatasetFilename[RawDatasetSample[RAW_SAMPLE]]
+
     scraped_samples: Dict[DatasetBucket, DatasetFilename[RawDatasetSample[RAW_SAMPLE]]] = dict()
     scraped_label: str
 
@@ -356,23 +360,34 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
 
     @classmethod
     def generate_dataset_samples(cls) -> Generator[ModelDatasetSample[MODEL_SAMPLE], None, None]:
-        """Generate samples from cls.scraped_samples in order create the dataset repository.
+        """Generate samples from cls.raw_dataset_source in order create the dataset repository.
+        An intermediate dataset is created, with the same RAW_SAMPLE from cls.raw_dataset_source,
+        but organized by dataset bucket.
         This dataset must contain sample objects, each object containing
         the features field (as specified by cls.features attribute), 'the target'
         field the field `dataset_bucket`with a value being either "train", "validation" or "test".
         """
         if hasattr(cls, "raw_dataset_source"):
-            idx = 0
             # for some reason, mypy is not understanding that raw_dataset_source yields RawDatasetSample
             # so we need to make explicit.
             sample: RawDatasetSample[RAW_SAMPLE]
             for sample in cls.raw_dataset_source:
                 cls.append_sample(sample)
-                idx += 1
+        elif hasattr(cls, "base_data_source"):
+            bsample: Dict[str, Any]
+            for bsample in cls.base_data_source:
+                rsample = cls.free_sample_to_raw_sample(bsample)
+                cls.append_sample(rsample)
         for bucket, scrapes_dataset in cls.scraped_samples.items():
             for rsample in scrapes_dataset:
                 ms = cls.get_model_sample_from_raw_sample(rsample["payload"])
                 yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=rsample["target"])
+
+    @classmethod
+    def free_sample_to_raw_sample(cls, sample: Dict[str, Any]) -> RawDatasetSample[RAW_SAMPLE]:
+        raise NotImplementedError(
+            "free_sample_to_raw_sample() must be defined if your base datgaset is cls.base_data_source."
+        )
 
 
 class ModelWithVectorizer(
