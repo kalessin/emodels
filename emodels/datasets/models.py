@@ -1,5 +1,6 @@
 """
 """
+import os
 import logging
 from functools import partial
 from abc import abstractmethod, ABC
@@ -24,7 +25,6 @@ from dataclasses import dataclass, Field
 import collections.abc
 
 import joblib
-from scrapy.http import HtmlResponse
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
@@ -48,7 +48,6 @@ from emodels.datasets.utils import (
     DatasetFilename,
     CloudDatasetFilename,
     WebsiteSampleData,
-    build_sample_data_from_response,
 )
 from emodels.datasets.tokenizers import (
     extract_dataset_text_from_website_sampledata,
@@ -90,11 +89,9 @@ RAW_SAMPLE = TypeVar("RAW_SAMPLE", bound=Mapping[str, Any])
 # MODEL_SAMPLE: DatasetFilename samples type, used for model sample. It may already contain the features for the model
 # training
 MODEL_SAMPLE = TypeVar("MODEL_SAMPLE", bound=Mapping[str, Any])
-# If RAW_SAMPLE is already a structured object, MODEL_SAMPLE and
-# RAW_SAMPLE could be either the same. Otherwise, MODEL_SAMPLE is typically a structured representation of the type
-# RAW_SAMPLE (i.e. when RAW_SAMPLE is an HtmlResponse and MODEL_SAMPLE a WebsiteSampleData, which is a dataset
-# structure for representing an HtmlResponse)
-# In simpler applications, MODEL_SAMPLE can also be the same as VECTORIZER_INPUT TypeVar(see below)
+# If RAW_SAMPLE is already a structured object, MODEL_SAMPLE and RAW_SAMPLE could be either the same, or a version
+# with features generated for the model. In simpler applications, MODEL_SAMPLE can also be the same as
+# VECTORIZER_INPUT TypeVar(see below)
 
 Target = NewType("Target", int)
 
@@ -201,7 +198,7 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
         features: Tuple[str, ...],
     ) -> Self:
         df = pd.read_json(filename, lines=True, compression="gzip")
-        df = df['payload'].apply(pd.Series).assign(target=df["target"], dataset_bucket=df["dataset_bucket"])
+        df = df["payload"].apply(pd.Series).assign(target=df["target"], dataset_bucket=df["dataset_bucket"])
         df = df[~df["target"].isnull()]
 
         df_train = df[df.dataset_bucket == "train"].drop("dataset_bucket", axis=1)
@@ -231,9 +228,10 @@ class DatasetsPandas(Generic[MODEL_SAMPLE]):
 class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     datasets: DatasetsPandas[MODEL_SAMPLE] | None = None
 
-    # if you use base_data_source as base dataset, you need to define free_sample_to_raw_sample()
+    # if you use base_data_source as source dataset, you need to define free_sample_to_raw_sample()
     base_data_source: CloudDatasetFilename[Dict[str, Any]]
-    # if you use raw_dataset_source as base dataset, the dataset requires a specific standard
+    # if you use raw_dataset_source as source dataset, the dataset requires a specific data protocol,
+    # given by RawDatasetSample and RAW_SAMPLE
     raw_dataset_source: CloudDatasetFilename[RawDatasetSample[RAW_SAMPLE]]
 
     scraped_samples: Dict[DatasetBucket, DatasetFilename[RawDatasetSample[RAW_SAMPLE]]] = dict()
@@ -349,6 +347,16 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
         """
         cls._check_raw_dataset_sample(sample)
         dsample = dict(sample)
+        if dsample["dataset_bucket"] not in cls.scraped_samples:
+            if hasattr(cls, "raw_dataset_source"):
+                raw_base_name = os.path.basename(cls.raw_dataset_source)
+            else:
+                raw_base_name = os.path.basename(cls.base_data_source)
+            dataset_filename = dsample["dataset_bucket"] + "_" + raw_base_name
+            dataset: DatasetFilename[RawDatasetSample[RAW_SAMPLE]] = DatasetFilename(
+                f"{cls.project}/{dataset_filename}"
+            )
+            cls.scraped_samples[dsample["dataset_bucket"]] = dataset
         cls.scraped_samples[dsample["dataset_bucket"]].append(RawDatasetSample(**dsample))
 
     @classmethod
@@ -520,7 +528,7 @@ class ModelWithTfidfVectorizer(
         return TfidfVectorizer(min_df=10, max_df=0.7, ngram_range=(1, 3))
 
 
-class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, WebsiteSampleData]):
+class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[WebsiteSampleData, WebsiteSampleData]):
     converter: ResponseConverter | None = None
 
     @classmethod
@@ -545,8 +553,8 @@ class ModelWithResponseSamplesTokenizer(ModelWithTfidfVectorizer[HtmlResponse, W
         return (" ".join(tokens),)
 
     @classmethod
-    def get_model_sample_from_raw_sample(cls, sample: HtmlResponse) -> WebsiteSampleData:
-        return build_sample_data_from_response(sample)
+    def get_model_sample_from_raw_sample(cls, sample: WebsiteSampleData) -> WebsiteSampleData:
+        return sample
 
 
 class TrainableModel(Generic[RAW_SAMPLE, MODEL_SAMPLE, M], ModelWithDataset[RAW_SAMPLE, MODEL_SAMPLE]):
@@ -722,7 +730,7 @@ class SVMModelWithVectorizer(
 
 class SVMModelWithTfidfResponseVectorizer(
     ModelWithResponseSamplesTokenizer,
-    SVMModelWithVectorizer[WebsiteSampleData, HtmlResponse, str, TfidfVectorizer],
+    SVMModelWithVectorizer[WebsiteSampleData, WebsiteSampleData, str, TfidfVectorizer],
 ):
     pass
 
