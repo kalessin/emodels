@@ -1,6 +1,5 @@
 """
 """
-import os
 import logging
 from functools import partial
 from abc import abstractmethod, ABC
@@ -234,7 +233,6 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     # given by RawDatasetSample and RAW_SAMPLE
     raw_dataset_source: CloudDatasetFilename[RawDatasetSample[RAW_SAMPLE]]
 
-    scraped_samples: Dict[DatasetBucket, DatasetFilename[RawDatasetSample[RAW_SAMPLE]]] = dict()
     scraped_label: str
 
     FSHELPER: FSHelper | None = None
@@ -313,11 +311,6 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
     def reset_datasets(cls):
         cls.delete_model_files(cls.dataset_repository)
         cls.datasets = None
-        if hasattr(cls, "raw_dataset_source"):
-            for fname in cls.scraped_samples.values():
-                if cls._fshelper().exists(fname):
-                    cls._fshelper().rm_file(fname)
-                    LOGGER.info(f"Deleted {fname}")
 
     @classmethod
     def reset(cls):
@@ -341,25 +334,6 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
         ...
 
     @classmethod
-    def append_sample(cls, sample: RawDatasetSample[RAW_SAMPLE]):
-        """
-        Add raw sample to the specified scraped dataset in cls.scraped_samples list.
-        """
-        cls._check_raw_dataset_sample(sample)
-        dsample = dict(sample)
-        if dsample["dataset_bucket"] not in cls.scraped_samples:
-            if hasattr(cls, "raw_dataset_source"):
-                raw_base_name = os.path.basename(cls.raw_dataset_source)
-            else:
-                raw_base_name = os.path.basename(cls.base_data_source)
-            dataset_filename = dsample["dataset_bucket"] + "_" + raw_base_name
-            dataset: DatasetFilename[RawDatasetSample[RAW_SAMPLE]] = DatasetFilename(
-                f"{cls.project}/{dataset_filename}"
-            )
-            cls.scraped_samples[dsample["dataset_bucket"]] = dataset
-        cls.scraped_samples[dsample["dataset_bucket"]].append(RawDatasetSample(**dsample))
-
-    @classmethod
     def rebalance_samples(cls, bucket: DatasetBucket):
         """
         Rebalance target sample dataset so all labels has similar count, by randomly removing
@@ -367,10 +341,16 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
         """
 
     @classmethod
+    def _get_model_sample_from_raw_dataset_sample(
+        cls, sample: RawDatasetSample[RAW_SAMPLE]
+    ) -> ModelDatasetSample[MODEL_SAMPLE]:
+        cls._check_raw_dataset_sample(sample)
+        ms = cls.get_model_sample_from_raw_sample(sample["payload"])
+        return ModelDatasetSample(payload=ms, dataset_bucket=sample["dataset_bucket"], target=sample["target"])
+
+    @classmethod
     def generate_dataset_samples(cls) -> Generator[ModelDatasetSample[MODEL_SAMPLE], None, None]:
         """Generate samples from cls.raw_dataset_source in order create the dataset repository.
-        An intermediate dataset is created, with the same RAW_SAMPLE from cls.raw_dataset_source,
-        but organized by dataset bucket.
         This dataset must contain sample objects, each object containing
         the features field (as specified by cls.features attribute), 'the target'
         field the field `dataset_bucket`with a value being either "train", "validation" or "test".
@@ -380,19 +360,16 @@ class ModelWithDataset(Generic[RAW_SAMPLE, MODEL_SAMPLE], ABC):
             # so we need to make explicit.
             sample: RawDatasetSample[RAW_SAMPLE]
             for sample in cls.raw_dataset_source:
-                cls.append_sample(sample)
+                yield cls._get_model_sample_from_raw_dataset_sample(sample)
         elif hasattr(cls, "base_data_source"):
             bsample: Dict[str, Any]
+            rsample: RawDatasetSample[RAW_SAMPLE] | None
             for bsample in cls.base_data_source:
-                rsample = cls.free_sample_to_raw_sample(bsample)
-                cls.append_sample(rsample)
-        for bucket, scrapes_dataset in cls.scraped_samples.items():
-            for rsample in scrapes_dataset:
-                ms = cls.get_model_sample_from_raw_sample(rsample["payload"])
-                yield ModelDatasetSample(payload=ms, dataset_bucket=bucket, target=rsample["target"])
+                if (rsample := cls.free_sample_to_raw_sample(bsample)) is not None:
+                    yield cls._get_model_sample_from_raw_dataset_sample(rsample)
 
     @classmethod
-    def free_sample_to_raw_sample(cls, sample: Dict[str, Any]) -> RawDatasetSample[RAW_SAMPLE]:
+    def free_sample_to_raw_sample(cls, sample: Dict[str, Any]) -> RawDatasetSample[RAW_SAMPLE] | None:
         raise NotImplementedError(
             "free_sample_to_raw_sample() must be defined if your base datgaset is cls.base_data_source."
         )
