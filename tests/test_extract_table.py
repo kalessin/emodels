@@ -129,10 +129,10 @@ class TableSpiderTests(TestCase):
                     "market": "1",
                     "symbol": "ARBK",
                     "notes": "",
-                    "url": "/en/company_historical/ARBK",
+                    "url": "http://example.com/en/company_historical/ARBK",
                 },
             )
-            self.assertEqual(results[13]["url"], "/en/company_historical/ARBK")
+            self.assertEqual(results[13]["url"], "http://example.com/en/company_historical/ARBK")
             self.assertEqual(
                 results[96],
                 {
@@ -143,7 +143,7 @@ class TableSpiderTests(TestCase):
                     "market": "1",
                     "symbol": "PEDC",
                     "notes": "",
-                    "url": "/en/company_historical/PEDC",
+                    "url": "http://example.com/en/company_historical/PEDC",
                 },
             )
             self.assertEqual(
@@ -156,7 +156,7 @@ class TableSpiderTests(TestCase):
                     "market": "2",
                     "listed shares": "42,065,129",
                     "notes": "OTC",
-                    "url": "/en/company_historical/ULDC",
+                    "url": "http://example.com/en/company_historical/ULDC",
                 },
             )
 
@@ -214,8 +214,13 @@ class TableSpiderTests(TestCase):
                     "ticker": "PTR1L",
                     "trades": "11",
                     "turnover €": "1,159",
-                    "url": "/statistics/en/instrument/LT0000101446/trading",
+                    "url": "http://example.com/statistics/en/instrument/LT0000101446/trading",
                     "volume": "2,431",
+                    "website": (
+                        "http://lt.morningstar.com/gj8uge2g9k/stockprofile/default.aspx?"
+                        "externalid=LT0000101446&externalidexchange=EX$$$$XLIT&externalidtype"
+                        "=ISIN&LanguageId=en-GB&CurrencyId=EUR"
+                    ),
                 },
             )
 
@@ -232,7 +237,6 @@ class TableSpiderTests(TestCase):
             self.assertEqual(len(list(results)), 20)
 
     def test_table_ix(self):
-        self.maxDiff = None
         with self.open_resource("test24.html") as f:
             response = TextResponse(url="http://example.com", status=200, body=f.read())
             columns = Columns(
@@ -265,4 +269,25 @@ class TableSpiderTests(TestCase):
                         "super-sector": "Travel and Leisure",
                     },
                 ],
+            )
+
+    def test_table_x(self):
+        with self.open_resource("test28.html") as f:
+            response = TextResponse(url="https://www.mse.mk/en/issuers/shares-listing", status=200, body=f.read())
+            columns = Columns(("name", "business", "address", "city", "state", "phone", "site"))
+            results = parse_tables_from_response(
+                response,
+                columns=columns,
+                validate_result=validate_result
+            )
+            self.assertEqual(len(results), 90)
+            self.assertEqual(results[34], {
+                'address': 'ul. 808 br. 8',
+                'business': 'Industry',
+                'city': 'Skopje',
+                'name': 'Evropa AD Skopje',
+                'phone': '+389 2 3114 066',
+                'site': 'Link to site',
+                'url': 'https://www.mse.mk/en/issuer/evropa-ad-skopje/',
+                'website': 'http://www.evropa.com.mk'}
             )

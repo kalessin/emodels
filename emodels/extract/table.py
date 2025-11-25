@@ -1,6 +1,7 @@
 import re
 from operator import itemgetter
-from typing import List, Generator, Dict, Set, Tuple, Callable, NewType, Optional
+from urllib.parse import urlparse, ParseResult, urljoin
+from typing import List, Dict, Set, Tuple, Callable, NewType, Optional, Iterable
 
 from scrapy.http import TextResponse
 from scrapy import Selector
@@ -21,14 +22,16 @@ def extract_row_text(row: Selector) -> List[str]:
     return text
 
 
-def iterate_rows(table: Selector) -> Generator[Tuple[List[str], str | None], None, None]:
+def iterate_rows(table: Selector, parsed: ParseResult | None = None) -> Iterable[Tuple[List[str], List[str]]]:
     for row in table.xpath(".//tr"):
-        url = None
+        urls = []
         for _url in row.xpath(".//a/@href").extract():
             if not _url.startswith("mailto:"):
                 url = _url
-                break
-        yield extract_row_text(row), url
+                if parsed is not None:
+                    url = urljoin(parsed.geturl(), url)
+                urls.append(url)
+        yield extract_row_text(row), urls
 
 
 def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...]) -> List[List[str]]:
@@ -65,10 +68,20 @@ def find_tables(
     return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)]
 
 
-def parse_table(table: Selector, headers: List[str]):
+def extract_urls(urls: List[str], parsed: ParseResult) -> Dict[str, str]:
+    url_data = {}
+    for url in urls:
+        if parsed.netloc in url:
+            url_data["url"] = url
+        else:
+            url_data["website"] = url
+    return url_data
+
+
+def parse_table(table: Selector, headers: List[str], parsed: ParseResult):
     header_find_status = False
     headers_lower = [h.lower() for h in headers]
-    for row, url in iterate_rows(table):
+    for row, urls in iterate_rows(table, parsed):
         if not header_find_status and row != headers:
             continue
         header_find_status = True
@@ -77,16 +90,15 @@ def parse_table(table: Selector, headers: List[str]):
         if len(row) != len(headers):
             continue
         data = dict(zip(headers_lower, row))
-        if url:
-            data["url"] = url
+        data.update(extract_urls(urls, parsed))
         yield data
 
 
-def parse_table_ii(table: Selector, headers: List[str]):
+def parse_table_ii(table: Selector, headers: List[str], parsed: ParseResult):
     headers = list(filter(None, headers))
     header_find_status = False
     headers_lower = [h.lower() for h in headers]
-    for row, url in iterate_rows(table):
+    for row, urls in iterate_rows(table, parsed):
         row = list(filter(None, row))
         if not header_find_status and row != headers:
             continue
@@ -94,8 +106,7 @@ def parse_table_ii(table: Selector, headers: List[str]):
         if row == headers:
             continue
         data = dict(zip(headers_lower, row))
-        if url:
-            data["url"] = url
+        data.update(extract_urls(urls, parsed))
         yield data
 
 
@@ -156,13 +167,14 @@ def parse_tables_from_response(
     seen: Set[Uid] = set()
     table_count = 0
     if all_tables:
+        parsed = urlparse(response.url)
         for _, headers in find_tables(all_tables, columns):
             all_table_results: List[Result] = []
             fields: Set[str] = set()
             for parse_method in parse_table, parse_table_ii:
                 all_table_results_method = []
                 for table in all_tables:
-                    for result in parse_method(table, headers):
+                    for result in parse_method(table, headers, parsed):
                         uid, fuid = unique_id(result, dedupe_keywords)
                         if validate_result(result, columns) and uid not in seen and fuid not in seen:
                             if uid:
