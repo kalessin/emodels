@@ -148,8 +148,8 @@ VECTORIZER_INPUT = TypeVar("VECTORIZER_INPUT", contravariant=True)
 #  Source: Dataset <----- generate_dataset_samples() <----- Samples (sequence of RAW_SAMPLE)
 #             |                                                         |
 #             |                                                         |
-#             E  <------- get_model_sample_from_raw_sample() <----- RAW_SAMPLE
-#             |                                      (RAW_SAMPLE and E can eventually be the same type)
+#        MODEL_SAMPLE  <------- get_model_sample_from_raw_sample() <----- RAW_SAMPLE
+#             |                                      (RAW_SAMPLE and MODEL_SAMPLE can eventually be the same type)
 #             |
 #      get_dataset()
 #             |

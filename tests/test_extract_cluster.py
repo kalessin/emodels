@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.cluster import extract_by_keywords, tile_extraction
-from emodels.extract.utils import apply_additional_regexes
+from emodels.extract.utils import apply_additional_regexes, Constraints
 
 
 class ClusterExtractTests(TestCase):
@@ -62,6 +62,7 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=("address", "isin", "listing date", "website", "^#"),
+                constraints=Constraints({"website": "url_type"})
             )
             self.assertEqual(
                 result,

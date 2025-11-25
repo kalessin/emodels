@@ -6,7 +6,7 @@ import dateparser
 from emodels.scrapyutils.response import ExtractTextResponse
 
 
-Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type"]])
+Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type", "url_type"]])
 Result = NewType("Result", Dict[str, str])
 
 
@@ -18,7 +18,10 @@ def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
                 if result.get(k) and dateparser.parse(result[k]) is None:
                     result.pop(k)
                     was_updated = True
-        elif result.get(k) and pattern.search(result[k]) is None:
+                continue
+            if pattern == "url_type":
+                pattern = re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")
+        if result.get(k) and pattern.search(result[k]) is None:
             result.pop(k)
             was_updated = True
     return was_updated

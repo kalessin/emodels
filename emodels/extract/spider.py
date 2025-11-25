@@ -57,13 +57,13 @@ class ExtractionSpider(Spider):
     additional_regexes: Dict[str, Tuple[str | Tuple[str | None, str], ...]] | None = None
 
     # A map field->pattern that field value must fit. Otherwise the field is removed.
-    # pattern is either a regex or a type keyword. Actually supported keywords: date_type
+    # pattern is either a regex or a type keyword. Actually supported keywords: date_type, url_type
     # Don't change constraints directly unless you know what you are doing. Just use constraints_overrides
     #       for adding new constraints.
     constraints: Constraints = Constraints(
         {
             "isin": re.compile(r"^[a-z0-9]{12}$", re.I),
-            "website": re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)"),
+            "website": "url_type",
         }
     )
     constraints_overrides: Optional[Dict[str, str]] = None
@@ -97,7 +97,7 @@ class ExtractionSpider(Spider):
     def override_constraints(constraints, overrides) -> Constraints:
         constraints = Constraints(constraints.copy())
         for k, v in (overrides or {}).items():
-            if v in ("date_type",):
+            if v in ("date_type", "url_type"):
                 constraints[k] = v
             else:
                 constraints[k] = re.compile(v)
