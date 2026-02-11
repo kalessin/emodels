@@ -1,4 +1,5 @@
 import os
+import re
 from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
@@ -72,6 +73,20 @@ class ClusterExtractTests(TestCase):
                     "listing date": "10/28/2003 - 17:15",
                     "title": "USE All Share Index (100@31.12.2001)",
                     "website": "<http://www.use.or.ug>",
+                },
+            )
+            result = extract_by_keywords(
+                response.markdown,
+                keywords=("address", "isin", "listing date", "website", "^#"),
+                constraints=Constraints({"website": re.compile("aaa")})
+            )
+            self.assertEqual(
+                result,
+                {
+                    "address": "Nakawa Business Park, Block A, 4th Floor, P.O.Box 23552, Kampala",
+                    "isin": "UG0000000071",
+                    "listing date": "10/28/2003 - 17:15",
+                    "title": "USE All Share Index (100@31.12.2001)",
                 },
             )
 

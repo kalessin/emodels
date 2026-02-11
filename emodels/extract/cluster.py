@@ -114,8 +114,8 @@ def extract_by_keywords(
     - value_presets (optional): A map from field to a value. If field was not extracted, it is added to the final
       result. If it is extracted and has the given value, the group score is increased.
     - constraints (optional): a dict field: pattern to specify regex patterns that must be fulfilled by specific
-      field in order to accept the extracted result. Pattern can also be special keywords:
-        * datetype - value extracted must be a date
+      field in order to accept it. If field value does not match the constraint, the field is popped out from the result.
+      Pattern can also be special keywords. See apply_constraints docstring for special keywords available.
     - debug (optional, boolean): if True, provides additional debug information in order to understand what
       the algorithm is doing
     - n_clusters (optional, int): this is a debug feature only. It should not be used in practical situation.

@@ -8,9 +8,15 @@ from emodels.scrapyutils.response import ExtractTextResponse
 
 Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type", "url_type"]])
 Result = NewType("Result", Dict[str, str])
+URL_RE = re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")
 
 
 def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
+    """Remove fields from result that don't match the given constraints.
+    constraint is either a regex pattern or any of special keywords as defined in Constraints type:
+    date_type: matches if dateparser accepts the field value.
+    url_type: matches if the field value matches a url regex.
+    """
     was_updated = False
     for k, pattern in constraints.items():
         if isinstance(pattern, str):
@@ -20,7 +26,7 @@ def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
                     was_updated = True
                 continue
             if pattern == "url_type":
-                pattern = re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")
+                pattern = URL_RE
         if result.get(k) and pattern.search(result[k]) is None:
             result.pop(k)
             was_updated = True
