@@ -69,6 +69,8 @@ def validate_result(result: Dict[str, str], candidate_fields: Columns = TEST_TAB
         m = NUMBER_RE.match(issuer)
         if m:
             return False
+    if "code" in result and len(result["code"]) > 20:
+        return False
     return True
 
 
@@ -238,7 +240,10 @@ class TableSpiderTests(TestCase):
 
     def test_table_ix(self):
         with self.open_resource("test24.html") as f:
-            response = TextResponse(url="http://example.com", status=200, body=f.read())
+            response = TextResponse(
+                url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/",
+                status=200, body=f.read()
+            )
             columns = Columns(
                 ("industry", "sector", "super-sector", "sub-sector", "code", "isin", "listing date", "security name")
             )
@@ -291,3 +296,22 @@ class TableSpiderTests(TestCase):
                 'url': 'https://www.mse.mk/en/issuer/evropa-ad-skopje/',
                 'website': 'http://www.evropa.com.mk'}
             )
+
+    def test_table_xi(self):
+        with self.open_resource("test29.html") as f:
+            response = TextResponse(url="https://www.bse-sofia.bg/en/listed-instruments", status=200, body=f.read())
+            columns=("code", "lei", "name")
+            results = parse_tables_from_response(
+                response,
+                columns=columns,
+                constraints=Constraints({"website": re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")})
+            )
+            self.assertEqual(len(results), 420)
+            self.assertEqual(results[23], {
+                'code': 'EAC',
+                'currency': 'EUR',
+                'lei': '213800A3AEHGOGT4KM74',
+                'name': 'Elana Agrocredit AD',
+                'nominal': '0.5100',
+                'total volume of the issue': '46 692 133'
+            })

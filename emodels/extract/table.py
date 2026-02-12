@@ -181,8 +181,8 @@ def parse_tables_from_response(
                                 seen.add(uid)
                             if fuid:
                                 seen.add(fuid)
-                            if constraints is not None and apply_constraints(result, constraints):
-                                continue
+                            if constraints is not None:
+                                apply_constraints(result, constraints)
                             all_table_results_method.append(result)
                             fields.update(result.keys())
                 if score_results(all_table_results_method) > score_results(all_table_results):
