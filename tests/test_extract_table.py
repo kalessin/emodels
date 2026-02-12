@@ -300,11 +300,13 @@ class TableSpiderTests(TestCase):
     def test_table_xi(self):
         with self.open_resource("test29.html") as f:
             response = TextResponse(url="https://www.bse-sofia.bg/en/listed-instruments", status=200, body=f.read())
-            columns=("code", "lei", "name")
+            columns = Columns(("code", "lei", "name"))
             results = parse_tables_from_response(
                 response,
                 columns=columns,
-                constraints=Constraints({"website": re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")})
+                constraints=Constraints(
+                    {"website": re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")}
+                )
             )
             self.assertEqual(len(results), 420)
             self.assertEqual(results[23], {
