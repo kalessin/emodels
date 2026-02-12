@@ -74,7 +74,7 @@ def validate_result(result: Dict[str, str], candidate_fields: Columns = TEST_TAB
     return True
 
 
-class TableSpiderTests(TestCase):
+class TableExtractTests(TestCase):
     def open_resource(self, name):
         rname = os.path.join(os.path.dirname(__file__), "extract_resources", name)
         return open(rname, "rb")
