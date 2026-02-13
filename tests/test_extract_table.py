@@ -57,7 +57,7 @@ DEDUPE_KEYWORDS = Columns(
 )
 
 
-def validate_result(result: Dict[str, str], candidate_fields: Columns = TEST_TABLE_COLUMNS) -> bool:
+def validate_result(result: Dict[str, str], candidate_fields: Columns) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:

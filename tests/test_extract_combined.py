@@ -12,33 +12,6 @@ from emodels.extract.utils import Constraints
 
 
 NUMBER_RE = re.compile(r"\d+$")
-TEST_TABLE_COLUMNS = Columns(
-    (
-        "address",
-        "code",
-        "company",
-        "company name",
-        "fullname",
-        "industry group",
-        "instrument",
-        "isin",
-        "isin code",
-        "issuer",
-        "issuer code",
-        "issuer name",
-        "lei",
-        "market",
-        "name",
-        "name isin",
-        "open price",
-        "open",
-        "sector",
-        "share code",
-        "stock symbol",
-        "symbol",
-        "ticker",
-    )
-)
 DEDUPE_KEYWORDS = Columns(
     (
         "code",
@@ -59,7 +32,7 @@ DEDUPE_KEYWORDS = Columns(
 )
 
 
-def validate_result(result: Dict[str, str], candidate_fields: Columns = TEST_TABLE_COLUMNS) -> bool:
+def validate_result(result: Dict[str, str], candidate_fields: Columns) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:
