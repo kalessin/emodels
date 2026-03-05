@@ -3,7 +3,7 @@ import re
 from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.cluster import extract_by_keywords, tile_extraction
+from emodels.extract.cluster import extract_by_keywords
 from emodels.extract.utils import apply_additional_regexes, Constraints
 
 
@@ -19,7 +19,7 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(response.markdown, keywords=("^#", "industry", "sector", "stock"))
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "industry": "Restaurants & Bars",
                     "sector": "Consumer Discretionary",
@@ -33,7 +33,7 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(response.markdown, keywords=("^#",), value_presets={"stock": "HDGE"})
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "stock": "HDGE",
                     "title": "Accelerate Absolute Return Fund",
@@ -50,7 +50,7 @@ class ClusterExtractTests(TestCase):
                 value_presets={"stock": "ATSX"},
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "stock": "ATSX",
                     "title": "Accelerate Canadian Long Short Equity Fund",
@@ -63,10 +63,10 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=("address", "isin", "listing date", "website", "^#"),
-                constraints=Constraints({"website": "url_type"})
+                constraints=Constraints({"website": "url_type"}),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "address": "Nakawa Business Park, Block A, 4th Floor, P.O.Box 23552, Kampala",
                     "isin": "UG0000000071",
@@ -78,10 +78,10 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=("address", "isin", "listing date", "website", "^#"),
-                constraints=Constraints({"website": re.compile("aaa")})
+                constraints=Constraints({"website": re.compile("aaa")}),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "address": "Nakawa Business Park, Block A, 4th Floor, P.O.Box 23552, Kampala",
                     "isin": "UG0000000071",
@@ -99,7 +99,7 @@ class ClusterExtractTests(TestCase):
                 value_filters={"address": ("P.O. Box 6771",)},
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "address": "Kampala",
                     "listing date": "11/07/2023 - 10:52",
@@ -115,7 +115,7 @@ class ClusterExtractTests(TestCase):
                 keywords=("name", "isin", "short name", "ticker", "trading as of", "type", "website"),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "name": "Centerenergo, PJSC, Common",
                     "isin": "UA4000079081",
@@ -144,7 +144,7 @@ class ClusterExtractTests(TestCase):
                 ),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "name": "POWSZECHNY ZAKŁAD UBEZPIECZEŃ SPÓŁKA AKCYJNA",
                     "abbreviation": "PZU",
@@ -172,7 +172,7 @@ class ClusterExtractTests(TestCase):
                 ),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "activity": (
                         "Production of, and trade in, combed cotton yarns and fabrics for shirt "
@@ -194,7 +194,7 @@ class ClusterExtractTests(TestCase):
                 keywords=("^##", "listing type", "listing status", "\\*\\*listed", "available to"),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "\\*\\*listed": "21 Jun 2022",
                     "available to": "Qualified Investors",
@@ -215,9 +215,9 @@ class ClusterExtractTests(TestCase):
                 response.markdown,
                 keywords=("^##", "wkn", "marktsegment", "erstnotierung", "wertpapiertyp"),
             )
-            apply_additional_regexes({"isin": ("isin: \\*\\*(.+?)\\*\\*",)}, result, response)
+            apply_additional_regexes({"isin": ("isin: \\*\\*(.+?)\\*\\*",)}, result[0], response)
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "erstnotierung": "13.10.2020",
                     "isin": "DE000A2P4HL9",
@@ -241,7 +241,7 @@ class ClusterExtractTests(TestCase):
                 keywords=("full name", "short name", "sector", "Business activity", "contact"),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "Business activity": "",
                     "contact": "HU-1095 Budapest, Máriássy utca 7.\n"
@@ -277,7 +277,7 @@ class ClusterExtractTests(TestCase):
                 ),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "company name": "AFRIC INDUSTRIES SA",
                     "corporate address": "Zone Industrielle, Route de Tétouan, Lot 107, BP 368",
@@ -317,7 +317,7 @@ class ClusterExtractTests(TestCase):
                 ),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "company website": "<http://www.caymannational.com/>",
                     "isin": "KYG198141056",
@@ -338,9 +338,9 @@ class ClusterExtractTests(TestCase):
                 response.markdown,
                 keywords=("company type", "listing date", "company overview", "^####"),
             )
-            apply_additional_regexes({"ticker": ("^## ([A-Z]+)",)}, result, response)
+            apply_additional_regexes({"ticker": ("^## ([A-Z]+)",)}, result[0], response)
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "company overview": "Alpha Dhabi Holding (ADX: ALPHADHABI) is one of the MENA "
                     "region's largest and fastest-growing listed investment "
@@ -394,9 +394,9 @@ class ClusterExtractTests(TestCase):
                     "market category",
                 ),
             )
-            apply_additional_regexes({"name": ((None, ".com_title"),)}, result, response)
+            apply_additional_regexes({"name": ((None, ".com_title"),)}, result[0], response)
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "debut trade date": "25 January, 2018",
                     "listing year": "2018",
@@ -429,7 +429,7 @@ class ClusterExtractTests(TestCase):
                 ),
             )
             self.assertEqual(
-                result,
+                result[0],
                 {
                     "debut trading date": "02 Oct, 2017",
                     "scrip code": "22649",
@@ -458,31 +458,19 @@ class ClusterExtractTests(TestCase):
                 value_presets=value_presets,
             )
             # nothing new was extracted
-            self.assertEqual(result, value_presets)
+            self.assertEqual(result[0], value_presets)
 
-    def test_cluster_tile_i(self):
+    def test_cluster_tile_i_(self):
         with self.open_resource("test27.html") as f:
             response = ExtractTextResponse(
                 url="https://www.ese.co.sz/issuers/securities/",
                 status=200,
                 body=f.read(),
             )
-            result = extract_by_keywords(
+            result_list = extract_by_keywords(
                 response.markdown,
                 keywords=("isin", "ticker", "founded", "listed"),
-            )
-            self.assertEqual(
-                result,
-                {
-                    "founded": "1838",
-                    "isin": "SZE000331064",
-                    "listed": "5th December, 2023",
-                    "ticker": "FNBE",
-                },
-            )
-            result_list = tile_extraction(
-                response,
-                keywords=("isin", "ticker", "founded", "listed"),
+                tiles_mode=True,
             )
             self.assertEqual(
                 result_list,
@@ -496,5 +484,279 @@ class ClusterExtractTests(TestCase):
                     {"founded": "2011", "isin": "SZE000331031", "listed": "10th February, 2014", "ticker": "SBC"},
                     {"founded": "1998", "isin": "SZE000331015", "listed": "1st June, 2004", "ticker": "SEL"},
                     {"founded": "1996", "isin": "SZ0005797946", "listed": "1st January, 1999", "ticker": "SWP"},
+                ],
+            )
+
+    def test_cluster_tile_ii(self):
+        with self.open_resource("test30.html") as f:
+            response = ExtractTextResponse(
+                url="https://bse.co.bw/companies/",
+                status=200,
+                body=f.read(),
+            )
+            results = extract_by_keywords(
+                response.markdown,
+                keywords=("counter", "physical and postal address", "sector", "board"),
+                tiles_mode=True,
+                # debug_mode=True,
+            )
+            self.assertEqual(
+                results,
+                [
+                    {
+                        "counter": "ACCESS",
+                        "sector": "Banking",
+                        "board": "Domestic Main Board",
+                        "physical and postal address": "Access House, Plot 62433, Fairgrounds Gaborone, Botswana",
+                    },
+                    {
+                        "counter": "BOTALA",
+                        "physical and postal address": "24 Hasler Road, Osborne Park WA 6017, Australia",
+                        "sector": "Mining",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "ABSA",
+                        "physical and postal address": (
+                            "5th Floor, Building 4 Plaza Plot 74358 Gaborone, "
+                            "Central Business District, \nP O Box 478 Gaborone Botswana,"
+                        ),
+                        "sector": "Banking",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "BIHL",
+                        "physical and postal address": (
+                            "Plot 66458, Fairgrounds Office Park \n"
+                            "3rd Floor, Block A, \nP O Box 336 Gaborone,"
+                        ),
+                        "sector": "Financial Services",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "BTCL",
+                        "physical and postal address": (
+                            "Plot 50350, Megaleng House \nKhama Crescent \n"
+                            "Gaborone, Botswana \n(P.O. Box 700, Gaborone, Botswana),"
+                        ),
+                        "sector": "ICT",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "CHOBE",
+                        "physical and postal address": "Private Bag 198, \nMaun,Botswana",
+                        "sector": "Tourism",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "CHOPPIES",
+                        "physical and postal address": (
+                            "Plot 46, \nGaborone International Commerce Park, \n"
+                            "Gaborone, Botswana, \nPrivate Bag 00278, \nGaborone."
+                        ),
+                        "sector": "Retail & Wholesale",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "CRESTA",
+                        "physical and postal address": (
+                            "2nd Floor, Marula House Prime Plaza Plot 74538 "
+                            "New CBD Gaborone"
+                        ),
+                        "sector": "Tourism",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "ENGEN",
+                        "physical and postal address": "Plot 54026, \nWestern Bypass, \nGaborone.",
+                        "sector": "Energy",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "FNBB",
+                        "physical and postal address": "4th Floor First Place, \nPlot 54362 Gaborone CBD, \nBotswana",
+                        "sector": "Banking",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "FPC",
+                        "physical and postal address": (
+                            "Plot 46, Gaborone International Commerce Park, "
+                            "\nGaborone, \nBotswana"
+                        ),
+                        "sector": "Property",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "G4S",
+                        "physical and postal address": "Western Bypass, \nGaborone, \nBotswana",
+                        "sector": "Security Services",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "LETLOLE",
+                        "physical and postal address": (
+                            "1st Floor, Unit 2B, Peelo Place, Plot 54366, CBD \n"
+                            "P O Box 700ABG, Gaborone, Botswana"
+                        ),
+                        "sector": "Property",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "LETSHEGO",
+                        "physical and postal address": (
+                            "Tower C, Zambezi Towers, Plot 54352, Central Business "
+                            "District, Gaborone Botswana"
+                        ),
+                        "sector": "Financial Services",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "MINERGY",
+                        "physical and postal address": (
+                            "Unit B3 & B4, \n1st Floor Plot 43175, "
+                            "\nPhakalane, \nGaborone"
+                        ),
+                        "sector": "Mining",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "NAP",
+                        "physical and postal address": "Plot 20573/4 Block 3 Gaborone",
+                        "sector": "Property",
+                        "board": "Domestic Main Board",
+                    },
+                    # {"counter": "TURNSTAR"},
+                    {
+                        "counter": "STANCHART",
+                        "physical and postal address": (
+                            "5th Floor, \nStandard Chartered House, "
+                            "\nPlot 1124-30, Queens Road, \nGaborone, \nBotswana"
+                        ),
+                        "sector": "Banking",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "SEFALANA",
+                        "physical and postal address": (
+                            "Plot 10247/50 Corner of Noko and Lejara Roads, "
+                            "\nBroadjurst Industrial, \nGaborone"
+                        ),
+                        "sector": "Retail & Wholesale",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "SEEDCO",
+                        "physical and postal address": (
+                            "PO BOX 47143,GABORONE, \nBOTSWANA, "
+                            "\nUnit 1 Plot 43178, Phakalane, \nGaborone"
+                        ),
+                        "sector": "Agriculture",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "SECHABA",
+                        "physical and postal address": (
+                            "Central Business District \nPlot 54367,2nd floor,Mogobe Plaza "
+                            "\nP O Box 1956 AAD, Gaborone ,Botswana"
+                        ),
+                        "sector": "Retail & Wholesale",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "RDCP",
+                        "physical and postal address": (
+                            "Lejara Road, \nPlot 5624, "
+                            "\nBroadhurst Ind. – P O Box 495, \nGaborone, \nBotswana"
+                        ),
+                        "sector": "Property",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "PRIMETIME",
+                        "physical and postal address": (
+                            "Plot 79961 \nOffice 1 Setlhoa Corner "
+                            "\nGaborone, Botswana \n(PO Box 1395, Gaborone)"
+                        ),
+                        "sector": "Property",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "OLYMPIA",
+                        "physical and postal address": "Plot 50371 Fairgrounds, \nGaborone, \nBotswana",
+                        "sector": "Retail & Wholesale",
+                        "board": "Domestic Main Board",
+                    },
+                    {
+                        "counter": "BMIN-EQO",
+                        "physical and postal address": (
+                            "Principal Office, \n162 Clontarf Road, \nDublin 3, \nIreland, "
+                            "\nRegistered Office, \n20-22 Bedford Row, \nLondon, \nWC1R 4ES"
+                        ),
+                        "sector": "Mining",
+                        "board": "Foreign Venture Capital Board",
+                    },
+                    {
+                        "counter": "TLOU",
+                        "physical and postal address": (
+                            "Ground Floor, Victoria House, "
+                            "\n132 Independence Avenue, \nGaborone, \nBotswana"
+                        ),
+                        "sector": "Mining",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "SHUMBA ENERGY",
+                        "physical and postal address": (
+                            "P.O.Box 70311, \nGaborone, \nBotswana, \nPlot 2780 Manong "
+                            "Close,Extension 9, \nGaborone, \nIFS Court, Bank Street, "
+                            "TwentyEight Cybercity, Ebène 72201, Republic of Mauritius "
+                            "\nTel. +230 467 3000"
+                        ),
+                        "sector": "Mining",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "INVESTEC",
+                        "physical and postal address": "100 Grayston Drive, Sandown, Sandton, 2196, South Africa",
+                        "sector": "Financial Services",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "CA SALES",
+                        "physical and postal address": (
+                            "1st Floor Building C, West End Office Park \n254 Hall "
+                            "Street \nCenturion,0157 \nSouth Africa"
+                        ),
+                        "sector": "Retail & Wholesale",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "ANGLO",
+                        "physical and postal address": (
+                            "20 Carlton House Terrace,London SW1Y 5AN, "
+                            "United Kingdom"
+                        ),
+                        "sector": "Mining",
+                        "board": "Foreign Main Board",
+                    },
+                    {
+                        "counter": "LUC",
+                        "physical and postal address": (
+                            "Suite 2000 – 885 West Georgia StreetVancouver, \n"
+                            "British Columbia Canada V6C 3E8"
+                        ),
+                        "sector": "Mining",
+                        "board": "Foreign Venture Capital Board",
+                    },
+                    {
+                        "counter": "GAIA",
+                        "physical and postal address": (
+                            "146 Campground Road \nNewlands "
+                            "\nCape Town \nSouth Africa, \n7780"
+                        ),
+                        "sector": "Financial Services",
+                        "board": "Foreign Investment Entity",
+                    },
                 ],
             )

@@ -4,70 +4,110 @@ Cluster extraction algorithm
 
 import re
 from pprint import pformat
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import List, Dict, Tuple, Optional
 
 from sklearn.cluster import KMeans
 import numpy as np
 
 from emodels.extract.utils import Constraints, apply_constraints, Result
-from emodels.scrapyutils.response import ExtractTextResponse
 
 
-def tile_extraction(
-    response: ExtractTextResponse, keywords: Tuple[str, ...], debug_mode: bool = False, **extract_kwargs
-) -> List[Result]:
-    results: List[Result] = []
-    current_responses = [response]
-    xpath = "."
-    while True:
-        new_results = [
-            extract_by_keywords(cr.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
-            for cr in current_responses
-        ]
-        if not new_results:
-            break
-        results = new_results
-
-        max_result = -1
-        for idx in range(len(new_results)):
-            if max_result == -1 or len(new_results[idx]) > len(new_results[max_result]):
-                max_result = idx
-
-        prev_xpath = xpath
-        for cidx, child in enumerate(response.xpath(xpath + "/*"), start=1):
-            for val in new_results[idx].values():
-                if val not in child.get():
-                    break
+def tiles_kmeans(
+    matches: List[Tuple[str, re.Match]], keywords: Tuple[str, ...], debug_mode: bool = False
+) -> Dict[int, List[Tuple[str, re.Match]]]:
+    keywords_matches = sorted([(k, m) for k, m in matches], key=lambda x: x[1].span()[0])
+    groups: List[Dict[str, re.Match]] = []
+    for k, m in keywords_matches:
+        if not groups:
+            groups.append(OrderedDict({k: m}))
+            if debug_mode:
+                print("Added", {k: m.group()}, "to new group. Index:", m.span())
+        elif k in groups[-1].keys():
+            current_group = list(groups[-1].items())
+            present_keywords = list(k for k, _ in current_group)
+            filled_keywords = list(k for k in keywords if k in present_keywords)
+            if len(current_group) > 1 and current_group[0][0] == k:
+                diff1 = current_group[1][1].span()[0] - current_group[0][1].span()[1]
+                diff2 = m.span()[0] - current_group[-1][1].span()[1]
+                if debug_mode:
+                    print("diff1:", diff1, "diff2:", diff2)
+                if diff2 < diff1 and present_keywords != filled_keywords:
+                    if debug_mode:
+                        print("  Present keywords:", present_keywords, "Filled keywords:", filled_keywords)
+                    groups[-1].pop(k)  # remove previous match to preserver ordering of keywords in group
+                    groups[-1][k] = m
+                    if debug_mode:
+                        print("Updated", k, "to", m.group(), "in current group. Index:", m.span())
+                else:
+                    groups.append(OrderedDict({k: m}))
+                    if debug_mode:
+                        print("Added", {k: m.group()}, "to new group. Index:", m.span())
             else:
-                xpath += f"/*[{cidx}]"
-                break
+                groups.append(OrderedDict({k: m}))
+                if debug_mode:
+                    print("Added", {k: m.group()}, "to new group. Index:", m.span())
+        else:
+            groups[-1][k] = m
+            if debug_mode:
+                print("Added", {k: m.group()}, "to current group. Index:", m.span())
+    groups = [g for g in groups if len(g) > 2]
+    groups.insert(0, {})
+    return {i - 1: list(g.items()) for i, g in enumerate(groups)}
 
-        if xpath == prev_xpath:
-            break
-        current_responses = response.xpath_split(xpath)
 
-    while "[" in xpath:
-        xpath = xpath.rsplit("[", 1)[0]
-        new_current_responses = response.xpath_split(xpath)
-        if len(new_current_responses) > len(current_responses):
-            results = [
-                extract_by_keywords(cr.markdown, keywords, debug_mode=debug_mode, **extract_kwargs)
-                for cr in new_current_responses
-            ]
-            break
+def clean_group(
+    m: re.Match, group_results: Optional[List[Tuple[str, re.Match]]] = None, keywords: Tuple[str, ...] = ()
+) -> Tuple[str, int]:
+    text = m.groups()[-1]
+    return clean_text(text, group_results=group_results, keywords=keywords)
 
-    return results
+
+def clean_text(
+    text: str, group_results: Optional[List[Tuple[str, re.Match]]] = None, keywords: Tuple[str, ...] = ()
+) -> Tuple[str, int]:
+    if text.startswith("| |"):
+        return "", 0
+    score = 0
+    for _, mm in group_results or []:
+        subtext = mm.group()
+        if subtext in text and subtext != text:
+            text = text.replace(subtext, "")
+    changed = True
+    while changed:
+        changed = False
+        if (new_text := re.sub(r"^\*\*", "", text)) != text:
+            score += 1
+            text = new_text
+            changed = True
+        if (new_text := re.sub(r"\*\*$", "", text)) != text:
+            score += 1
+            text = new_text
+            changed = True
+        if (new_text := text.strip().strip("| \n")) != text:
+            score += 1
+            text = new_text
+            changed = True
+        for kw in keywords:
+            if (new_text := re.sub(rf"\s*{re.escape(kw)}\s*", "", text, flags=re.I)) != text:
+                score += 1
+                text = new_text
+                changed = True
+    return text, score
 
 
 def apply_kmeans_clustering(
-    markdown: str, keywords: Tuple[str, ...], n_clusters: int = 0, debug_mode: bool = False
+    markdown: str, keywords: Tuple[str, ...], n_clusters: int = 0, tiles_mode: bool = False, debug_mode: bool = False
 ) -> Tuple[Dict[int, List[Tuple[str, re.Match]]], KMeans | None]:
     # generate matches
     matches: List[Tuple[str, re.Match]] = []
     max_groups = 0
     for keyword in keywords:
         mlist = list(re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I))
+        if not all([clean_group(m, keywords=keywords)[0] for m in mlist]):
+            mlist = list(
+                re.finditer(rf"\|[ \t]*{keyword}[ \t]*\|[ \t]*(?:\|[ \t]*)?((?s:.)+?)\|", markdown, flags=re.I)
+            )
         if not mlist:
             mlist = list(re.finditer(rf"{keyword}\s*([:|\s\n*]+)(.+)", markdown, flags=re.M | re.I))
         matches.extend(("title" if "#" in keyword else keyword, m) for m in mlist)
@@ -78,14 +118,19 @@ def apply_kmeans_clustering(
     groups[-1] = []
     kmeans = None
     if max_groups > 0:
-        features = [m.span() for _, m in matches]
-        kmeans = KMeans(n_clusters=n_clusters or max_groups, random_state=0, n_init="auto").fit(features)
-        for grp, mch in zip(kmeans.labels_, matches):
-            groups[int(grp)].append(mch)
-
+        if tiles_mode:
+            groups = tiles_kmeans(matches, keywords, debug_mode=debug_mode)
+        else:
+            features: List[Tuple[int, int]] = [m.span() for _, m in matches]
+            kmeans = KMeans(
+                n_clusters=n_clusters or max_groups,
+                random_state=0,
+                n_init="auto",
+            ).fit(features)
+            for grp, mch in zip(kmeans.labels_, matches):
+                groups[int(grp)].append(mch)
     if debug_mode:
         print(pformat(groups))
-
     return groups, kmeans
 
 
@@ -97,8 +142,9 @@ def extract_by_keywords(
     value_presets: Optional[Dict[str, str]] = None,
     constraints: Optional[Constraints] = None,
     debug_mode: bool = False,
+    tiles_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
-) -> Result:
+) -> List[Result]:
     """
     Extracts fields from markdown text, based on keyword search and data clustering.
 
@@ -122,32 +168,6 @@ def extract_by_keywords(
       it can be used to understand how the algorithm behaves with different number of clusters
     """
 
-    def _clean_group(m: re.Match, group_results: Optional[List[Tuple[str, re.Match]]] = None) -> Tuple[str, int]:
-        text = m.groups()[-1]
-        if text.startswith("| |"):
-            return "", 0
-        score = 0
-        for _, mm in group_results or []:
-            subtext = mm.group()
-            if subtext in text and subtext != text:
-                text = text.replace(subtext, "")
-        changed = True
-        while changed:
-            changed = False
-            if (new_text := re.sub(r"^\*\*", "", text)) != text:
-                score += 1
-                text = new_text
-                changed = True
-            if (text := re.sub(r"\*\*$", "", text)) != text:
-                score += 1
-                text = new_text
-                changed = True
-            if (new_text := text.strip().strip("| \n")) != text:
-                score += 1
-                text = new_text
-                changed = True
-        return text, score
-
     def _best_values_dict(extracted_data: Dict[str, List[Tuple[str, int]]]) -> Dict[str, str]:
         result = {}
         for k, vv_scores in extracted_data.items():
@@ -160,7 +180,9 @@ def extract_by_keywords(
             result[k] = best_value
         return result
 
-    groups, kmeans = apply_kmeans_clustering(markdown, keywords, n_clusters=n_clusters, debug_mode=debug_mode)
+    groups, kmeans = apply_kmeans_clustering(
+        markdown, keywords, n_clusters=n_clusters, tiles_mode=tiles_mode, debug_mode=debug_mode
+    )
 
     if keywords:
         required_fields += tuple(["title" if k.startswith("^#") else k for k in keywords])
@@ -169,22 +191,23 @@ def extract_by_keywords(
     max_score = -len(required_fields)
     max_score_group: Result = Result({})
     max_score_group_idx = -1
+    tiles_groups: List[Result] = []
 
     for idx, results in groups.items():
         results = [
             (k, m)
             for k, m in results
-            if not any([re.search(vv, _clean_group(m, results)[0]) for vv in (value_filters or {}).get(k, [])])
+            if not any([re.search(vv, clean_group(m, results)[0]) for vv in (value_filters or {}).get(k, [])])
         ]
         extracted_data: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         for k, m in results:
-            extracted_data[k].append(_clean_group(m, results))
-        if debug_mode:
-            print("Candidate extraction:", pformat(dict(extracted_data)))
+            extracted_data[k].append(clean_group(m, results))
         extracted_dict: Dict[str, str] = _best_values_dict(extracted_data)
         if constraints is not None:
             apply_constraints(extracted_dict, constraints)
         score = len(extracted_dict)
+        if debug_mode:
+            print("Candidate extraction:", pformat(dict(extracted_data)), "score:", score)
 
         for k, v in (value_presets or {}).items():
             if extracted_dict.get(k) == v:
@@ -200,11 +223,14 @@ def extract_by_keywords(
 
         missing_required_fields = set(required_fields).difference(set(extracted_dict.keys()))
         score -= len(missing_required_fields)
-
+        print("HEHE", missing_required_fields)
         if score > max_score:
             max_score = score
             max_score_group = Result(extracted_dict)
             max_score_group_idx = idx
+            tiles_groups = []
+        elif tiles_mode and (score == max_score or (score > 0 and not missing_required_fields)):
+            tiles_groups.append(Result(extracted_dict))
 
     missing_required_fields = set(required_fields).difference(set(max_score_group.keys()))
     if debug_mode:
@@ -213,7 +239,7 @@ def extract_by_keywords(
         print("Missing required fields stage 1:", missing_required_fields)
     # try to add missing fields from secondary groups
     # return max_score_group
-    if max_score_group and missing_required_fields and kmeans is not None:
+    if not tiles_mode and max_score_group and missing_required_fields and kmeans is not None:
         center = kmeans.cluster_centers_[max_score_group_idx]
         for field in missing_required_fields:
             if field.startswith("^#"):
@@ -230,19 +256,24 @@ def extract_by_keywords(
                             better_extra_candidate_distance = float(distance)
                             better_extra_candidate = m
             if better_extra_candidate is not None:
-                max_score_group[field] = _clean_group(better_extra_candidate)[0]
+                max_score_group[field] = clean_group(better_extra_candidate)[0]
 
-    for k, v in list(max_score_group.items()):
-        for j, w in max_score_group.items():
-            if k != j and w and w in v:
-                vv = re.sub(w, "", v, flags=re.I)
-                if v == vv:
-                    continue
-                vvv = re.sub(j, "", vv, flags=re.I)
-                if vv == vvv:
-                    continue
-                vvvv = vvv.strip("*| :")
-                if vvvv != vvv and vvvv in v:
-                    max_score_group[k] = vvvv
+    max_score_groups = [max_score_group]
+    if tiles_mode:
+        max_score_groups += tiles_groups
+    # clean results
+    for max_score_group in max_score_groups:
+        for k, v in list(max_score_group.items()):
+            for j, w in max_score_group.items():
+                if k != j and w and w in v:
+                    vv = re.sub(w, "", v, flags=re.I)
+                    if v == vv:
+                        continue
+                    vvv = re.sub(j, "", vv, flags=re.I)
+                    if vv == vvv:
+                        continue
+                    vvvv = vvv.strip("*| :")
+                    if vvvv != vvv and vvvv in v:
+                        max_score_group[k] = vvvv
 
-    return max_score_group
+    return max_score_groups
