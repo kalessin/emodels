@@ -5,11 +5,10 @@ from typing import Dict
 
 from itemloaders.processors import TakeFirst, Join
 from scrapy import Item, Field
-from scrapy.http import TextResponse
 
 from emodels import config
 from emodels.scrapyutils.loader import ExtractItemLoader, ItemSample
-from emodels.scrapyutils.response import COMMENT_RE
+from emodels.scrapyutils.response import COMMENT_RE, ExtractTextResponse
 from emodels.datasets.utils import DatasetFilename, build_response_from_sample_data
 
 
@@ -65,7 +64,7 @@ class ScrapyUtilsTests(TestCase):
     samples_file: DatasetFilename[ItemSample] = DatasetFilename(
         os.path.join(os.path.dirname(__file__), "samples.jl.gz")
     )
-    samples: Dict[str, TextResponse]
+    samples: Dict[str, ExtractTextResponse]
     maxDiff = None
 
     @classmethod

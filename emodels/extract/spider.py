@@ -4,10 +4,10 @@ from typing import Dict, Set, Tuple, Optional, Literal, Iterable
 from abc import abstractmethod
 
 from scrapy.http import TextResponse
-from scrapy import Spider
+from scrapy import Request, Spider
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.cluster import extract_by_keywords, tile_extraction
+from emodels.extract.cluster import extract_by_keywords
 from emodels.extract.utils import apply_additional_regexes, Constraints, Result
 from emodels.extract.table import parse_tables_from_response, Columns
 
@@ -17,13 +17,13 @@ MARKDOWN_URL_RE = re.compile(r"\[.*\]\((.+)\)")
 
 
 class ExtractionSpider(Spider):
-    name: str | None = "stocks"
+    name: str
 
     # a list of fields to drop from the final result
     drop_fields: Tuple[str, ...] = ()
     # a dict of field -> tuple of regexes to define patterns that makes any matching item to be completely dropped out.
     drop_items: Dict[str, Tuple[str]] = {}
-    # - in listing mode, it will try to extract stocks data from a listing table from each visited page.
+    # - in listing mode, it will try to extract data from a listing table from each visited page.
     # - in item mode, it will try to extract item-like data from each visited page (that is, a single item per page)
     # - in any mode, it will first try to assume each page is a listing, and if nothing is extracted, it will try to
     #   extract using item mode.
@@ -73,6 +73,11 @@ class ExtractionSpider(Spider):
     # in "combined" extract mode
     max_tables: int = 1
 
+    # if True, it will generate a markdown file for each visited page with the markdown text extracted by
+    # ExtractTextResponse. This is specially useful for debugging extraction results and writing additional
+    # regexes. It will also activate debug mode on extract_by_keywords, in order to debug the item extraction process.
+    debug_mode: bool = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.all_results = []
@@ -90,8 +95,14 @@ class ExtractionSpider(Spider):
                 setattr(self, attr, json.loads(getattr(self, attr)))
         if isinstance(self.max_tables, str):
             self.max_tables = int(self.max_tables)
-
+        assert (
+            len(self.fields) > 1
+        ), "A minimal of two keywords need to be provided. The more keywords, the better the algorithm works."
         self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
+        self.markdown_count = 0
+
+    def make_request(self, url, callback, cb_kwargs=None, **kwargs) -> Request:
+        return Request(url, callback=callback, cb_kwargs=cb_kwargs, **kwargs)
 
     @staticmethod
     def override_constraints(constraints, overrides) -> Constraints:
@@ -132,15 +143,16 @@ class ExtractionSpider(Spider):
         Extract items from listing html tables using smart heuristics.
         """
         response = response.replace(cls=ExtractTextResponse)
-        if self.debug:
-            open(f"markdown{self.response_count}.md", "w").write(response.markdown)
+        if self.debug_mode:
+            open(f"markdown{self.markdown_count}.md", "w").write(response.markdown)
+            self.markdown_count += 1
         has_results = False
         if self.extract_mode in ("any", "listing"):
             for result in self.extract_listing(response):
                 yield result
                 has_results = True
         if self.extract_mode in ("any", "item", "tiles") and not has_results:
-            for result in self.parse_item_from_response(response):
+            for result in self.parse_items_from_response(response):
                 yield result
         if self.extract_mode == "hybrid":
             for result in self.extract_listing(response):
@@ -152,14 +164,14 @@ class ExtractionSpider(Spider):
                     except Exception as e:
                         self.logger.warning(f"Cannot build item url: {e!r} from '{result}'")
                 if "url" in result:
-                    yield self.request_factory(
-                        url=result["url"], callback=self.parse_item_from_response, cb_kwargs=result
+                    yield self.make_request(
+                        url=result["url"], callback=self.parse_items_from_response, cb_kwargs=result
                     )
         if self.extract_mode == "combined":
             results_to_combine = []
             for result in self.extract_listing(response):
                 results_to_combine.append(result)
-            for result in self.parse_item_from_response(response):
+            for result in self.parse_items_from_response(response):
                 results_to_combine.append(result)
             if results_to_combine:
                 results_to_combine, final_result = results_to_combine[:-1], results_to_combine[-1]
@@ -200,55 +212,22 @@ class ExtractionSpider(Spider):
                 self.all_results.append(result)
             yield result
 
-    def extract_item_page(
-        self,
-        markdown: str,
-        keywords: Tuple[str, ...],
-        required_fields: Tuple[str, ...] = (),
-        value_filters: Optional[Dict[str, Tuple[str, ...]]] = None,
-        value_presets: Optional[Dict[str, str]] = None,
-        constraints: Optional[Constraints] = None,
-        debug_mode=False,
-        n_clusters: int = 0,  # this is a debug feature only
-    ) -> Result:
-        assert (
-            len(keywords) > 1
-        ), "A minimal of two keywords need to be provided. The more keywords, the better the algorithm works."
-        result = extract_by_keywords(
-            markdown, keywords, required_fields, value_filters, value_presets, constraints, debug_mode, n_clusters
-        )
-        if "title" in result:
-            result["name"] = result.pop("title")
-        return result
-
-    def parse_item_from_response(self, response: TextResponse, **kwargs) -> Iterable[Dict[str, str]]:
+    def parse_items_from_response(self, response: TextResponse, **kwargs) -> Iterable[Dict[str, str]]:
         response = response.replace(cls=ExtractTextResponse)
 
         value_filters = (self.value_filters or {}).copy()
         for field in self.drop_fields:
             value_filters[field] = (".",)
-        if self.extract_mode == "tiles":
-            results = tile_extraction(
-                response,
-                keywords=self.fields,
-                required_fields=self.required_fields,
-                value_filters=value_filters or None,
-                value_presets=kwargs,
-                constraints=self.constraints,
-                debug_mode=self.debug,
-            )
-        else:
-            result = self.extract_item_page(
-                response.markdown,
-                keywords=self.fields,
-                required_fields=self.required_fields,
-                value_filters=value_filters or None,
-                value_presets=kwargs,
-                constraints=self.constraints,
-                debug_mode=self.debug,
-            )
-            if result:
-                results = [result]
+        results = extract_by_keywords(
+            response.markdown,
+            keywords=self.fields,
+            required_fields=self.required_fields,
+            value_filters=value_filters or None,
+            value_presets=kwargs,
+            constraints=self.constraints,
+            tiles_mode=self.extract_mode == "tiles",
+            debug_mode=self.debug_mode,
+        )
         for result in results:
             apply_additional_regexes(self.additional_regexes, result, response)
             self._adapt_result(result, response)

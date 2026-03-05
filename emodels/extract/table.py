@@ -4,7 +4,8 @@ from urllib.parse import urlparse, ParseResult, urljoin
 from typing import List, Dict, Set, Tuple, Callable, NewType, Optional, Iterable
 
 from scrapy.http import TextResponse
-from scrapy import Selector
+from scrapy.selector.unified import SelectorList
+from parsel.selector import Selector
 
 from emodels.extract.utils import Constraints, apply_constraints, Result
 
@@ -48,7 +49,7 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...]) -> Li
 
 
 def find_tables(
-    tables: List[Selector], candidate_fields: Tuple[str, ...]
+    tables: SelectorList, candidate_fields: Tuple[str, ...]
 ) -> List[Tuple[Selector, List[str]]]:
     # list of tuples (table selector, header, score1 score2)
     scored_tables: List[Tuple[Selector, List[str], int, int]] = []
