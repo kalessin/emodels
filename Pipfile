@@ -15,6 +15,7 @@ pillow = "*"
 einops = "==0.8.0"
 torchvision = "==0.18.0"
 scikit-learn = "==1.6.1"
+k-means-constrained = "*"
 
 [dev-packages]
 flake8 = "*"
