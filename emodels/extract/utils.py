@@ -7,6 +7,17 @@ from emodels.scrapyutils.response import ExtractTextResponse
 
 Text = NewType("Text", str)
 Keyword = NewType("Keyword", str)
+# convenient way to represent a match with its position in the text
+# Match is a tuple of (matched text, start position, end position, extracted value).
+# It is build from a re.Match object, according to re_match_to_match function below.
+Match = NewType("Match", Tuple[Text, int, int, Text])
+
+
+def re_match_to_match(m: re.Match) -> Match:
+    full_group = Text(m.group())
+    value_group = Text(m.groups()[-1] if m.groups() else "")
+    return Match((full_group, m.start(), m.end(), value_group))
+
 
 Constraints = NewType("Constraints", Dict[Keyword, re.Pattern | Literal["date_type", "url_type"]])
 Result = NewType("Result", Dict[Keyword, Text])

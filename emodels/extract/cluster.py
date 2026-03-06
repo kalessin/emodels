@@ -5,17 +5,13 @@ Cluster extraction algorithm
 import re
 from pprint import pformat
 from collections import defaultdict, OrderedDict
-from typing import List, Dict, Tuple, Optional, NewType
+from typing import List, Dict, Tuple, Optional
 
 from sklearn.cluster import KMeans
 import numpy as np
 
-from emodels.extract.utils import Constraints, apply_constraints, Result, Text, Keyword
+from emodels.extract.utils import Constraints, apply_constraints, Result, Text, Keyword, Match, re_match_to_match
 from emodels.scrapyutils.response import ExtractTextResponse
-
-
-# convenient way to represent a match with its position in the text
-Match = NewType("Match", Tuple[Text, int, int, Text])
 
 
 def tiles_kmeans(
@@ -59,12 +55,6 @@ def tiles_kmeans(
     groups = [g for g in groups if len(g) > 2]
     groups.insert(0, {})
     return {i - 1: list(g.items()) for i, g in enumerate(groups)}
-
-
-def re_match_to_match(m: re.Match) -> Match:
-    full_group = Text(m.group())
-    value_group = Text(m.groups()[-1] if m.groups() else "")
-    return Match((full_group, m.start(), m.end(), value_group))
 
 
 def clean_group(
