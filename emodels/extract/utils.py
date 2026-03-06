@@ -46,17 +46,17 @@ def apply_constraints(result: Dict[Keyword, Text], constraints: Constraints) -> 
     return was_updated
 
 
-def apply_additional_regexes(
+def parse_additional_regexes(
     additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None,
-    result: Result,
     response: ExtractTextResponse,
-):
+) -> Dict[Keyword, Match]:
     """
-    Apply additional regexes to the response and update the result dict with any matches found.
+    Get additional regexes to the response and update the result dict with any matches found.
     - additional_regexes is a dict where keys are field names and values are tuples of regex patterns
       or tuples of (regex pattern, tid), according to the argument accepted by response.text_re method.
       If a regex pattern is None, it will only apply the tid-based extraction without any regex filtering.
     """
+    matches: Dict[Keyword, Match] = {}
     for field, regexes in (additional_regexes or {}).items():
         assert isinstance(regexes, (list, tuple)), "additional_regexes values must be of type list."
         for regex_tid in regexes:
@@ -70,7 +70,21 @@ def apply_additional_regexes(
             flags = re.M | re.I if regex.startswith("^") else re.I
             extracted = response.text_re(regex, tid=tid, flags=flags)
             if extracted:
-                result[field] = Text(extracted[0][0])
+                matches[field] = Match((Text(extracted[0][0]), extracted[0][1], extracted[0][2], Text(extracted[0][0])))
                 break
+    return matches
+
+
+def apply_additional_regexes(
+    additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None,
+    result: Result,
+    response: ExtractTextResponse,
+) -> None:
+    """
+    Apply additional regexes to the response and update the result dict with any matches found.
+    """
+    for keyword, match in parse_additional_regexes(additional_regexes, response).items():
+        result[keyword] = match[3]  # the extracted value is in the 4th position of the Match tuple
+
     if Keyword("url") not in result:
         result[Keyword("url")] = Text(response.url)
