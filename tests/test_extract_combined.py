@@ -1,48 +1,47 @@
 import os
 import re
 from unittest import TestCase
-from typing import Dict
 
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.table import Columns
 from emodels.extract.combined import parse_combined_from_response
-from emodels.extract.utils import Constraints
+from emodels.extract.utils import Constraints, Keyword, Result
 
 
 NUMBER_RE = re.compile(r"\d+$")
 DEDUPE_KEYWORDS = Columns(
     (
-        "code",
-        "company",
-        "company name",
-        "isin",
-        "isin code",
-        "issuer code",
-        "issuer name",
-        "lei",
-        "name",
-        "name isin",
-        "phone",
-        "share code",
-        "symbol",
-        "ticker",
+        Keyword("code"),
+        Keyword("company"),
+        Keyword("company name"),
+        Keyword("isin"),
+        Keyword("isin code"),
+        Keyword("issuer code"),
+        Keyword("issuer name"),
+        Keyword("lei"),
+        Keyword("name"),
+        Keyword("name isin"),
+        Keyword("phone"),
+        Keyword("share code"),
+        Keyword("symbol"),
+        Keyword("ticker"),
     )
 )
 
 
-def validate_result(result: Dict[str, str], candidate_fields: Columns) -> bool:
+def validate_result(result: Result, candidate_fields: Columns) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:
             score += 1
     if score < 2:
         return False
-    result.pop("", None)
-    if issuer := result.get("issuer"):
+    result.pop(Keyword(""), None)
+    if issuer := result.get(Keyword("issuer")):
         m = NUMBER_RE.match(issuer)
         if m:
             return False
-    if "code" in result and len(result["code"]) > 20:
+    if Keyword("code") in result and len(result[Keyword("code")]) > 20:
         return False
     return True
 
@@ -61,16 +60,16 @@ class CombinedExtractionTests(TestCase):
             )
             columns = Columns(
                 (
-                    "industry",
-                    "sector",
-                    "super-sector",
-                    "sub-sector",
-                    "code",
-                    "isin",
-                    "listing date",
-                    "security name",
-                    "address",
-                    "web-site",
+                    Keyword("industry"),
+                    Keyword("sector"),
+                    Keyword("super-sector"),
+                    Keyword("sub-sector"),
+                    Keyword("code"),
+                    Keyword("isin"),
+                    Keyword("listing date"),
+                    Keyword("security name"),
+                    Keyword("address"),
+                    Keyword("web-site"),
                 )
             )
             result = parse_combined_from_response(
@@ -78,7 +77,9 @@ class CombinedExtractionTests(TestCase):
                 columns=columns,
                 validate_result=validate_result,
                 dedupe_keywords=DEDUPE_KEYWORDS,
-                constraints=Constraints({"listing date": "date_type", "isin": re.compile(r"^[a-z0-9]{12}$", re.I)}),
+                constraints=Constraints(
+                    {Keyword("listing date"): "date_type", Keyword("isin"): re.compile(r"^[a-z0-9]{12}$", re.I)}
+                ),
             )
             self.assertEqual(
                 result,

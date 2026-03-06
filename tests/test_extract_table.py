@@ -1,75 +1,74 @@
 import os
 import re
 from unittest import TestCase
-from typing import Dict
 
 from scrapy.http import TextResponse
 
 from emodels.extract.table import parse_tables_from_response, Columns
-from emodels.extract.utils import Constraints
+from emodels.extract.utils import Constraints, Keyword, Result
 
 
 NUMBER_RE = re.compile(r"\d+$")
 TEST_TABLE_COLUMNS = Columns(
     (
-        "address",
-        "code",
-        "company",
-        "company name",
-        "fullname",
-        "industry group",
-        "instrument",
-        "isin",
-        "isin code",
-        "issuer",
-        "issuer code",
-        "issuer name",
-        "lei",
-        "market",
-        "name",
-        "name isin",
-        "open price",
-        "open",
-        "sector",
-        "share code",
-        "stock symbol",
-        "symbol",
-        "ticker",
+        Keyword("address"),
+        Keyword("code"),
+        Keyword("company"),
+        Keyword("company name"),
+        Keyword("fullname"),
+        Keyword("industry group"),
+        Keyword("instrument"),
+        Keyword("isin"),
+        Keyword("isin code"),
+        Keyword("issuer"),
+        Keyword("issuer code"),
+        Keyword("issuer name"),
+        Keyword("lei"),
+        Keyword("market"),
+        Keyword("name"),
+        Keyword("name isin"),
+        Keyword("open price"),
+        Keyword("open"),
+        Keyword("sector"),
+        Keyword("share code"),
+        Keyword("stock symbol"),
+        Keyword("symbol"),
+        Keyword("ticker"),
     )
 )
 DEDUPE_KEYWORDS = Columns(
     (
-        "code",
-        "company",
-        "company name",
-        "isin",
-        "isin code",
-        "issuer code",
-        "issuer name",
-        "lei",
-        "name",
-        "name isin",
-        "phone",
-        "share code",
-        "symbol",
-        "ticker",
+        Keyword("code"),
+        Keyword("company"),
+        Keyword("company name"),
+        Keyword("isin"),
+        Keyword("isin code"),
+        Keyword("issuer code"),
+        Keyword("issuer name"),
+        Keyword("lei"),
+        Keyword("name"),
+        Keyword("name isin"),
+        Keyword("phone"),
+        Keyword("share code"),
+        Keyword("symbol"),
+        Keyword("ticker"),
     )
 )
 
 
-def validate_result(result: Dict[str, str], candidate_fields: Columns) -> bool:
+def validate_result(result: Result, candidate_fields: Columns) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:
             score += 1
     if score < 2:
         return False
-    result.pop("", None)
-    if issuer := result.get("issuer"):
+    result.pop(Keyword("url"), None)
+    if issuer := result.get(Keyword("issuer")):
         m = NUMBER_RE.match(issuer)
         if m:
             return False
-    if "code" in result and len(result["code"]) > 20:
+    if Keyword("code") in result and len(result[Keyword("code")]) > 20:
         return False
     return True
 
@@ -134,7 +133,7 @@ class TableExtractTests(TestCase):
                     "url": "http://example.com/en/company_historical/ARBK",
                 },
             )
-            self.assertEqual(results[13]["url"], "http://example.com/en/company_historical/ARBK")
+            self.assertEqual(results[13][Keyword("url")], "http://example.com/en/company_historical/ARBK")
             self.assertEqual(
                 results[96],
                 {
@@ -241,18 +240,28 @@ class TableExtractTests(TestCase):
     def test_table_ix(self):
         with self.open_resource("test24.html") as f:
             response = TextResponse(
-                url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/",
-                status=200, body=f.read()
+                url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/", status=200, body=f.read()
             )
             columns = Columns(
-                ("industry", "sector", "super-sector", "sub-sector", "code", "isin", "listing date", "security name")
+                (
+                    Keyword("industry"),
+                    Keyword("sector"),
+                    Keyword("super-sector"),
+                    Keyword("sub-sector"),
+                    Keyword("code"),
+                    Keyword("isin"),
+                    Keyword("listing date"),
+                    Keyword("security name"),
+                )
             )
             results = parse_tables_from_response(
                 response,
                 columns=columns,
                 validate_result=validate_result,
                 dedupe_keywords=DEDUPE_KEYWORDS,
-                constraints=Constraints({"listing date": "date_type", "isin": re.compile(r"^[a-z0-9]{12}$", re.I)}),
+                constraints=Constraints(
+                    {Keyword("listing date"): "date_type", Keyword("isin"): re.compile(r"^[a-z0-9]{12}$", re.I)}
+                ),
                 max_tables=2,
             )
             self.assertEqual(
@@ -279,41 +288,57 @@ class TableExtractTests(TestCase):
     def test_table_x(self):
         with self.open_resource("test28.html") as f:
             response = TextResponse(url="https://www.mse.mk/en/issuers/shares-listing", status=200, body=f.read())
-            columns = Columns(("name", "business", "address", "city", "state", "phone", "site"))
-            results = parse_tables_from_response(
-                response,
-                columns=columns,
-                validate_result=validate_result
+            columns = Columns(
+                (
+                    Keyword("name"),
+                    Keyword("business"),
+                    Keyword("address"),
+                    Keyword("city"),
+                    Keyword("state"),
+                    Keyword("phone"),
+                    Keyword("site"),
+                )
             )
+            results = parse_tables_from_response(response, columns=columns, validate_result=validate_result)
             self.assertEqual(len(results), 90)
-            self.assertEqual(results[34], {
-                'address': 'ul. 808 br. 8',
-                'business': 'Industry',
-                'city': 'Skopje',
-                'name': 'Evropa AD Skopje',
-                'phone': '+389 2 3114 066',
-                'site': 'Link to site',
-                'url': 'https://www.mse.mk/en/issuer/evropa-ad-skopje/',
-                'website': 'http://www.evropa.com.mk'}
+            self.assertEqual(
+                results[34],
+                {
+                    "address": "ul. 808 br. 8",
+                    "business": "Industry",
+                    "city": "Skopje",
+                    "name": "Evropa AD Skopje",
+                    "phone": "+389 2 3114 066",
+                    "site": "Link to site",
+                    "url": "https://www.mse.mk/en/issuer/evropa-ad-skopje/",
+                    "website": "http://www.evropa.com.mk",
+                },
             )
 
     def test_table_xi(self):
         with self.open_resource("test29.html") as f:
             response = TextResponse(url="https://www.bse-sofia.bg/en/listed-instruments", status=200, body=f.read())
-            columns = Columns(("code", "lei", "name"))
+            columns = Columns((Keyword("code"), Keyword("lei"), Keyword("name")))
             results = parse_tables_from_response(
                 response,
                 columns=columns,
                 constraints=Constraints(
-                    {"website": re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")}
-                )
+                    {
+                        Keyword("website"): re.compile(
+                            r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)"
+                        )
+                    }
+                ),
             )
             self.assertEqual(len(results), 420)
-            self.assertEqual(results[23], {
-                'code': 'EAC',
-                'currency': 'EUR',
-                'lei': '213800A3AEHGOGT4KM74',
-                'name': 'Elana Agrocredit AD',
-                'nominal': '0.5100',
-                'total volume of the issue': '46 692 133'
-            })
+            self.assertEqual(
+                results[23],
+                {
+                    "code": "EAC",
+                    "currency": "EUR",
+                    "lei": "213800A3AEHGOGT4KM74",
+                    "name": "Elana Agrocredit AD",
+                    "nominal": "0.5100",
+                    "total volume of the issue": "46 692 133",
+                },
+            )

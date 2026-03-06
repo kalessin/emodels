@@ -3,7 +3,7 @@ from typing import Optional, Callable, List, Dict, Tuple, Set
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.table import parse_tables_from_response, default_validate_result, Columns
 from emodels.extract.cluster import extract_by_keywords
-from emodels.extract.utils import Constraints, Result
+from emodels.extract.utils import Constraints, Result, Keyword, Text
 
 
 def parse_combined_from_response(
@@ -12,8 +12,8 @@ def parse_combined_from_response(
     validate_result: Callable[[Result, Columns], bool] = default_validate_result,
     dedupe_keywords: Columns = Columns(()),
     constraints: Optional[Constraints] = None,
-    value_filters: Optional[Dict[str, Tuple[str, ...]]] = None,
-    value_presets: Optional[Dict[str, str]] = None,
+    value_filters: Optional[Dict[Keyword, Tuple[Text, ...]]] = None,
+    value_presets: Optional[Dict[Keyword, Text]] = None,
     debug_mode: bool = False,
 ) -> Result:
     results_to_combine: List[Result] = []

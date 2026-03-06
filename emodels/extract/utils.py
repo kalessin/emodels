@@ -5,13 +5,15 @@ import dateparser
 
 from emodels.scrapyutils.response import ExtractTextResponse
 
+Text = NewType("Text", str)
+Keyword = NewType("Keyword", str)
 
-Constraints = NewType("Constraints", Dict[str, re.Pattern | Literal["date_type", "url_type"]])
-Result = NewType("Result", Dict[str, str])
+Constraints = NewType("Constraints", Dict[Keyword, re.Pattern | Literal["date_type", "url_type"]])
+Result = NewType("Result", Dict[Keyword, Text])
 URL_RE = re.compile(r"^(https?://.+?)|(<https?://.+?>)|(\[.+\]\(https?://.+\))|(www\..+\..+)")
 
 
-def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
+def apply_constraints(result: Dict[Keyword, Text], constraints: Constraints) -> bool:
     """Remove fields from result that don't match the given constraints.
     constraint is either a regex pattern or any of special keywords as defined in Constraints type:
     date_type: matches if dateparser accepts the field value.
@@ -34,10 +36,16 @@ def apply_constraints(result: Dict[str, str], constraints: Constraints) -> bool:
 
 
 def apply_additional_regexes(
-    additional_regexes: Dict[str, Tuple[str | Tuple[str | None, str], ...]] | None,
-    result: Dict[str, str],
+    additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None,
+    result: Result,
     response: ExtractTextResponse,
 ):
+    """
+    Apply additional regexes to the response and update the result dict with any matches found.
+    - additional_regexes is a dict where keys are field names and values are tuples of regex patterns
+      or tuples of (regex pattern, tid), according to the argument accepted by response.text_re method.
+      If a regex pattern is None, it will only apply the tid-based extraction without any regex filtering.
+    """
     for field, regexes in (additional_regexes or {}).items():
         assert isinstance(regexes, (list, tuple)), "additional_regexes values must be of type list."
         for regex_tid in regexes:
@@ -51,7 +59,7 @@ def apply_additional_regexes(
             flags = re.M | re.I if regex.startswith("^") else re.I
             extracted = response.text_re(regex, tid=tid, flags=flags)
             if extracted:
-                result[field] = extracted[0][0]
+                result[field] = Text(extracted[0][0])
                 break
-    if "url" not in result:
-        result["url"] = response.url
+    if Keyword("url") not in result:
+        result[Keyword("url")] = Text(response.url)

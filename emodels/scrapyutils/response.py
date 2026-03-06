@@ -109,6 +109,12 @@ class ExtractTextResponse(TextResponse):
         flags: int = 0,
         skip_prefix: str = DEFAULT_SKIP_PREFIX,
     ) -> Generator[Tuple[str, int, int], None, None]:
+        """
+        Returns a generator of tuples (extracted_text, start_pos, end_pos) for each match of the given regex
+        pattern in the markdown version of the response text. If tid is provided, it will look for matches
+        that are associated with the given tid in the markdown with ids or classes (depending on the tid format).
+        If no matches are found and tid
+        """
         if reg is None:
             reg = "(.+?)"
         reg = f"{skip_prefix}{reg}"
@@ -156,6 +162,12 @@ class ExtractTextResponse(TextResponse):
         idx: int = 0,
         optimize: bool = False,
     ) -> List[Tuple[str, int, int]]:
+        """
+        Returns a list of tuples (extracted_text, start_pos, end_pos) for each match of the given regex
+        pattern in the markdown version of the response text. If tid is provided, it will look for matches
+        that are associated with the given tid in the markdown with ids or classes (depending on the tid format).
+        If no matches are found and tid
+        """
         result = []
         for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix)):
             if not optimize or i == idx:

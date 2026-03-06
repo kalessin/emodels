@@ -7,12 +7,12 @@ from scrapy.http import TextResponse
 from scrapy.selector.unified import SelectorList
 from parsel.selector import Selector
 
-from emodels.extract.utils import Constraints, apply_constraints, Result
+from emodels.extract.utils import Constraints, apply_constraints, Result, Keyword
 
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
 
-Columns = NewType("Columns", Tuple[str, ...])
+Columns = NewType("Columns", Tuple[Keyword, ...])
 Uid = NewType("Uid", Tuple[Tuple[str, str], ...])
 
 
@@ -111,7 +111,7 @@ def parse_table_ii(table: Selector, headers: List[str], parsed: ParseResult):
         yield data
 
 
-def default_validate_result(result: Dict[str, str], columns: Columns) -> bool:
+def default_validate_result(result: Result, columns: Columns) -> bool:
     return True
 
 
@@ -134,7 +134,7 @@ def unique_id(result: Dict[str, str], dedupe_keywords: Columns) -> Tuple[Uid, Ui
 
 
 def remove_all_empty_fields(results: List[Result]):
-    fields: Set[str] = set()
+    fields: Set[Keyword] = set()
     for result in results:
         fields.update(result.keys())
     all_empty_fields = []

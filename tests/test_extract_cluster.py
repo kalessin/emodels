@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.cluster import extract_by_keywords
-from emodels.extract.utils import apply_additional_regexes, Constraints
+from emodels.extract.utils import apply_additional_regexes, Constraints, Keyword, Text
 
 
 class ClusterExtractTests(TestCase):
@@ -17,7 +17,9 @@ class ClusterExtractTests(TestCase):
     def test_cluster_i(self):
         with self.open_resource("test9.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
-            result = extract_by_keywords(response.markdown, keywords=("^#", "industry", "sector", "stock"))
+            result = extract_by_keywords(
+                response.markdown, keywords=(Keyword("^#"), Keyword("industry"), Keyword("sector"), Keyword("stock"))
+            )
             self.assertEqual(
                 result[0],
                 {
@@ -31,7 +33,9 @@ class ClusterExtractTests(TestCase):
     def test_cluster_ii(self):
         with self.open_resource("test10.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
-            result = extract_by_keywords(response.markdown, keywords=("^#",), value_presets={"stock": "HDGE"})
+            result = extract_by_keywords(
+                response.markdown, keywords=(Keyword("^#"),), value_presets={Keyword("stock"): Text("HDGE")}
+            )
             self.assertEqual(
                 result[0],
                 {
@@ -45,9 +49,12 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("^#",),
-                value_filters={"name": ("ETF 101", "https://", "Key Data"), "stock": ("https://",)},
-                value_presets={"stock": "ATSX"},
+                keywords=(Keyword("^#"),),
+                value_filters={
+                    Keyword("name"): (Text("ETF 101"), Text("https://"), Text("Key Data")),
+                    Keyword("stock"): (Text("https://"),),
+                },
+                value_presets={Keyword("stock"): Text("ATSX")},
             )
             self.assertEqual(
                 result[0],
@@ -62,8 +69,14 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("address", "isin", "listing date", "website", "^#"),
-                constraints=Constraints({"website": "url_type"}),
+                keywords=(
+                    Keyword("address"),
+                    Keyword("isin"),
+                    Keyword("listing date"),
+                    Keyword("website"),
+                    Keyword("^#"),
+                ),
+                constraints=Constraints({Keyword("website"): "url_type"}),
             )
             self.assertEqual(
                 result[0],
@@ -77,8 +90,14 @@ class ClusterExtractTests(TestCase):
             )
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("address", "isin", "listing date", "website", "^#"),
-                constraints=Constraints({"website": re.compile("aaa")}),
+                keywords=(
+                    Keyword("address"),
+                    Keyword("isin"),
+                    Keyword("listing date"),
+                    Keyword("website"),
+                    Keyword("^#"),
+                ),
+                constraints=Constraints({Keyword("website"): re.compile("aaa")}),
             )
             self.assertEqual(
                 result[0],
@@ -95,8 +114,8 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("address", "listing date", "^#"),
-                value_filters={"address": ("P.O. Box 6771",)},
+                keywords=(Keyword("address"), Keyword("listing date"), Keyword("^#")),
+                value_filters={Keyword("address"): (Text("P.O. Box 6771"),)},
             )
             self.assertEqual(
                 result[0],
@@ -112,7 +131,15 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="http://www.ux.ua/en/issue.aspx?code=CEEN", status=200, body=f.read())
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("name", "isin", "short name", "ticker", "trading as of", "type", "website"),
+                keywords=(
+                    Keyword("name"),
+                    Keyword("isin"),
+                    Keyword("short name"),
+                    Keyword("ticker"),
+                    Keyword("trading as of"),
+                    Keyword("type"),
+                    Keyword("website"),
+                ),
             )
             self.assertEqual(
                 result[0],
@@ -133,14 +160,14 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "name",
-                    "abbreviation",
-                    "address",
-                    "date of first listing",
-                    "sector",
-                    "www",
-                    "full name",
-                    "company address",
+                    Keyword("name"),
+                    Keyword("abbreviation"),
+                    Keyword("address"),
+                    Keyword("date of first listing"),
+                    Keyword("sector"),
+                    Keyword("www"),
+                    Keyword("full name"),
+                    Keyword("company address"),
                 ),
             )
             self.assertEqual(
@@ -163,12 +190,12 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "activity",
-                    "address",
-                    "site url",
-                    "listing in athex",
-                    "sector / subsector",
-                    "reference symbols",
+                    Keyword("activity"),
+                    Keyword("address"),
+                    Keyword("site url"),
+                    Keyword("listing in athex"),
+                    Keyword("sector / subsector"),
+                    Keyword("reference symbols"),
                 ),
             )
             self.assertEqual(
@@ -191,7 +218,13 @@ class ClusterExtractTests(TestCase):
             response = ExtractTextResponse(url="https://money.tmx.co/", status=200, body=f.read())
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("^##", "listing type", "listing status", "\\*\\*listed", "available to"),
+                keywords=(
+                    Keyword("^##"),
+                    Keyword("listing type"),
+                    Keyword("listing status"),
+                    Keyword("\\*\\*listed"),
+                    Keyword("available to"),
+                ),
             )
             self.assertEqual(
                 result[0],
@@ -213,9 +246,15 @@ class ClusterExtractTests(TestCase):
             )
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("^##", "wkn", "marktsegment", "erstnotierung", "wertpapiertyp"),
+                keywords=(
+                    Keyword("^##"),
+                    Keyword("wkn"),
+                    Keyword("marktsegment"),
+                    Keyword("erstnotierung"),
+                    Keyword("wertpapiertyp"),
+                ),
             )
-            apply_additional_regexes({"isin": ("isin: \\*\\*(.+?)\\*\\*",)}, result[0], response)
+            apply_additional_regexes({Keyword("isin"): ("isin: \\*\\*(.+?)\\*\\*",)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -238,7 +277,13 @@ class ClusterExtractTests(TestCase):
             )
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("full name", "short name", "sector", "Business activity", "contact"),
+                keywords=(
+                    Keyword("full name"),
+                    Keyword("short name"),
+                    Keyword("sector"),
+                    Keyword("Business activity"),
+                    Keyword("contact"),
+                ),
             )
             self.assertEqual(
                 result[0],
@@ -267,13 +312,13 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "company name",
-                    "corporate address",
-                    "external auditors",
-                    "date of creation",
-                    "date of ipo",
-                    "length of fiscal year",
-                    "social object",
+                    Keyword("company name"),
+                    Keyword("corporate address"),
+                    Keyword("external auditors"),
+                    Keyword("date of creation"),
+                    Keyword("date of ipo"),
+                    Keyword("length of fiscal year"),
+                    Keyword("social object"),
                 ),
             )
             self.assertEqual(
@@ -309,11 +354,11 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "ticker",
-                    "isin",
-                    "listing type",
-                    "company website",
-                    "^###",
+                    Keyword("ticker"),
+                    Keyword("isin"),
+                    Keyword("listing type"),
+                    Keyword("company website"),
+                    Keyword("^###"),
                 ),
             )
             self.assertEqual(
@@ -336,9 +381,14 @@ class ClusterExtractTests(TestCase):
             )
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("company type", "listing date", "company overview", "^####"),
+                keywords=(
+                    Keyword("company type"),
+                    Keyword("listing date"),
+                    Keyword("company overview"),
+                    Keyword("^####"),
+                ),
             )
-            apply_additional_regexes({"ticker": ("^## ([A-Z]+)",)}, result[0], response)
+            apply_additional_regexes({Keyword("ticker"): ("^## ([A-Z]+)",)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -385,16 +435,16 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "trading code",
-                    "scrip code",
-                    "listing year",
-                    "debut trade date",
-                    "type of instrument",
-                    "sector",
-                    "market category",
+                    Keyword("trading code"),
+                    Keyword("scrip code"),
+                    Keyword("listing year"),
+                    Keyword("debut trade date"),
+                    Keyword("type of instrument"),
+                    Keyword("sector"),
+                    Keyword("market category"),
                 ),
             )
-            apply_additional_regexes({"name": ((None, ".com_title"),)}, result[0], response)
+            apply_additional_regexes({Keyword("name"): ((None, ".com_title"),)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -420,12 +470,12 @@ class ClusterExtractTests(TestCase):
             result = extract_by_keywords(
                 response.markdown,
                 keywords=(
-                    "type of instrument",
-                    "debut trading date",
-                    "trading code",
-                    "scrip code",
-                    "web address",
-                    "sector",
+                    Keyword("type of instrument"),
+                    Keyword("debut trading date"),
+                    Keyword("trading code"),
+                    Keyword("scrip code"),
+                    Keyword("web address"),
+                    Keyword("sector"),
                 ),
             )
             self.assertEqual(
@@ -448,13 +498,13 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             value_presets = {
-                "company name": "Grenreal Property Corporation Ltd.",
-                "isin": "GD3456401067",
-                "ticker": "GPCL",
+                Keyword("company name"): Text("Grenreal Property Corporation Ltd."),
+                Keyword("isin"): Text("GD3456401067"),
+                Keyword("ticker"): Text("GPCL"),
             }
             result = extract_by_keywords(
                 response.markdown,
-                keywords=("symbol", "company name", "isin", "website"),
+                keywords=(Keyword("symbol"), Keyword("company name"), Keyword("isin"), Keyword("website")),
                 value_presets=value_presets,
             )
             # nothing new was extracted
@@ -469,7 +519,7 @@ class ClusterExtractTests(TestCase):
             )
             result_list = extract_by_keywords(
                 response.markdown,
-                keywords=("isin", "ticker", "founded", "listed"),
+                keywords=(Keyword("isin"), Keyword("ticker"), Keyword("founded"), Keyword("listed")),
                 tiles_mode=True,
             )
             self.assertEqual(
@@ -496,7 +546,12 @@ class ClusterExtractTests(TestCase):
             )
             results = extract_by_keywords(
                 response.markdown,
-                keywords=("counter", "physical and postal address", "sector", "board"),
+                keywords=(
+                    Keyword("counter"),
+                    Keyword("physical and postal address"),
+                    Keyword("sector"),
+                    Keyword("board"),
+                ),
                 tiles_mode=True,
                 # debug_mode=True,
             )
@@ -527,8 +582,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "BIHL",
                         "physical and postal address": (
-                            "Plot 66458, Fairgrounds Office Park \n"
-                            "3rd Floor, Block A, \nP O Box 336 Gaborone,"
+                            "Plot 66458, Fairgrounds Office Park \n" "3rd Floor, Block A, \nP O Box 336 Gaborone,"
                         ),
                         "sector": "Financial Services",
                         "board": "Domestic Main Board",
@@ -560,8 +614,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "CRESTA",
                         "physical and postal address": (
-                            "2nd Floor, Marula House Prime Plaza Plot 74538 "
-                            "New CBD Gaborone"
+                            "2nd Floor, Marula House Prime Plaza Plot 74538 " "New CBD Gaborone"
                         ),
                         "sector": "Tourism",
                         "board": "Domestic Main Board",
@@ -581,8 +634,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "FPC",
                         "physical and postal address": (
-                            "Plot 46, Gaborone International Commerce Park, "
-                            "\nGaborone, \nBotswana"
+                            "Plot 46, Gaborone International Commerce Park, " "\nGaborone, \nBotswana"
                         ),
                         "sector": "Property",
                         "board": "Domestic Main Board",
@@ -596,8 +648,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "LETLOLE",
                         "physical and postal address": (
-                            "1st Floor, Unit 2B, Peelo Place, Plot 54366, CBD \n"
-                            "P O Box 700ABG, Gaborone, Botswana"
+                            "1st Floor, Unit 2B, Peelo Place, Plot 54366, CBD \n" "P O Box 700ABG, Gaborone, Botswana"
                         ),
                         "sector": "Property",
                         "board": "Domestic Main Board",
@@ -605,8 +656,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "LETSHEGO",
                         "physical and postal address": (
-                            "Tower C, Zambezi Towers, Plot 54352, Central Business "
-                            "District, Gaborone Botswana"
+                            "Tower C, Zambezi Towers, Plot 54352, Central Business " "District, Gaborone Botswana"
                         ),
                         "sector": "Financial Services",
                         "board": "Domestic Main Board",
@@ -614,8 +664,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "MINERGY",
                         "physical and postal address": (
-                            "Unit B3 & B4, \n1st Floor Plot 43175, "
-                            "\nPhakalane, \nGaborone"
+                            "Unit B3 & B4, \n1st Floor Plot 43175, " "\nPhakalane, \nGaborone"
                         ),
                         "sector": "Mining",
                         "board": "Domestic Main Board",
@@ -639,8 +688,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "SEFALANA",
                         "physical and postal address": (
-                            "Plot 10247/50 Corner of Noko and Lejara Roads, "
-                            "\nBroadjurst Industrial, \nGaborone"
+                            "Plot 10247/50 Corner of Noko and Lejara Roads, " "\nBroadjurst Industrial, \nGaborone"
                         ),
                         "sector": "Retail & Wholesale",
                         "board": "Domestic Main Board",
@@ -648,8 +696,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "SEEDCO",
                         "physical and postal address": (
-                            "PO BOX 47143,GABORONE, \nBOTSWANA, "
-                            "\nUnit 1 Plot 43178, Phakalane, \nGaborone"
+                            "PO BOX 47143,GABORONE, \nBOTSWANA, " "\nUnit 1 Plot 43178, Phakalane, \nGaborone"
                         ),
                         "sector": "Agriculture",
                         "board": "Domestic Main Board",
@@ -666,8 +713,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "RDCP",
                         "physical and postal address": (
-                            "Lejara Road, \nPlot 5624, "
-                            "\nBroadhurst Ind. – P O Box 495, \nGaborone, \nBotswana"
+                            "Lejara Road, \nPlot 5624, " "\nBroadhurst Ind. – P O Box 495, \nGaborone, \nBotswana"
                         ),
                         "sector": "Property",
                         "board": "Domestic Main Board",
@@ -675,8 +721,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "PRIMETIME",
                         "physical and postal address": (
-                            "Plot 79961 \nOffice 1 Setlhoa Corner "
-                            "\nGaborone, Botswana \n(PO Box 1395, Gaborone)"
+                            "Plot 79961 \nOffice 1 Setlhoa Corner " "\nGaborone, Botswana \n(PO Box 1395, Gaborone)"
                         ),
                         "sector": "Property",
                         "board": "Domestic Main Board",
@@ -699,8 +744,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "TLOU",
                         "physical and postal address": (
-                            "Ground Floor, Victoria House, "
-                            "\n132 Independence Avenue, \nGaborone, \nBotswana"
+                            "Ground Floor, Victoria House, " "\n132 Independence Avenue, \nGaborone, \nBotswana"
                         ),
                         "sector": "Mining",
                         "board": "Foreign Main Board",
@@ -733,18 +777,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "ANGLO",
-                        "physical and postal address": (
-                            "20 Carlton House Terrace,London SW1Y 5AN, "
-                            "United Kingdom"
-                        ),
+                        "physical and postal address": ("20 Carlton House Terrace,London SW1Y 5AN, " "United Kingdom"),
                         "sector": "Mining",
                         "board": "Foreign Main Board",
                     },
                     {
                         "counter": "LUC",
                         "physical and postal address": (
-                            "Suite 2000 – 885 West Georgia StreetVancouver, \n"
-                            "British Columbia Canada V6C 3E8"
+                            "Suite 2000 – 885 West Georgia StreetVancouver, \n" "British Columbia Canada V6C 3E8"
                         ),
                         "sector": "Mining",
                         "board": "Foreign Venture Capital Board",
@@ -752,8 +792,7 @@ class ClusterExtractTests(TestCase):
                     {
                         "counter": "GAIA",
                         "physical and postal address": (
-                            "146 Campground Road \nNewlands "
-                            "\nCape Town \nSouth Africa, \n7780"
+                            "146 Campground Road \nNewlands " "\nCape Town \nSouth Africa, \n7780"
                         ),
                         "sector": "Financial Services",
                         "board": "Foreign Investment Entity",
