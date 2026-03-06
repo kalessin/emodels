@@ -63,7 +63,7 @@ def validate_result(result: Result, candidate_fields: Columns) -> bool:
             score += 1
     if score < 2:
         return False
-    result.pop(Keyword("url"), None)
+    result.pop(Keyword(""), None)
     if issuer := result.get(Keyword("issuer")):
         m = NUMBER_RE.match(issuer)
         if m:
