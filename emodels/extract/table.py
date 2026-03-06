@@ -7,7 +7,7 @@ from scrapy.http import TextResponse
 from scrapy.selector.unified import SelectorList
 from parsel.selector import Selector
 
-from emodels.extract.utils import Constraints, apply_constraints, Result, Keyword
+from emodels.extract.utils import Constraints, apply_constraints, Result, Keyword, Text
 
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
@@ -16,14 +16,14 @@ Columns = NewType("Columns", Tuple[Keyword, ...])
 Uid = NewType("Uid", Tuple[Tuple[str, str], ...])
 
 
-def extract_row_text(row: Selector) -> List[str]:
+def extract_row_text(row: Selector) -> List[Text]:
     text = []
     for td in row.xpath(".//th") or row.xpath(".//td"):
-        text.append(" ".join(td.xpath(".//text()").extract()).strip())
+        text.append(Text(" ".join(td.xpath(".//text()").extract()).strip()))
     return text
 
 
-def iterate_rows(table: Selector, parsed: ParseResult | None = None) -> Iterable[Tuple[List[str], List[str]]]:
+def iterate_rows(table: Selector, parsed: ParseResult | None = None) -> Iterable[Tuple[List[Text], List[Text]]]:
     for row in table.xpath(".//tr"):
         urls = []
         for _url in row.xpath(".//a/@href").extract():
@@ -31,28 +31,28 @@ def iterate_rows(table: Selector, parsed: ParseResult | None = None) -> Iterable
                 url = _url
                 if parsed is not None:
                     url = urljoin(parsed.geturl(), url)
-                urls.append(url)
+                urls.append(Text(url))
         yield extract_row_text(row), urls
 
 
-def find_table_headers(table: Selector, candidate_fields: Tuple[str, ...]) -> List[List[str]]:
-    score_rows: List[Tuple[List[str], int]] = []
+def find_table_headers(table: Selector, candidate_fields: Tuple[Keyword, ...]) -> List[List[Keyword]]:
+    score_rows: List[Tuple[List[Keyword], int]] = []
     for rowtexts, _ in iterate_rows(table):
         row_score = 0
-        lower_rowtexts = [t.lower() for t in rowtexts]
+        lower_rowtexts = [Keyword(t.lower()) for t in rowtexts]
         for kw in candidate_fields:
             if kw in lower_rowtexts:
                 row_score += 1
         if len(list(filter(None, rowtexts))) <= MAX_HEADER_COLUMNS:
-            score_rows.append((rowtexts, row_score))
+            score_rows.append(([Keyword(t) for t in rowtexts], row_score))
     return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)]
 
 
 def find_tables(
-    tables: SelectorList, candidate_fields: Tuple[str, ...]
-) -> List[Tuple[Selector, List[str]]]:
+    tables: SelectorList, candidate_fields: Tuple[Keyword, ...]
+) -> List[Tuple[Selector, List[Keyword]]]:
     # list of tuples (table selector, header, score1 score2)
-    scored_tables: List[Tuple[Selector, List[str], int, int]] = []
+    scored_tables: List[Tuple[Selector, List[Keyword], int, int]] = []
     for table in tables[::-1]:
         headers = find_table_headers(table, candidate_fields)[0]
         score1 = len(
@@ -69,19 +69,20 @@ def find_tables(
     return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)]
 
 
-def extract_urls(urls: List[str], parsed: ParseResult) -> Dict[str, str]:
+def extract_urls(urls: List[Text], parsed: ParseResult) -> Dict[Keyword, Text]:
     url_data = {}
     for url in urls:
         if parsed.netloc in url:
-            url_data["url"] = url
+            url_data[Keyword("url")] = url
         else:
-            url_data["website"] = url
+            url_data[Keyword("website")] = url
+    print("HIH", url_data)
     return url_data
 
 
-def parse_table(table: Selector, headers: List[str], parsed: ParseResult):
+def parse_table(table: Selector, headers: List[Keyword], parsed: ParseResult) -> Iterable[Result]:
     header_find_status = False
-    headers_lower = [h.lower() for h in headers]
+    headers_lower = [Keyword(h.lower()) for h in headers]
     for row, urls in iterate_rows(table, parsed):
         if not header_find_status and row != headers:
             continue
@@ -90,15 +91,15 @@ def parse_table(table: Selector, headers: List[str], parsed: ParseResult):
             continue
         if len(row) != len(headers):
             continue
-        data = dict(zip(headers_lower, row))
+        data = Result(dict(zip(headers_lower, row)))
         data.update(extract_urls(urls, parsed))
         yield data
 
 
-def parse_table_ii(table: Selector, headers: List[str], parsed: ParseResult):
+def parse_table_ii(table: Selector, headers: List[Keyword], parsed: ParseResult) -> Iterable[Result]:
     headers = list(filter(None, headers))
     header_find_status = False
-    headers_lower = [h.lower() for h in headers]
+    headers_lower = [Keyword(h.lower()) for h in headers]
     for row, urls in iterate_rows(table, parsed):
         row = list(filter(None, row))
         if not header_find_status and row != headers:
@@ -108,7 +109,7 @@ def parse_table_ii(table: Selector, headers: List[str], parsed: ParseResult):
             continue
         data = dict(zip(headers_lower, row))
         data.update(extract_urls(urls, parsed))
-        yield data
+        yield Result(data)
 
 
 def default_validate_result(result: Result, columns: Columns) -> bool:
@@ -122,7 +123,7 @@ def score_results(results: List[Result]) -> int:
     return score
 
 
-def unique_id(result: Dict[str, str], dedupe_keywords: Columns) -> Tuple[Uid, Uid]:
+def unique_id(result: Result, dedupe_keywords: Columns) -> Tuple[Uid, Uid]:
     uid = []
     full_uid = []
     for key, value in result.items():
@@ -171,7 +172,7 @@ def parse_tables_from_response(
         parsed = urlparse(response.url)
         for _, headers in find_tables(all_tables, columns):
             all_table_results: List[Result] = []
-            fields: Set[str] = set()
+            fields: Set[Keyword] = set()
             for parse_method in parse_table, parse_table_ii:
                 all_table_results_method = []
                 for table in all_tables:
@@ -190,7 +191,7 @@ def parse_tables_from_response(
                     all_table_results = all_table_results_method
             for result in all_table_results:
                 for field in fields:
-                    result.setdefault(field, "")
+                    result.setdefault(field, Text(""))
             remove_all_empty_fields(all_table_results)
             if all_table_results:
                 all_results.extend(all_table_results)
