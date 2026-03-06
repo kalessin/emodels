@@ -10,7 +10,16 @@ from typing import List, Dict, Tuple, Optional
 from sklearn.cluster import KMeans
 import numpy as np
 
-from emodels.extract.utils import Constraints, apply_constraints, Result, Text, Keyword, Match, re_match_to_match
+from emodels.extract.utils import (
+    Constraints,
+    apply_constraints,
+    Result,
+    Text,
+    Keyword,
+    Match,
+    parse_additional_regexes,
+    re_match_to_match,
+)
 from emodels.scrapyutils.response import ExtractTextResponse
 
 
@@ -97,15 +106,17 @@ def clean_text(
 
 
 def apply_kmeans_clustering(
-    markdown: str,
+    response: ExtractTextResponse,
     keywords: Tuple[Keyword, ...],
     n_clusters: int = 0,
     tiles_mode: bool = False,
+    additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
     debug_mode: bool = False,
 ) -> Tuple[Dict[int, List[Tuple[Keyword, Match]]], KMeans | None]:
     # generate matches
     matches: List[Tuple[Keyword, Match]] = []
     max_groups = 0
+    markdown = response.markdown
     for keyword in keywords:
         mlist: List[Match] = [
             re_match_to_match(m) for m in re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I)
@@ -121,6 +132,8 @@ def apply_kmeans_clustering(
             ]
         matches.extend((Keyword("title") if "#" in keyword else keyword, m) for m in mlist)
         max_groups = max(max_groups, len(mlist))
+
+    matches.extend(parse_additional_regexes(additional_regexes, response).items())
 
     # group with k-means by position in text
     groups: Dict[int, List[Tuple[Keyword, Match]]] = defaultdict(list)
@@ -144,15 +157,15 @@ def apply_kmeans_clustering(
 
 
 def extract_by_keywords(
-    markdown: str,
+    response: ExtractTextResponse,
     keywords: Tuple[Keyword, ...],
     required_fields: Tuple[Keyword, ...] = (),
     value_filters: Optional[Dict[Keyword, Tuple[Text, ...]]] = None,
     value_presets: Optional[Dict[Keyword, Text]] = None,
     constraints: Optional[Constraints] = None,
     tiles_mode: bool = False,
+    additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
     debug_mode: bool = False,
-    response: Optional[ExtractTextResponse] = None,
     n_clusters: int = 0,  # this is a debug feature only
 ) -> List[Result]:
     """
@@ -174,9 +187,7 @@ def extract_by_keywords(
       result. Pattern can also be special keywords. See apply_constraints docstring for special keywords available.
     - tiles_mode (optional, boolean): if True, do tiles-based extraction. In this mode, it will return all groups
       that match the same pattern.
-    - response (optional, ExtractTextResponse): if provided, it will be used to apply additional regexes in order
-      to extract missing fields from the best group or the tiles groups (if tiles_mode is True).
-    - debug (optional, boolean): if True, provides additional debug information in order to understand what
+    - debug_mode (optional, boolean): if True, provides additional debug information in order to understand what
       the algorithm is doing
     - n_clusters (optional, int): this is a debug feature only. It should not be used in practical situation.
       it can be used to understand how the algorithm behaves with different number of clusters
@@ -195,7 +206,12 @@ def extract_by_keywords(
         return result
 
     groups, kmeans = apply_kmeans_clustering(
-        markdown, keywords, n_clusters=n_clusters, tiles_mode=tiles_mode, debug_mode=debug_mode
+        response,
+        keywords,
+        n_clusters=n_clusters,
+        tiles_mode=tiles_mode,
+        additional_regexes=additional_regexes,
+        debug_mode=debug_mode,
     )
 
     if keywords:
@@ -215,7 +231,9 @@ def extract_by_keywords(
         ]
         extracted_data: Dict[Keyword, List[Tuple[Text, int]]] = defaultdict(list)
         for k, m in results:
-            extracted_data[k].append(clean_group(m, results))
+            extracted_data[k].append(
+                clean_group(m, [(k, m) for k, m in results if k not in (additional_regexes or {})])
+            )
         extracted_dict: Dict[Keyword, Text] = _best_values_dict(extracted_data)
         if constraints is not None:
             apply_constraints(extracted_dict, constraints)
@@ -288,5 +306,7 @@ def extract_by_keywords(
                     vvvv = vvv.strip("*| :")
                     if vvvv != vvv and vvvv in v:
                         max_score_group[k] = Text(vvvv)
+        if not tiles_mode and Keyword("url") not in max_score_group:
+            max_score_group[Keyword("url")] = Text(response.url)
 
     return max_score_groups

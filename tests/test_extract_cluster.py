@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.cluster import extract_by_keywords
-from emodels.extract.utils import apply_additional_regexes, Constraints, Keyword, Text
+from emodels.extract.utils import Constraints, Keyword, Text
 
 
 class ClusterExtractTests(TestCase):
@@ -18,7 +18,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test9.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown, keywords=(Keyword("^#"), Keyword("industry"), Keyword("sector"), Keyword("stock"))
+                response, keywords=(Keyword("^#"), Keyword("industry"), Keyword("sector"), Keyword("stock"))
             )
             self.assertEqual(
                 result[0],
@@ -27,6 +27,7 @@ class ClusterExtractTests(TestCase):
                     "sector": "Consumer Discretionary",
                     "stock": "AW",
                     "title": "A & W Food Services of Canada Inc.",
+                    "url": "http://example.com",
                 },
             )
 
@@ -34,13 +35,14 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test10.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown, keywords=(Keyword("^#"),), value_presets={Keyword("stock"): Text("HDGE")}
+                response, keywords=(Keyword("^#"),), value_presets={Keyword("stock"): Text("HDGE")}
             )
             self.assertEqual(
                 result[0],
                 {
                     "stock": "HDGE",
                     "title": "Accelerate Absolute Return Fund",
+                    "url": "http://example.com",
                 },
             )
 
@@ -48,7 +50,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test11.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(Keyword("^#"),),
                 value_filters={
                     Keyword("name"): (Text("ETF 101"), Text("https://"), Text("Key Data")),
@@ -61,6 +63,7 @@ class ClusterExtractTests(TestCase):
                 {
                     "stock": "ATSX",
                     "title": "Accelerate Canadian Long Short Equity Fund",
+                    "url": "http://example.com",
                 },
             )
 
@@ -68,7 +71,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test12.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("address"),
                     Keyword("isin"),
@@ -85,11 +88,12 @@ class ClusterExtractTests(TestCase):
                     "isin": "UG0000000071",
                     "listing date": "10/28/2003 - 17:15",
                     "title": "USE All Share Index (100@31.12.2001)",
+                    'url': 'http://example.com',
                     "website": "<http://www.use.or.ug>",
                 },
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("address"),
                     Keyword("isin"),
@@ -106,6 +110,7 @@ class ClusterExtractTests(TestCase):
                     "isin": "UG0000000071",
                     "listing date": "10/28/2003 - 17:15",
                     "title": "USE All Share Index (100@31.12.2001)",
+                    'url': 'http://example.com',
                 },
             )
 
@@ -113,7 +118,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test13.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(Keyword("address"), Keyword("listing date"), Keyword("^#")),
                 value_filters={Keyword("address"): (Text("P.O. Box 6771"),)},
             )
@@ -123,6 +128,7 @@ class ClusterExtractTests(TestCase):
                     "address": "Kampala",
                     "listing date": "11/07/2023 - 10:52",
                     "title": "Airtel Uganda",
+                    'url': 'http://example.com',
                 },
             )
 
@@ -130,7 +136,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test14.html") as f:
             response = ExtractTextResponse(url="http://www.ux.ua/en/issue.aspx?code=CEEN", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("name"),
                     Keyword("isin"),
@@ -150,6 +156,7 @@ class ClusterExtractTests(TestCase):
                     "ticker": "CEEN",
                     "trading as of": "16.03.2009",
                     "type": "common stock",
+                    'url': 'http://www.ux.ua/en/issue.aspx?code=CEEN',
                     "website": "[www.centrenergo.com](http://www.centrenergo.com)",
                 },
             )
@@ -158,7 +165,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test15.html") as f:
             response = ExtractTextResponse(url="http://example.com", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("name"),
                     Keyword("abbreviation"),
@@ -180,6 +187,7 @@ class ClusterExtractTests(TestCase):
                     "date of first listing": "05.2010",
                     "full name": "POWSZECHNY ZAKŁAD UBEZPIECZEŃ SPÓŁKA AKCYJNA",
                     "sector": "insurance offices",
+                    'url': 'http://example.com',
                     "www": "[www.pzu.pl](http://www.pzu.pl)",
                 },
             )
@@ -188,7 +196,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test16.html") as f:
             response = ExtractTextResponse(url="https://money.tmx.co/", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("activity"),
                     Keyword("address"),
@@ -210,6 +218,7 @@ class ClusterExtractTests(TestCase):
                     "listing in athex": "Jul 8, 1996",
                     "reference symbols": '[NAYP](https://money.tmx.co/stock-snapshot/-/select-stock/122 "NAYP")',
                     "sector / subsector": "Basic Resources / Textile Products (Jul 1, 2019)",
+                    'url': 'https://money.tmx.co/',
                 },
             )
 
@@ -217,7 +226,7 @@ class ClusterExtractTests(TestCase):
         with self.open_resource("test17.html") as f:
             response = ExtractTextResponse(url="https://money.tmx.co/", status=200, body=f.read())
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("^##"),
                     Keyword("listing type"),
@@ -234,6 +243,7 @@ class ClusterExtractTests(TestCase):
                     "listing status": "Listed",
                     "listing type": "International Debt",
                     "title": "Acamar Films Limited - Secured Loan Note - Issue 035, 6.00% Notes " "Due April 14, 2027",
+                    'url': 'https://money.tmx.co/',
                 },
             )
 
@@ -245,7 +255,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("^##"),
                     Keyword("wkn"),
@@ -253,8 +263,8 @@ class ClusterExtractTests(TestCase):
                     Keyword("erstnotierung"),
                     Keyword("wertpapiertyp"),
                 ),
+                additional_regexes={Keyword("isin"): ("isin: \\*\\*(.+?)\\*\\*",)},
             )
-            apply_additional_regexes({Keyword("isin"): ("isin: \\*\\*(.+?)\\*\\*",)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -276,7 +286,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("full name"),
                     Keyword("short name"),
@@ -299,6 +309,7 @@ class ClusterExtractTests(TestCase):
                     "full name": "WINGHOLDING Ingatlanfejlesztő és Beruházó Zártkörűen Működő " "Részvénytársaság",
                     "sector": "",
                     "short name": "WINGHOLDING Zrt.",
+                    'url': 'https://www.bse.hu/pages/company_profile/$issuer/3439',
                 },
             )
 
@@ -310,7 +321,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("company name"),
                     Keyword("corporate address"),
@@ -341,6 +352,7 @@ class ClusterExtractTests(TestCase):
                     "processing, assembly, installation laying of all "
                     "equipments, materials, tools, accessories, raw materials "
                     "and spare parts;",
+                    'url': 'https://www.casablanca-bourse.com/en/live-market/emetteurs/AFI050112'
                 },
             )
 
@@ -352,7 +364,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("ticker"),
                     Keyword("isin"),
@@ -369,6 +381,7 @@ class ClusterExtractTests(TestCase):
                     "listing type": "Primary Listing on CSX",
                     "ticker": "CNC KY",
                     "title": "Cayman National Corporation Ltd.",
+                    'url': 'https://www.csx.ky/companies/equity.asp?SecId=01510001',
                 },
             )
 
@@ -380,15 +393,16 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("company type"),
                     Keyword("listing date"),
                     Keyword("company overview"),
                     Keyword("^####"),
                 ),
+                additional_regexes={Keyword("ticker"): ("^## ([A-Z]+)",)},
+                debug_mode=True,
             )
-            apply_additional_regexes({Keyword("ticker"): ("^## ([A-Z]+)",)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -433,7 +447,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("trading code"),
                     Keyword("scrip code"),
@@ -443,8 +457,8 @@ class ClusterExtractTests(TestCase):
                     Keyword("sector"),
                     Keyword("market category"),
                 ),
+                additional_regexes={Keyword("name"): ((None, ".com_title"),)},
             )
-            apply_additional_regexes({Keyword("name"): ((None, ".com_title"),)}, result[0], response)
             self.assertEqual(
                 result[0],
                 {
@@ -468,7 +482,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("type of instrument"),
                     Keyword("debut trading date"),
@@ -486,6 +500,7 @@ class ClusterExtractTests(TestCase):
                     "sector": "IT Sector",
                     "trading code": "AAMRANET",
                     "type of instrument": "Equity",
+                    'url': 'https://www.dsebd.org/displayCompany.php?name=AAMRANET',
                     "web address": "[ http://www.aamra.com.bd](http://www.aamra.com.bd)",
                 },
             )
@@ -503,12 +518,14 @@ class ClusterExtractTests(TestCase):
                 Keyword("ticker"): Text("GPCL"),
             }
             result = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(Keyword("symbol"), Keyword("company name"), Keyword("isin"), Keyword("website")),
                 value_presets=value_presets,
             )
             # nothing new was extracted
-            self.assertEqual(result[0], value_presets)
+            expected = value_presets.copy()
+            expected[Keyword("url")] = Text("https://www.ecseonline.com/profiles/GPCL/?type=equities")
+            self.assertEqual(result[0], expected)
 
     def test_cluster_tile_i_(self):
         with self.open_resource("test27.html") as f:
@@ -518,7 +535,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             result_list = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(Keyword("isin"), Keyword("ticker"), Keyword("founded"), Keyword("listed")),
                 tiles_mode=True,
             )
@@ -545,7 +562,7 @@ class ClusterExtractTests(TestCase):
                 body=f.read(),
             )
             results = extract_by_keywords(
-                response.markdown,
+                response,
                 keywords=(
                     Keyword("counter"),
                     Keyword("physical and postal address"),

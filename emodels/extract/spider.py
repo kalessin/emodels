@@ -219,17 +219,17 @@ class ExtractionSpider(Spider):
         for field in self.drop_fields:
             value_filters[field] = (Text("."),)
         results = extract_by_keywords(
-            response.markdown,
+            response,
             keywords=self.fields,
             required_fields=self.required_fields,
             value_filters=value_filters or None,
             value_presets=cast(Dict[Keyword, Text], kwargs),
             constraints=self.constraints,
             tiles_mode=self.extract_mode == "tiles",
+            additional_regexes=self.additional_regexes,
             debug_mode=self.debug_mode,
         )
         for result in results:
-            apply_additional_regexes(self.additional_regexes, result, response)
             self._adapt_result(result, response)
             for field, regexes in self.drop_items.items():
                 for regex in regexes:
