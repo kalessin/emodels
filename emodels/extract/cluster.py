@@ -133,7 +133,11 @@ def apply_kmeans_clustering(
         matches.extend((Keyword("title") if "#" in keyword else keyword, m) for m in mlist)
         max_groups = max(max_groups, len(mlist))
 
-    matches.extend(parse_additional_regexes(additional_regexes, response).items())
+    for k, mm in parse_additional_regexes(additional_regexes, response, tiles_mode=tiles_mode).items():
+        for m in mm:
+            matches.append((k, m))
+            if not tiles_mode:
+                break
 
     # group with k-means by position in text
     groups: Dict[int, List[Tuple[Keyword, Match]]] = defaultdict(list)

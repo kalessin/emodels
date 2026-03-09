@@ -1,5 +1,6 @@
 import re
-from typing import Dict, Tuple, NewType, Literal
+from collections import defaultdict
+from typing import Dict, Tuple, NewType, Literal, List
 
 import dateparser
 
@@ -49,14 +50,18 @@ def apply_constraints(result: Dict[Keyword, Text], constraints: Constraints) -> 
 def parse_additional_regexes(
     additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None,
     response: ExtractTextResponse,
-) -> Dict[Keyword, Match]:
+    tiles_mode: bool = False,
+) -> Dict[Keyword, List[Match]]:
     """
     Get additional regexes to the response and update the result dict with any matches found.
     - additional_regexes is a dict where keys are field names and values are tuples of regex patterns
       or tuples of (regex pattern, tid), according to the argument accepted by response.text_re method.
       If a regex pattern is None, it will only apply the tid-based extraction without any regex filtering.
+    - response is the ExtractTextResponse object to apply the regexes on.
+    - tiles_mode - If False, it will return the first match for each regex. If True, it will return all
+      matches for each regex.
     """
-    matches: Dict[Keyword, Match] = {}
+    matches: Dict[Keyword, List[Match]] = defaultdict(list)
     for field, regexes in (additional_regexes or {}).items():
         assert isinstance(regexes, (list, tuple)), "additional_regexes values must be of type list."
         for regex_tid in regexes:
@@ -68,10 +73,11 @@ def parse_additional_regexes(
             if regex is None:
                 regex = "(.+?)"
             flags = re.M | re.I if regex.startswith("^") else re.I
-            extracted = response.text_re(regex, tid=tid, flags=flags)
-            if extracted:
-                matches[field] = Match((Text(extracted[0][0]), extracted[0][1], extracted[0][2], Text(extracted[0][0])))
-                break
+            all_extracted = response.text_re(regex, tid=tid, flags=flags)
+            for extracted in all_extracted:
+                matches[field].append(Match((Text(extracted[0]), extracted[1], extracted[2], Text(extracted[0]))))
+                if not tiles_mode:
+                    break
     return matches
 
 
@@ -83,8 +89,8 @@ def apply_additional_regexes(
     """
     Apply additional regexes to the response and update the result dict with any matches found.
     """
-    for keyword, match in parse_additional_regexes(additional_regexes, response).items():
-        result[keyword] = match[3]  # the extracted value is in the 4th position of the Match tuple
+    for keyword, matches in parse_additional_regexes(additional_regexes, response).items():
+        result[keyword] = matches[0][3]  # the extracted value is in the 4th position of the Match tuple
 
     if Keyword("url") not in result:
         result[Keyword("url")] = Text(response.url)

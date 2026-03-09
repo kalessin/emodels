@@ -88,7 +88,7 @@ class ClusterExtractTests(TestCase):
                     "isin": "UG0000000071",
                     "listing date": "10/28/2003 - 17:15",
                     "title": "USE All Share Index (100@31.12.2001)",
-                    'url': 'http://example.com',
+                    "url": "http://example.com",
                     "website": "<http://www.use.or.ug>",
                 },
             )
@@ -110,7 +110,7 @@ class ClusterExtractTests(TestCase):
                     "isin": "UG0000000071",
                     "listing date": "10/28/2003 - 17:15",
                     "title": "USE All Share Index (100@31.12.2001)",
-                    'url': 'http://example.com',
+                    "url": "http://example.com",
                 },
             )
 
@@ -128,7 +128,7 @@ class ClusterExtractTests(TestCase):
                     "address": "Kampala",
                     "listing date": "11/07/2023 - 10:52",
                     "title": "Airtel Uganda",
-                    'url': 'http://example.com',
+                    "url": "http://example.com",
                 },
             )
 
@@ -156,7 +156,7 @@ class ClusterExtractTests(TestCase):
                     "ticker": "CEEN",
                     "trading as of": "16.03.2009",
                     "type": "common stock",
-                    'url': 'http://www.ux.ua/en/issue.aspx?code=CEEN',
+                    "url": "http://www.ux.ua/en/issue.aspx?code=CEEN",
                     "website": "[www.centrenergo.com](http://www.centrenergo.com)",
                 },
             )
@@ -187,7 +187,7 @@ class ClusterExtractTests(TestCase):
                     "date of first listing": "05.2010",
                     "full name": "POWSZECHNY ZAKŁAD UBEZPIECZEŃ SPÓŁKA AKCYJNA",
                     "sector": "insurance offices",
-                    'url': 'http://example.com',
+                    "url": "http://example.com",
                     "www": "[www.pzu.pl](http://www.pzu.pl)",
                 },
             )
@@ -218,7 +218,7 @@ class ClusterExtractTests(TestCase):
                     "listing in athex": "Jul 8, 1996",
                     "reference symbols": '[NAYP](https://money.tmx.co/stock-snapshot/-/select-stock/122 "NAYP")',
                     "sector / subsector": "Basic Resources / Textile Products (Jul 1, 2019)",
-                    'url': 'https://money.tmx.co/',
+                    "url": "https://money.tmx.co/",
                 },
             )
 
@@ -243,7 +243,7 @@ class ClusterExtractTests(TestCase):
                     "listing status": "Listed",
                     "listing type": "International Debt",
                     "title": "Acamar Films Limited - Secured Loan Note - Issue 035, 6.00% Notes " "Due April 14, 2027",
-                    'url': 'https://money.tmx.co/',
+                    "url": "https://money.tmx.co/",
                 },
             )
 
@@ -309,7 +309,7 @@ class ClusterExtractTests(TestCase):
                     "full name": "WINGHOLDING Ingatlanfejlesztő és Beruházó Zártkörűen Működő " "Részvénytársaság",
                     "sector": "",
                     "short name": "WINGHOLDING Zrt.",
-                    'url': 'https://www.bse.hu/pages/company_profile/$issuer/3439',
+                    "url": "https://www.bse.hu/pages/company_profile/$issuer/3439",
                 },
             )
 
@@ -352,7 +352,7 @@ class ClusterExtractTests(TestCase):
                     "processing, assembly, installation laying of all "
                     "equipments, materials, tools, accessories, raw materials "
                     "and spare parts;",
-                    'url': 'https://www.casablanca-bourse.com/en/live-market/emetteurs/AFI050112'
+                    "url": "https://www.casablanca-bourse.com/en/live-market/emetteurs/AFI050112",
                 },
             )
 
@@ -381,7 +381,7 @@ class ClusterExtractTests(TestCase):
                     "listing type": "Primary Listing on CSX",
                     "ticker": "CNC KY",
                     "title": "Cayman National Corporation Ltd.",
-                    'url': 'https://www.csx.ky/companies/equity.asp?SecId=01510001',
+                    "url": "https://www.csx.ky/companies/equity.asp?SecId=01510001",
                 },
             )
 
@@ -500,7 +500,7 @@ class ClusterExtractTests(TestCase):
                     "sector": "IT Sector",
                     "trading code": "AAMRANET",
                     "type of instrument": "Equity",
-                    'url': 'https://www.dsebd.org/displayCompany.php?name=AAMRANET',
+                    "url": "https://www.dsebd.org/displayCompany.php?name=AAMRANET",
                     "web address": "[ http://www.aamra.com.bd](http://www.aamra.com.bd)",
                 },
             )
@@ -570,25 +570,28 @@ class ClusterExtractTests(TestCase):
                     Keyword("board"),
                 ),
                 tiles_mode=True,
-                # debug_mode=True,
+                additional_regexes={Keyword("name"): ((None, ".lvca-panel-title"),)},
             )
             self.assertEqual(
                 results,
                 [
                     {
                         "counter": "ACCESS",
+                        "name": "Access Bank Botswana Limited",
                         "sector": "Banking",
                         "board": "Domestic Main Board",
                         "physical and postal address": "Access House, Plot 62433, Fairgrounds Gaborone, Botswana",
                     },
                     {
                         "counter": "BOTALA",
+                        "name": "Botala Energy Limited",
                         "physical and postal address": "24 Hasler Road, Osborne Park WA 6017, Australia",
                         "sector": "Mining",
                         "board": "Foreign Main Board",
                     },
                     {
                         "counter": "ABSA",
+                        "name": "ABSA Bank of Botswana Limited",
                         "physical and postal address": (
                             "5th Floor, Building 4 Plaza Plot 74358 Gaborone, "
                             "Central Business District, \nP O Box 478 Gaborone Botswana,"
@@ -598,6 +601,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "BIHL",
+                        "name": "Botswana Insurance Holdings Limited",
                         "physical and postal address": (
                             "Plot 66458, Fairgrounds Office Park \n" "3rd Floor, Block A, \nP O Box 336 Gaborone,"
                         ),
@@ -606,6 +610,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "BTCL",
+                        "name": "Botswana Telecommunications Corporation Limited",
                         "physical and postal address": (
                             "Plot 50350, Megaleng House \nKhama Crescent \n"
                             "Gaborone, Botswana \n(P.O. Box 700, Gaborone, Botswana),"
@@ -615,12 +620,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "CHOBE",
+                        "name": "Chobe Holdings Limited",
                         "physical and postal address": "Private Bag 198, \nMaun,Botswana",
                         "sector": "Tourism",
                         "board": "Domestic Main Board",
                     },
                     {
                         "counter": "CHOPPIES",
+                        "name": "Choppies Enterprises Limited",
                         "physical and postal address": (
                             "Plot 46, \nGaborone International Commerce Park, \n"
                             "Gaborone, Botswana, \nPrivate Bag 00278, \nGaborone."
@@ -630,6 +637,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "CRESTA",
+                        "name": "Cresta Marakanelo Limited",
                         "physical and postal address": (
                             "2nd Floor, Marula House Prime Plaza Plot 74538 " "New CBD Gaborone"
                         ),
@@ -638,18 +646,21 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "ENGEN",
+                        "name": "Engen Botswana Limited",
                         "physical and postal address": "Plot 54026, \nWestern Bypass, \nGaborone.",
                         "sector": "Energy",
                         "board": "Domestic Main Board",
                     },
                     {
                         "counter": "FNBB",
+                        "name": "First National Bank Botswana Limited",
                         "physical and postal address": "4th Floor First Place, \nPlot 54362 Gaborone CBD, \nBotswana",
                         "sector": "Banking",
                         "board": "Domestic Main Board",
                     },
                     {
                         "counter": "FPC",
+                        "name": "The Far Property Company Limited",
                         "physical and postal address": (
                             "Plot 46, Gaborone International Commerce Park, " "\nGaborone, \nBotswana"
                         ),
@@ -658,12 +669,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "G4S",
+                        "name": "G4S Botswana Limited",
                         "physical and postal address": "Western Bypass, \nGaborone, \nBotswana",
                         "sector": "Security Services",
                         "board": "Domestic Main Board",
                     },
                     {
                         "counter": "LETLOLE",
+                        "name": "Letlole La Rona Limited",
                         "physical and postal address": (
                             "1st Floor, Unit 2B, Peelo Place, Plot 54366, CBD \n" "P O Box 700ABG, Gaborone, Botswana"
                         ),
@@ -672,6 +685,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "LETSHEGO",
+                        "name": "Letshego Holdings Limited",
                         "physical and postal address": (
                             "Tower C, Zambezi Towers, Plot 54352, Central Business " "District, Gaborone Botswana"
                         ),
@@ -680,6 +694,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "MINERGY",
+                        "name": "Minergy Limited",
                         "physical and postal address": (
                             "Unit B3 & B4, \n1st Floor Plot 43175, " "\nPhakalane, \nGaborone"
                         ),
@@ -688,6 +703,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "NAP",
+                        "name": "New African Properties Limited",
                         "physical and postal address": "Plot 20573/4 Block 3 Gaborone",
                         "sector": "Property",
                         "board": "Domestic Main Board",
@@ -695,6 +711,7 @@ class ClusterExtractTests(TestCase):
                     # {"counter": "TURNSTAR"},
                     {
                         "counter": "STANCHART",
+                        "name": "Standard Chartered Botswana Limited",
                         "physical and postal address": (
                             "5th Floor, \nStandard Chartered House, "
                             "\nPlot 1124-30, Queens Road, \nGaborone, \nBotswana"
@@ -704,6 +721,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "SEFALANA",
+                        "name": "Sefalana Holding Company Limited",
                         "physical and postal address": (
                             "Plot 10247/50 Corner of Noko and Lejara Roads, " "\nBroadjurst Industrial, \nGaborone"
                         ),
@@ -712,6 +730,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "SEEDCO",
+                        "name": "Seedco International Limited",
                         "physical and postal address": (
                             "PO BOX 47143,GABORONE, \nBOTSWANA, " "\nUnit 1 Plot 43178, Phakalane, \nGaborone"
                         ),
@@ -720,6 +739,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "SECHABA",
+                        "name": "Sechaba Brewery Holdings Limited",
                         "physical and postal address": (
                             "Central Business District \nPlot 54367,2nd floor,Mogobe Plaza "
                             "\nP O Box 1956 AAD, Gaborone ,Botswana"
@@ -729,6 +749,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "RDCP",
+                        "name": "RDC Properties Limited",
                         "physical and postal address": (
                             "Lejara Road, \nPlot 5624, " "\nBroadhurst Ind. – P O Box 495, \nGaborone, \nBotswana"
                         ),
@@ -737,6 +758,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "PRIMETIME",
+                        "name": "PrimeTime Property Holdings Limited",
                         "physical and postal address": (
                             "Plot 79961 \nOffice 1 Setlhoa Corner " "\nGaborone, Botswana \n(PO Box 1395, Gaborone)"
                         ),
@@ -745,12 +767,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "OLYMPIA",
+                        "name": "Olympia Capital Corporation (Botswana) Limited",
                         "physical and postal address": "Plot 50371 Fairgrounds, \nGaborone, \nBotswana",
                         "sector": "Retail & Wholesale",
                         "board": "Domestic Main Board",
                     },
                     {
                         "counter": "BMIN-EQO",
+                        "name": "Botswana Minerals plc",
                         "physical and postal address": (
                             "Principal Office, \n162 Clontarf Road, \nDublin 3, \nIreland, "
                             "\nRegistered Office, \n20-22 Bedford Row, \nLondon, \nWC1R 4ES"
@@ -760,6 +784,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "TLOU",
+                        "name": "Tlou Energy",
                         "physical and postal address": (
                             "Ground Floor, Victoria House, " "\n132 Independence Avenue, \nGaborone, \nBotswana"
                         ),
@@ -768,6 +793,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "SHUMBA ENERGY",
+                        "name": "Shumba Energy Limited",
                         "physical and postal address": (
                             "P.O.Box 70311, \nGaborone, \nBotswana, \nPlot 2780 Manong "
                             "Close,Extension 9, \nGaborone, \nIFS Court, Bank Street, "
@@ -779,12 +805,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "INVESTEC",
+                        "name": "Investec Limited",
                         "physical and postal address": "100 Grayston Drive, Sandown, Sandton, 2196, South Africa",
                         "sector": "Financial Services",
                         "board": "Foreign Main Board",
                     },
                     {
                         "counter": "CA SALES",
+                        "name": "CA Sales Holdings Limited",
                         "physical and postal address": (
                             "1st Floor Building C, West End Office Park \n254 Hall "
                             "Street \nCenturion,0157 \nSouth Africa"
@@ -794,12 +822,14 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "ANGLO",
+                        "name": "Anglo American Plc",
                         "physical and postal address": ("20 Carlton House Terrace,London SW1Y 5AN, " "United Kingdom"),
                         "sector": "Mining",
                         "board": "Foreign Main Board",
                     },
                     {
                         "counter": "LUC",
+                        "name": "Lucara Diamond Corp",
                         "physical and postal address": (
                             "Suite 2000 – 885 West Georgia StreetVancouver, \n" "British Columbia Canada V6C 3E8"
                         ),
@@ -808,6 +838,7 @@ class ClusterExtractTests(TestCase):
                     },
                     {
                         "counter": "GAIA",
+                        "name": "GAIA Renewables 1 Limited",
                         "physical and postal address": (
                             "146 Campground Road \nNewlands " "\nCape Town \nSouth Africa, \n7780"
                         ),

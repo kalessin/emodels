@@ -1,6 +1,6 @@
 import re
 import logging
-import difflib
+from collections import namedtuple
 from typing import List, Optional, Tuple, Generator
 
 try:
@@ -21,6 +21,43 @@ COMMENT_RE = re.compile(r" <!--.+?-->")
 DEFAULT_SKIP_PREFIX = "[^a-zA-Z0-9$]*"
 LOG = logging.getLogger(__name__)
 SPACE_COMMA_RE = re.compile(r"(\s+,)?[ \t]+(?!<!--.+?-->)")
+
+SequenceMatcher = namedtuple("SequenceMatcher", ["a", "b", "size"])
+
+
+def find_inserted_matches(a: str, b: str) -> List[SequenceMatcher]:
+    """
+    Finds matches between string a and string b where b is a with insertions.
+    Returns a list of (start_a, start_b, length) tuples.
+    """
+    matches: List[SequenceMatcher] = []
+    i, j = 0, 0
+    len_a, len_b = len(a), len(b)
+
+    while i < len_a and j < len_b:
+        # Find the next character of a in b starting from current j
+        match_idx_in_b = b.find(a[i], j)
+
+        if match_idx_in_b == -1:
+            # This character from a isn't in the remainder of b
+            # (Shouldn't happen based on your prompt, but good for safety)
+            i += 1
+            continue
+
+        # Start of a potential match
+        start_a = i
+        start_b = match_idx_in_b
+        match_length = 0
+
+        # Expand the match as far as possible
+        while i < len_a and start_b + match_length < len_b and a[i] == b[start_b + match_length]:
+            i += 1
+            match_length += 1
+
+        matches.append(SequenceMatcher(a=start_a, b=start_b, size=match_length))
+        j = start_b + match_length
+
+    return matches
 
 
 class ExtractTextResponse(TextResponse):
@@ -119,13 +156,15 @@ class ExtractTextResponse(TextResponse):
             reg = "(.+?)"
         reg = f"{skip_prefix}{reg}"
         markdown = self.markdown
+        smatcher_matches: List[SequenceMatcher] = []
         if tid:
             if tid.startswith("#"):
                 markdown = self.markdown_ids
             elif tid.startswith("."):
                 tid = "\\" + tid
                 markdown = self.markdown_classes
-            reg += fr"\s<!--{tid}-->"
+            reg += rf"\s<!--{tid}-->"
+            smatcher_matches = find_inserted_matches(a=self.markdown, b=markdown)
         for m in re.finditer(reg, markdown, flags):
             if m.groups():
                 extracted = m.groups()[0]
@@ -144,8 +183,7 @@ class ExtractTextResponse(TextResponse):
                     end -= len(extracted) - len(new_extracted)
                     extracted = new_extracted
                     accum = 0
-                    smatcher = difflib.SequenceMatcher(a=self.markdown, b=markdown)
-                    for block in smatcher.get_matching_blocks():
+                    for block in smatcher_matches:
                         if block.b > start:
                             break
                         accum = block.b - block.a
