@@ -218,8 +218,11 @@ def extract_by_keywords(
         debug_mode=debug_mode,
     )
 
-    if keywords:
-        required_fields += tuple([Keyword("title") if k.startswith("^#") else k for k in keywords])
+    if not required_fields:
+        all_keywords = set(keywords).union(set(additional_regexes.keys() if additional_regexes else set()))
+        required_fields = tuple(
+            [Keyword("title") if k.startswith("^#") else k for k in all_keywords]
+        )
 
     # score groups
     max_score = -len(required_fields)
