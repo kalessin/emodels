@@ -166,7 +166,6 @@ class ExtractTextResponse(TextResponse):
         Returns a list of tuples (extracted_text, start_pos, end_pos) for each match of the given regex
         pattern in the markdown version of the response text. If tid is provided, it will look for matches
         that are associated with the given tid in the markdown with ids or classes (depending on the tid format).
-        If no matches are found and tid
         """
         result = []
         for i, r in enumerate(self._text_re(reg, tid, flags, skip_prefix)):

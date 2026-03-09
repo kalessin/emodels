@@ -26,7 +26,7 @@ def parse_combined_from_response(
     required_fields = tuple(c for c in columns if c not in seen_columns)
     if required_fields:
         results = extract_by_keywords(
-            response.markdown, columns, required_fields, value_filters, value_presets, constraints, debug_mode
+            response, columns, required_fields, value_filters, value_presets, constraints, debug_mode
         )
         if results:
             results_to_combine.append(results[0])

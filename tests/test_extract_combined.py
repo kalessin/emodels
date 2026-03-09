@@ -96,6 +96,7 @@ class CombinedExtractionTests(TestCase):
                     "sector": "Travel and Leisure",
                     "sub-sector": "Hotels and Motels",
                     "super-sector": "Travel and Leisure",
+                    'url': 'https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/',
                     "web-site": "www.tsokkos.com",
                 },
             )
