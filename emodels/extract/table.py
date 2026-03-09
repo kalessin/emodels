@@ -76,7 +76,6 @@ def extract_urls(urls: List[Text], parsed: ParseResult) -> Dict[Keyword, Text]:
             url_data[Keyword("url")] = url
         else:
             url_data[Keyword("website")] = url
-    print("HIH", url_data)
     return url_data
 
 
