@@ -571,6 +571,7 @@ class ClusterExtractTests(TestCase):
                 ),
                 tiles_mode=True,
                 additional_regexes={Keyword("name"): ((None, ".lvca-panel-title"),)},
+                debug_mode=True,
             )
             self.assertEqual(
                 results,
@@ -708,7 +709,12 @@ class ClusterExtractTests(TestCase):
                         "sector": "Property",
                         "board": "Domestic Main Board",
                     },
-                    # {"counter": "TURNSTAR"},
+                    {
+                        "counter": "TURNSTAR",
+                        "name": "Turnstar Holdings Limited",
+                        "physical and postal address": "Game City Retail Mall,Kgale, Gaborone",
+                        "sector": "Property",
+                    },
                     {
                         "counter": "STANCHART",
                         "name": "Standard Chartered Botswana Limited",

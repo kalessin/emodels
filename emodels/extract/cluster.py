@@ -168,6 +168,7 @@ def extract_by_keywords(
     value_presets: Optional[Dict[Keyword, Text]] = None,
     constraints: Optional[Constraints] = None,
     tiles_mode: bool = False,
+    tiles_mode_tolerance: int | float = 1,
     additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
     debug_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
@@ -191,6 +192,9 @@ def extract_by_keywords(
       result. Pattern can also be special keywords. See apply_constraints docstring for special keywords available.
     - tiles_mode (optional, boolean): if True, do tiles-based extraction. In this mode, it will return all groups
       that match the same pattern.
+    - tiles_mode_tolerance (optional, int | float): tolerance of missing required fields in tiles mode.
+      If integer and >= 1, define tolerance in terms of number of missing fields. If float, define tolerance as
+      a fraction of the total required fields. Default: 1.
     - debug_mode (optional, boolean): if True, provides additional debug information in order to understand what
       the algorithm is doing
     - n_clusters (optional, int): this is a debug feature only. It should not be used in practical situation.
@@ -220,9 +224,11 @@ def extract_by_keywords(
 
     if not required_fields:
         all_keywords = set(keywords).union(set(additional_regexes.keys() if additional_regexes else set()))
-        required_fields = tuple(
-            [Keyword("title") if k.startswith("^#") else k for k in all_keywords]
-        )
+        required_fields = tuple([Keyword("title") if k.startswith("^#") else k for k in all_keywords])
+    assert tiles_mode_tolerance >= 0, "tiles_mode_tolerance should be non-negative"
+    tiles_mode_tolerance = (
+        tiles_mode_tolerance if tiles_mode_tolerance < 1 else tiles_mode_tolerance / len(required_fields)
+    )
 
     # score groups
     max_score = -len(required_fields)
@@ -267,7 +273,10 @@ def extract_by_keywords(
             max_score_group = Result(extracted_dict)
             max_score_group_idx = idx
             tiles_groups = []
-        elif tiles_mode and (score == max_score or (score > 0 and not missing_required_fields)):
+        elif tiles_mode and (
+            score == max_score
+            or (score > 0 and len(missing_required_fields) <= len(required_fields) * tiles_mode_tolerance)
+        ):
             tiles_groups.append(Result(extracted_dict))
 
     missing_required_fields = set(required_fields).difference(set(max_score_group.keys()))
