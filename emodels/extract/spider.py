@@ -9,7 +9,8 @@ from scrapy import Request, Spider
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.cluster import extract_by_keywords
 from emodels.extract.utils import apply_additional_regexes, Constraints, Result, Keyword, Text
-from emodels.extract.table import parse_tables_from_response, Columns
+from emodels.extract.table import parse_tables_from_response, Columns, unique_id, Uid
+from emodels.extract.combined import parse_combined_from_response
 
 
 MULTIS_RE = re.compile(r"\s+")
@@ -19,7 +20,10 @@ MARKDOWN_URL_RE = re.compile(r"\[.*\]\((.+)\)")
 class ExtractionSpider(Spider):
     name: str
 
-    # a list of fields to drop from the final result
+    # a list of fields to drop from the final result. Applies on item post processing. that is, from final items
+    # that are valid. The difference with value_filters is that value_filters affects extraction process itself,
+    # by reducing the score of candidates with values matching the patterns, while drop_fields just removes the
+    # field from the final result.
     drop_fields: Tuple[Keyword, ...] = ()
     # a dict of field -> tuple of regexes to define patterns that makes any matching item to be completely dropped out.
     drop_items: Dict[Keyword, Tuple[str]] = {}
@@ -45,8 +49,10 @@ class ExtractionSpider(Spider):
     # which fields are use to deduplicate results (results with all same values in the same fields are
     # considered the same
     dedupe_keywords: Columns = Columns(())
-    # A dict (field -> list of patterns)
-    # filter out given fields with values with any of the given list of patterns
+    # A dict (field -> list of values)
+    # filter out given fields with values with any of the given list of values.
+    # Applies during items pre processing, so it affects extraction process by reducing the score of candidates
+    # with values matching the values.
     value_filters: Dict[Keyword, Tuple[Text, ...]] | None = None
     # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode
     # regexes is a list. Each element in regexes is used in the response.text_re() function provided by
@@ -80,7 +86,7 @@ class ExtractionSpider(Spider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.all_results = []
+        self.seen_results: Set[Uid] = set()
         self.visited_pages: Set = set()
         for attr in (
             "fields",
@@ -99,6 +105,7 @@ class ExtractionSpider(Spider):
             len(self.fields) > 1
         ), "A minimal of two keywords need to be provided. The more keywords, the better the algorithm works."
         self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
+        self.dedupe_keywords = self.dedupe_keywords or Columns(self.fields)
         self.markdown_count = 0
 
     def make_request(self, url, callback, cb_kwargs=None, **kwargs) -> Request:
@@ -138,9 +145,9 @@ class ExtractionSpider(Spider):
             max_tables=max_tables,
         )
 
-    def extract_html_page_items(self, response: TextResponse):
+    def extract_items_from_page(self, response: TextResponse) -> Iterable[Result | Request]:
         """
-        Extract items from listing html tables using smart heuristics.
+        Extract items from a page by selecting the chosen algorithm according to extract_mode parameter.
         """
         response = response.replace(cls=ExtractTextResponse)
         if self.debug_mode:
@@ -158,35 +165,40 @@ class ExtractionSpider(Spider):
             for result in self.extract_listing(response):
                 if self.item_url_template:
                     try:
-                        url = self.item_url_template.format(**result)
+                        url = self.item_url_template.format(**{str(k): v for k, v in result.items()})
                         if url:
-                            result["url"] = url
+                            result[Keyword("url")] = Text(url)
                     except Exception as e:
                         self.logger.warning(f"Cannot build item url: {e!r} from '{result}'")
                 if "url" in result:
                     yield self.make_request(
-                        url=result["url"], callback=self.parse_items_from_response, cb_kwargs=result
+                        url=result[Keyword("url")], callback=self.parse_items_from_response, cb_kwargs=result
                     )
         if self.extract_mode == "combined":
-            results_to_combine = []
-            for result in self.extract_listing(response):
-                results_to_combine.append(result)
-            for result in self.parse_items_from_response(response):
-                results_to_combine.append(result)
-            if results_to_combine:
-                results_to_combine, final_result = results_to_combine[:-1], results_to_combine[-1]
-                for result in results_to_combine[::-1]:
-                    final_result.update(result)
-                yield final_result
+            result = parse_combined_from_response(
+                response=response,
+                columns=Columns(self.fields),
+                validate_result=self.validate_result,
+                dedupe_keywords=Columns(self.dedupe_keywords),
+                constraints=self.constraints,
+                value_filters=self.value_filters,
+                debug_mode=self.debug_mode,
+            )
+            if result:
+                uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+                if uid in self.seen_results:
+                    return
+                self.seen_results.add(uid)
+                yield result
 
     @abstractmethod
-    def adapt_result(self, result: Result, response: TextResponse, drop_fields: Tuple[Keyword, ...] = ()):
+    def adapt_result(self, result: Result, response: TextResponse):
         """
         Perform any adaptation on result data, like changing field names, post processing values, dropping
         fields according to some specific logic, etc.
         """
 
-    def _adapt_result(self, result: Result, response: TextResponse, drop_fields: Tuple[Keyword, ...] = ()):
+    def _adapt_result(self, result: Result, response: TextResponse):
         self.adapt_result(result, response)
         for k in list(result.keys()):
             if m := MARKDOWN_URL_RE.match(result[k]):
@@ -195,21 +207,24 @@ class ExtractionSpider(Spider):
                 result.pop(k)
             if k in result:
                 result[Keyword(k.strip("*| \\"))] = Text(MULTIS_RE.sub(" ", result.pop(k)))
-        for field in drop_fields:
+        if "url" in result:
+            result[Keyword("url")] = Text(response.urljoin(result[Keyword("url")]))
+        for field in self.drop_fields:
             result.pop(field, None)
 
-    def extract_listing(self, response: TextResponse, **kwargs):
+    def extract_listing(self, response: TextResponse, **kwargs) -> Iterable[Result]:
         response = response.replace(cls=ExtractTextResponse)
         for result in self.parse_tables_from_response(
             response, self.fields, self.dedupe_keywords, self.constraints, self.max_tables
         ):
             result.update(kwargs)
             apply_additional_regexes(self.additional_regexes, result, response)
-            self._adapt_result(result, response, self.drop_fields)
+            self._adapt_result(result, response)
             if self.extract_mode != "hybrid":
-                if result in self.all_results:
+                uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+                if uid in self.seen_results:
                     continue
-                self.all_results.append(result)
+                self.seen_results.add(uid)
             yield result
 
     def parse_items_from_response(self, response: TextResponse, **kwargs) -> Iterable[Result]:
@@ -234,8 +249,9 @@ class ExtractionSpider(Spider):
             for field, regexes in self.drop_items.items():
                 for regex in regexes:
                     if re.search(regex, result.get(field, "")):
-                        return
-            if result in self.all_results:
-                return
-            self.all_results.append(result)
+                        continue
+            uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+            if uid in self.seen_results:
+                continue
+            self.seen_results.add(uid)
             yield result
