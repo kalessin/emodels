@@ -184,6 +184,7 @@ class ExtractionSpider(Spider):
             if result:
                 uid = unique_id(result, Columns(self.dedupe_keywords))[0]
                 if uid in self.seen_results:
+                    self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     return
                 self.seen_results.add(uid)
                 yield result
@@ -220,6 +221,7 @@ class ExtractionSpider(Spider):
             if self.extract_mode != "hybrid":
                 uid = unique_id(result, Columns(self.dedupe_keywords))[0]
                 if uid in self.seen_results:
+                    self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     continue
                 self.seen_results.add(uid)
             yield result
@@ -249,6 +251,7 @@ class ExtractionSpider(Spider):
                         continue
             uid = unique_id(result, Columns(self.dedupe_keywords))[0]
             if uid in self.seen_results:
+                self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                 continue
             self.seen_results.add(uid)
             yield result
