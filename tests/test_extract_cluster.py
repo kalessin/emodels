@@ -571,7 +571,6 @@ class ClusterExtractTests(TestCase):
                 ),
                 tiles_mode=True,
                 additional_regexes={Keyword("name"): ((None, ".lvca-panel-title"),)},
-                debug_mode=True,
             )
             self.assertEqual(
                 results,

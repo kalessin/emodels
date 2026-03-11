@@ -48,9 +48,7 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[Keyword, ...]) -
     return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)]
 
 
-def find_tables(
-    tables: SelectorList, candidate_fields: Tuple[Keyword, ...]
-) -> List[Tuple[Selector, List[Keyword]]]:
+def find_tables(tables: SelectorList, candidate_fields: Tuple[Keyword, ...]) -> List[Tuple[Selector, List[Keyword]]]:
     # list of tuples (table selector, header, score1 score2)
     scored_tables: List[Tuple[Selector, List[Keyword], int, int]] = []
     for table in tables[::-1]:
@@ -163,7 +161,9 @@ def parse_tables_from_response(
     dedupe_keywords - which columns use to deduplicate results (results with all same values in the same fields are
                       mutual dupes)
     """
-    assert len(columns) > 1, "At least two columns should be provided. The more columns, the better the algorithm works."
+    assert (
+        len(columns) > 1
+    ), "At least two columns should be provided. The more columns, the better the algorithm works."
     all_tables = response.xpath("//table")
     all_results: List[Result] = []
     seen: Set[Uid] = set()
