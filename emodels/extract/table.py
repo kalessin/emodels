@@ -163,6 +163,7 @@ def parse_tables_from_response(
     dedupe_keywords - which columns use to deduplicate results (results with all same values in the same fields are
                       mutual dupes)
     """
+    assert columns > 1, "At least two columns should be provided. The more columns, the better the algorithm works."
     all_tables = response.xpath("//table")
     all_results: List[Result] = []
     seen: Set[Uid] = set()

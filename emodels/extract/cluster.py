@@ -201,6 +201,8 @@ def extract_by_keywords(
       it can be used to understand how the algorithm behaves with different number of clusters
     """
 
+    assert keywords, "At least one keyword should be provided. The more keywords, the better the algorithm works."
+
     def _best_values_dict(extracted_data: Dict[Keyword, List[Tuple[Text, int]]]) -> Dict[Keyword, Text]:
         result = {}
         for k, vv_scores in extracted_data.items():

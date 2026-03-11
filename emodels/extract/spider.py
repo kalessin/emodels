@@ -101,9 +101,6 @@ class ExtractionSpider(Spider):
                 setattr(self, attr, json.loads(getattr(self, attr)))
         if isinstance(self.max_tables, str):
             self.max_tables = int(self.max_tables)
-        assert (
-            len(self.fields) > 1
-        ), "A minimal of two keywords need to be provided. The more keywords, the better the algorithm works."
         self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
         self.dedupe_keywords = self.dedupe_keywords or Columns(self.fields)
         self.markdown_count = 0
