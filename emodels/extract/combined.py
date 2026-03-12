@@ -1,16 +1,16 @@
 from typing import Optional, Callable, List, Dict, Tuple, Set
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.table import parse_tables_from_response, default_validate_result, Columns
+from emodels.extract.table import parse_tables_from_response, default_validate_result
 from emodels.extract.cluster import extract_by_keywords
 from emodels.extract.utils import Constraints, Result, Keyword, Text
 
 
 def parse_combined_from_response(
     response: ExtractTextResponse,
-    columns: Columns,
-    validate_result: Callable[[Result, Columns], bool] = default_validate_result,
-    dedupe_keywords: Columns = Columns(()),
+    columns: Tuple[Keyword, ...],
+    validate_result: Callable[[Result, Tuple[Keyword, ...]], bool] = default_validate_result,
+    dedupe_keywords: Tuple[Keyword, ...] = (),
     constraints: Optional[Constraints] = None,
     value_filters: Optional[Dict[Keyword, Tuple[Text, ...]]] = None,
     value_presets: Optional[Dict[Keyword, Text]] = None,

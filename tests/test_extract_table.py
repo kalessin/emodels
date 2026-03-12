@@ -1,16 +1,16 @@
 import os
 import re
 from unittest import TestCase
+from typing import Tuple
 
 from scrapy.http import TextResponse
 
-from emodels.extract.table import parse_tables_from_response, Columns
+from emodels.extract.table import parse_tables_from_response
 from emodels.extract.utils import Constraints, Keyword, Result
 
 
 NUMBER_RE = re.compile(r"\d+$")
-TEST_TABLE_COLUMNS = Columns(
-    (
+TEST_TABLE_COLUMNS = (
         Keyword("address"),
         Keyword("code"),
         Keyword("company"),
@@ -34,10 +34,8 @@ TEST_TABLE_COLUMNS = Columns(
         Keyword("stock symbol"),
         Keyword("symbol"),
         Keyword("ticker"),
-    )
 )
-DEDUPE_KEYWORDS = Columns(
-    (
+DEDUPE_KEYWORDS = (
         Keyword("code"),
         Keyword("company"),
         Keyword("company name"),
@@ -52,11 +50,10 @@ DEDUPE_KEYWORDS = Columns(
         Keyword("share code"),
         Keyword("symbol"),
         Keyword("ticker"),
-    )
 )
 
 
-def validate_result(result: Result, candidate_fields: Columns) -> bool:
+def validate_result(result: Result, candidate_fields: Tuple[Keyword, ...]) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:
@@ -242,8 +239,7 @@ class TableExtractTests(TestCase):
             response = TextResponse(
                 url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/", status=200, body=f.read()
             )
-            columns = Columns(
-                (
+            columns = (
                     Keyword("industry"),
                     Keyword("sector"),
                     Keyword("super-sector"),
@@ -252,7 +248,6 @@ class TableExtractTests(TestCase):
                     Keyword("isin"),
                     Keyword("listing date"),
                     Keyword("security name"),
-                )
             )
             results = parse_tables_from_response(
                 response,
@@ -288,8 +283,7 @@ class TableExtractTests(TestCase):
     def test_table_x(self):
         with self.open_resource("test28.html") as f:
             response = TextResponse(url="https://www.mse.mk/en/issuers/shares-listing", status=200, body=f.read())
-            columns = Columns(
-                (
+            columns = (
                     Keyword("name"),
                     Keyword("business"),
                     Keyword("address"),
@@ -297,7 +291,6 @@ class TableExtractTests(TestCase):
                     Keyword("state"),
                     Keyword("phone"),
                     Keyword("site"),
-                )
             )
             results = parse_tables_from_response(response, columns=columns, validate_result=validate_result)
             self.assertEqual(len(results), 90)
@@ -318,7 +311,7 @@ class TableExtractTests(TestCase):
     def test_table_xi(self):
         with self.open_resource("test29.html") as f:
             response = TextResponse(url="https://www.bse-sofia.bg/en/listed-instruments", status=200, body=f.read())
-            columns = Columns((Keyword("code"), Keyword("lei"), Keyword("name")))
+            columns = (Keyword("code"), Keyword("lei"), Keyword("name"))
             results = parse_tables_from_response(
                 response,
                 columns=columns,
@@ -346,7 +339,7 @@ class TableExtractTests(TestCase):
     def test_table_xii(self):
         with self.open_resource("test31.html") as f:
             response = TextResponse(url="https://www.egx.com.eg/en/listedstocks.aspx", status=200, body=f.read())
-            columns = Columns((Keyword("company name"), Keyword("isin code"), Keyword("sector")))
+            columns = (Keyword("company name"), Keyword("isin code"), Keyword("sector"))
             results = parse_tables_from_response(
                 response,
                 columns=columns,

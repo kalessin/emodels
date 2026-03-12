@@ -12,7 +12,6 @@ from emodels.extract.utils import Constraints, apply_constraints, Result, Keywor
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
 
-Columns = NewType("Columns", Tuple[Keyword, ...])
 Uid = NewType("Uid", Tuple[Tuple[str, str], ...])
 
 
@@ -116,7 +115,7 @@ def parse_table_ii(table: Selector, headers: List[Keyword], parsed: ParseResult)
         yield Result(data)
 
 
-def default_validate_result(result: Result, columns: Columns) -> bool:
+def default_validate_result(result: Result, columns: Tuple[Keyword, ...]) -> bool:
     return True
 
 
@@ -127,7 +126,7 @@ def score_results(results: List[Result]) -> int:
     return score
 
 
-def unique_id(result: Result, dedupe_keywords: Columns) -> Tuple[Uid, Uid]:
+def unique_id(result: Result, dedupe_keywords: Tuple[Keyword, ...]) -> Tuple[Uid, Uid]:
     uid = []
     full_uid = []
     for key, value in result.items():
@@ -153,9 +152,9 @@ def remove_all_empty_fields(results: List[Result]):
 
 def parse_tables_from_response(
     response: TextResponse,
-    columns: Columns,
-    validate_result: Callable[[Result, Columns], bool] = default_validate_result,
-    dedupe_keywords: Columns = Columns(()),
+    columns: Tuple[Keyword, ...],
+    validate_result: Callable[[Result, Tuple[Keyword, ...]], bool] = default_validate_result,
+    dedupe_keywords: Tuple[Keyword, ...] = (),
     constraints: Optional[Constraints] = None,
     required_fields: Tuple[Keyword, ...] = (),
     max_tables: int = 1,

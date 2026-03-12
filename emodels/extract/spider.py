@@ -9,7 +9,7 @@ from scrapy import Request, Spider
 from emodels.scrapyutils.response import ExtractTextResponse
 from emodels.extract.cluster import extract_by_keywords
 from emodels.extract.utils import apply_additional_regexes, Constraints, Result, Keyword, Text
-from emodels.extract.table import parse_tables_from_response, Columns, unique_id, Uid
+from emodels.extract.table import parse_tables_from_response, unique_id, Uid
 from emodels.extract.combined import parse_combined_from_response
 
 
@@ -48,7 +48,7 @@ class ExtractionSpider(Spider):
     required_fields: Tuple[Keyword, ...] = ()
     # which fields are use to deduplicate results (results with all same values in the same fields are
     # considered the same
-    dedupe_keywords: Columns = Columns(())
+    dedupe_keywords: Tuple[Keyword, ...] = ()
     # A dict (field -> list of values)
     # filter out given fields with values with any of the given list of values.
     # Applies during items pre processing, so it affects extraction process by reducing the score of candidates
@@ -102,7 +102,7 @@ class ExtractionSpider(Spider):
         if isinstance(self.max_tables, str):
             self.max_tables = int(self.max_tables)
         self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
-        self.dedupe_keywords = self.dedupe_keywords or Columns(self.fields)
+        self.dedupe_keywords = self.dedupe_keywords or self.fields
         self.markdown_count = 0
 
     def make_request(self, url, callback, cb_kwargs=None, **kwargs) -> Request:
@@ -119,7 +119,7 @@ class ExtractionSpider(Spider):
         return constraints
 
     @abstractmethod
-    def validate_result(self, result: Result, columns: Columns) -> bool:
+    def validate_result(self, result: Result, columns: Tuple[Keyword, ...]) -> bool:
         """
         Validates a result. If False, the result is not accepted.
         Override conveniently.
@@ -157,15 +157,15 @@ class ExtractionSpider(Spider):
         if self.extract_mode == "combined":
             result = parse_combined_from_response(
                 response=response,
-                columns=Columns(self.fields),
+                columns=self.fields,
                 validate_result=self.validate_result,
-                dedupe_keywords=Columns(self.dedupe_keywords),
+                dedupe_keywords=self.dedupe_keywords,
                 constraints=self.constraints,
                 value_filters=self.value_filters,
                 debug_mode=self.debug_mode,
             )
             if result:
-                uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+                uid = unique_id(result, self.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     return
@@ -197,7 +197,7 @@ class ExtractionSpider(Spider):
         response = response.replace(cls=ExtractTextResponse)
         for result in parse_tables_from_response(
             response,
-            columns=Columns(self.fields),
+            columns=self.fields,
             validate_result=self.validate_result,
             dedupe_keywords=self.dedupe_keywords,
             constraints=self.constraints,
@@ -208,7 +208,7 @@ class ExtractionSpider(Spider):
             apply_additional_regexes(self.additional_regexes, result, response)
             self._adapt_result(result, response)
             if self.extract_mode != "hybrid":
-                uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+                uid = unique_id(result, self.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     continue
@@ -238,7 +238,7 @@ class ExtractionSpider(Spider):
                 for regex in regexes:
                     if re.search(regex, result.get(field, "")):
                         continue
-            uid = unique_id(result, Columns(self.dedupe_keywords))[0]
+            uid = unique_id(result, self.dedupe_keywords)[0]
             if uid in self.seen_results:
                 self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                 continue

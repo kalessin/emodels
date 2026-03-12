@@ -1,16 +1,15 @@
 import os
 import re
 from unittest import TestCase
+from typing import Tuple
 
 from emodels.scrapyutils.response import ExtractTextResponse
-from emodels.extract.table import Columns
 from emodels.extract.combined import parse_combined_from_response
 from emodels.extract.utils import Constraints, Keyword, Result
 
 
 NUMBER_RE = re.compile(r"\d+$")
-DEDUPE_KEYWORDS = Columns(
-    (
+DEDUPE_KEYWORDS = (
         Keyword("code"),
         Keyword("company"),
         Keyword("company name"),
@@ -25,11 +24,10 @@ DEDUPE_KEYWORDS = Columns(
         Keyword("share code"),
         Keyword("symbol"),
         Keyword("ticker"),
-    )
 )
 
 
-def validate_result(result: Result, candidate_fields: Columns) -> bool:
+def validate_result(result: Result, candidate_fields: Tuple[Keyword, ...]) -> bool:
     score = 0
     for field in candidate_fields:
         if field in result:
@@ -58,8 +56,7 @@ class CombinedExtractionTests(TestCase):
             response = ExtractTextResponse(
                 url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/", status=200, body=f.read()
             )
-            columns = Columns(
-                (
+            columns = (
                     Keyword("industry"),
                     Keyword("sector"),
                     Keyword("super-sector"),
@@ -70,7 +67,6 @@ class CombinedExtractionTests(TestCase):
                     Keyword("security name"),
                     Keyword("address"),
                     Keyword("web-site"),
-                )
             )
             result = parse_combined_from_response(
                 response,
