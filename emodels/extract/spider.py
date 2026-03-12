@@ -125,23 +125,6 @@ class ExtractionSpider(Spider):
         Override conveniently.
         """
 
-    def parse_tables_from_response(
-        self,
-        response: TextResponse,
-        candidate_fields: Tuple[Keyword, ...],
-        dedupe_keywords: Columns = Columns(()),
-        constraints: Optional[Constraints] = None,
-        max_tables: int = 1,
-    ):
-        return parse_tables_from_response(
-            response,
-            Columns(candidate_fields),
-            self.validate_result,
-            dedupe_keywords,
-            constraints=constraints,
-            max_tables=max_tables,
-        )
-
     def extract_items_from_page(self, response: TextResponse) -> Iterable[Result | Request]:
         """
         Extract items from a page by selecting the chosen algorithm according to extract_mode parameter.
@@ -212,10 +195,16 @@ class ExtractionSpider(Spider):
 
     def extract_listing(self, response: TextResponse, **kwargs) -> Iterable[Result]:
         response = response.replace(cls=ExtractTextResponse)
-        for result in self.parse_tables_from_response(
-            response, self.fields, self.dedupe_keywords, self.constraints, self.max_tables
+        for result in parse_tables_from_response(
+            response,
+            columns=Columns(self.fields),
+            validate_result=self.validate_result,
+            dedupe_keywords=self.dedupe_keywords,
+            constraints=self.constraints,
+            required_fields=self.required_fields,
+            max_tables=self.max_tables
         ):
-            result.update(kwargs)
+            result.update(cast(Dict[Keyword, Text], kwargs))
             apply_additional_regexes(self.additional_regexes, result, response)
             self._adapt_result(result, response)
             if self.extract_mode != "hybrid":

@@ -342,3 +342,24 @@ class TableExtractTests(TestCase):
                     "total volume of the issue": "46 692 133",
                 },
             )
+
+    def test_table_xii(self):
+        with self.open_resource("test31.html") as f:
+            response = TextResponse(url="https://www.egx.com.eg/en/listedstocks.aspx", status=200, body=f.read())
+            columns = Columns((Keyword("company name"), Keyword("isin code"), Keyword("sector")))
+            results = parse_tables_from_response(
+                response,
+                columns=columns,
+                constraints=Constraints({Keyword("isin code"): re.compile(r"^[a-z0-9]{12}$", re.I)}),
+                required_fields=(Keyword("company name"), Keyword("isin code")),
+            )
+            self.assertEqual(len(results), 240)
+            self.assertEqual(
+                results[55],
+                {
+                    "company name": "Delta Insurance",
+                    "isin code": "EGS63031C016",
+                    "sector": "Non-bank financial services",
+                    "url": "https://www.egx.com.eg/en/CompanyDetails.aspx?ISIN=EGS63031C016",
+                },
+            )

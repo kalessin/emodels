@@ -7,7 +7,7 @@ from scrapy.http import TextResponse
 from scrapy.selector.unified import SelectorList
 from parsel.selector import Selector
 
-from emodels.extract.utils import Constraints, apply_constraints, Result, Keyword, Text
+from emodels.extract.utils import Constraints, apply_constraints, Result, Keyword, Text, URL_RE
 
 NUMBER_RE = re.compile(r"\d+$")
 MAX_HEADER_COLUMNS = 20
@@ -71,8 +71,9 @@ def extract_urls(urls: List[Text], parsed: ParseResult) -> Dict[Keyword, Text]:
     url_data = {}
     for url in urls:
         if parsed.netloc in url:
-            url_data[Keyword("url")] = url
-        else:
+            if Keyword("url") not in url_data:
+                url_data[Keyword("url")] = url
+        elif URL_RE.match(url) is not None:
             url_data[Keyword("website")] = url
     return url_data
 
@@ -104,6 +105,12 @@ def parse_table_ii(table: Selector, headers: List[Keyword], parsed: ParseResult)
         header_find_status = True
         if row == headers:
             continue
+        if len(row) > len(headers):
+            new_row = []
+            for cell in row:
+                if cell not in new_row:
+                    new_row.append(cell)
+            row = new_row
         data = dict(zip(headers_lower, row))
         data.update(extract_urls(urls, parsed))
         yield Result(data)
@@ -150,6 +157,7 @@ def parse_tables_from_response(
     validate_result: Callable[[Result, Columns], bool] = default_validate_result,
     dedupe_keywords: Columns = Columns(()),
     constraints: Optional[Constraints] = None,
+    required_fields: Tuple[Keyword, ...] = (),
     max_tables: int = 1,
 ) -> List[Result]:
     """
@@ -185,6 +193,8 @@ def parse_tables_from_response(
                                 seen.add(fuid)
                             if constraints is not None:
                                 apply_constraints(result, constraints)
+                            if set(required_fields).difference([k for k, v in result.items() if v]):
+                                continue
                             all_table_results_method.append(result)
                             fields.update(result.keys())
                 if score_results(all_table_results_method) > score_results(all_table_results):
