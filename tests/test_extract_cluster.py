@@ -852,3 +852,64 @@ class ClusterExtractTests(TestCase):
                     },
                 ],
             )
+
+    def test_cluster_tile_iii(self):
+        with self.open_resource("test32.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.cse-india.com/listi/database",
+                status=200,
+                body=f.read(),
+            )
+            results = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("cse scrip code"),
+                    Keyword("company name"),
+                    Keyword("company status"),
+                    Keyword("date of listing"),
+                    Keyword("address"),
+                    Keyword("state"),
+                    Keyword("www"),
+                ),
+                value_filters={
+                    Keyword("address"): (Text("contact no"),),
+                    Keyword("state"): (Text("name of the directors"),),
+                    Keyword("www"): (Text("close"),),
+                },
+                required_fields=(
+                    Keyword("cse scrip code"),
+                    Keyword("company name"),
+                    Keyword("company status"),
+                    Keyword("date of listing")
+                ),
+                tiles_mode=True,
+                debug_mode=True,
+            )
+            import json
+            with open("results.json", "w") as f:
+                for r in results:
+                    print(json.dumps(r), file=f)
+            self.assertEqual(len(results), 50)
+            self.assertEqual(results[0], {
+                "cse scrip code": "013186",
+                "company name": "20TH CENTURY - ZURICH INDIA MUTUAL FUND",
+                "company status": "Suspended",
+                "date of listing": "27-05-1994",
+            })
+            self.assertEqual(results[26], {
+                "address": "65 IDA JEEDIMETLA HYDERABAD 500 855",
+                "cse scrip code": "021060",
+                "company name": "ADILAKSHMI ENTERPRISES LIMITED",
+                "company status": "Active",
+                "date of listing": "01-04-1994",
+                "state": "ANDHRA PRADESH",
+                "www": "www.kljplastics.in"
+            })
+            self.assertEqual(results[-1], {
+                'address': 'NILHAT HANSE 11 R N MUKHERJEE ROAD CALCUTTA 700 001',
+                'company name': 'ALIPURDUAR TEA CO LTD',
+                'company status': 'Active',
+                'cse scrip code': '011187',
+                'date of listing': '08-12-1977',
+                'state': 'WEST BENGAL',
+            })
