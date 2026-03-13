@@ -1,0 +1,4668 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CSE-India</title>
+<!-- Bootstrap --><link rel="icon" href="https://www.cse-india.com/image/logo.png">
+<link href="https://www.cse-india.com/css/bootstrap.css" rel='stylesheet' type='text/css' />
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="application/x-javascript"> addEventListener("load", function() {
+	setTimeout(hideURLbar, 0);
+}, false); function hideURLbar(){
+	window.scrollTo(0,1);
+} </script>
+<link href="https://www.cse-india.com/css/blue.css" rel="stylesheet" type="text/css" media="all" />
+<!----font-Awesome----->
+<link rel="stylesheet" href="https://www.cse-india.com/fonts/css/font-awesome.min.css">
+<!----font-Awesome----->
+<!-- start plugins -->
+<script type="text/javascript" src="https://www.cse-india.com/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://www.cse-india.com/js/bootstrap.min.js"></script>
+<!--start slider -->
+<link rel="stylesheet" href="https://www.cse-india.com/css/fwslider.css" media="all">
+<script src="https://www.cse-india.com/js/jquery-ui.min.js"></script>
+<script src="https://www.cse-india.com/js/css3-mediaqueries.js"></script>
+<script src="https://www.cse-india.com/js/fwslider.js"></script>
+<!--end slider -->
+<!-- must have -->
+<link href="https://www.cse-india.com/css/allinone_carousel.css" rel="stylesheet" type="text/css">
+<link href="https://www.cse-india.com/css/custom.css" rel="stylesheet" type="text/css">
+<script src="https://www.cse-india.com/js/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
+<script src="https://www.cse-india.com/js/jquery.ui.touch-punch.min.js" type="text/javascript"></script>
+<script src="https://www.cse-india.com/js/allinone_carousel.js" type="text/javascript"></script>
+<!--[if IE]><script src="js/excanvas.compiled.js" type="text/javascript"></script><![endif]-->
+<!-- must have -->
+<script>
+jQuery(function() {
+
+		jQuery('#allinone_carousel_charming').allinone_carousel({
+				skin: 'charming',
+				width: 990,
+				height: 454,
+				responsive:true,
+				autoPlay: 3,
+				resizeImages:true,
+				autoHideBottomNav:false,
+				showElementTitle:false,
+				verticalAdjustment:50,
+				showPreviewThumbs:false,
+				//easing:'easeOutBounce',
+				numberOfVisibleItems:5,
+				nextPrevMarginTop:23,
+				playMovieMarginTop:0,
+				bottomNavMarginBottom:-10
+});
+});
+</script>
+<!-- Owl Carousel Assets -->
+<link href="https://www.cse-india.com/css/owl.carousel.css" rel="stylesheet">
+<script src="https://www.cse-india.com/js/owl.carousel.js"></script>
+<script>
+$(document).ready(function() {
+
+		$("#owl-demo").owlCarousel({
+				items : 4,
+				lazyLoad : true,
+				autoPlay : true,
+				navigation : true,
+				navigationText : ["", ""],
+				rewindNav : false,
+				scrollPerPage : false,
+				pagination : false,
+				paginationNumbers : false,
+});
+
+});
+</script>
+<!-- //Owl Carousel Assets -->
+<!-- start circle -->
+<script>
+(function($){
+$.fn.percentPie = function(options){
+
+var settings = $.extend({
+		width: 100,
+	trackColor: "EEEEEE",
+	barColor: "E2534B",
+	barWeight: 30,
+	startPercent: 0,
+	endPercent: 1,
+	fps: 60
+	}, options);
+
+	this.css({
+			width: settings.width,
+			height: settings.width
+});
+
+	var	that = this,
+	hoverPolice = false,
+	canvasWidth = settings.width,
+	canvasHeight = canvasWidth,
+	id = $('canvas').length,
+	canvasElement = $('<canvas id="'+ id +'" width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>'),
+			canvas = canvasElement.get(0).getContext("2d"),
+			centerX = canvasWidth/2,
+			centerY = canvasHeight/2,
+			radius = settings.width/2 - settings.barWeight/2;
+			counterClockwise = false,
+			fps = 1000 / settings.fps,
+			update = .01;
+			this.angle = settings.startPercent;
+
+			this.drawArc = function(startAngle, percentFilled, color){
+			var drawingArc = true;
+			canvas.beginPath();
+			canvas.arc(centerX, centerY, radius, (Math.PI/180)*(startAngle * 360 - 90), (Math.PI/180)*(percentFilled * 360 - 90), counterClockwise);
+			canvas.strokeStyle = color;
+			canvas.lineWidth = settings.barWeight;
+			canvas.stroke();
+			drawingArc = false;
+			}
+
+			this.fillChart = function(stop){
+			var loop = setInterval(function(){
+			hoverPolice = true;
+			canvas.clearRect(0, 0, canvasWidth, canvasHeight);
+
+			that.drawArc(0, 360, settings.trackColor);
+			that.angle += update;
+			that.drawArc(settings.startPercent, that.angle, settings.barColor);
+
+			if(that.angle > stop){
+			clearInterval(loop);
+			hoverPolice = false;
+			}
+			}, fps);
+			}
+
+			this.mouseover(function(){
+			if(hoverPolice == false){
+			that.angle = settings.startPercent;
+			that.fillChart(settings.endPercent);
+			}
+			});
+
+			this.fillChart(settings.endPercent);
+			this.append(canvasElement);
+			return this;
+}
+}(jQuery));
+
+$(document).ready(function() {
+
+		$('.google').percentPie({
+		width: 100,
+		trackColor: "E2534B",
+		barColor: "76C7C0",
+		barWeight: 20,
+		endPercent: .9,
+		fps: 60
+		});
+
+		$('.moz').percentPie({
+				width: 100,
+				trackColor: "E2534B",
+		barColor: "76C7C0",
+		barWeight: 20,
+		endPercent: .75,
+		fps: 60
+		});
+
+		$('.safari').percentPie({
+				width: 100,
+				trackColor: "E2534B",
+		barColor: "#76C7C0",
+		barWeight: 20,
+		endPercent: .5,
+		fps: 60
+		});
+
+		});
+		</script>
+		
+<style>
+.tableRow1{
+	background-color:#f3f3f3;
+	padding:10px;
+}
+
+.tableRow2{
+	background-color:#fff;
+	padding:10px;
+}
+
+.para{
+	font-size:1.5em;
+	color:#333;
+	margin-top:30px;
+}
+</style>
+
+<style>
+
+.no-js #loader { display: none;  }
+.js #loader { display: block; position: absolute; left: 100px; top: 0; }
+.se-pre-con {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url(images/Preloader_8.gif) center no-repeat #fff;
+}
+</style>
+
+
+
+<script type="text/javascript">
+	//paste this code under head tag or in a seperate js file.
+	// Wait for window load
+	$(window).load(function() {
+		// Animate loader off screen
+		$(".se-pre-con").fadeOut("slow");;
+	});
+</script>
+
+		</head>
+<body>
+<div class="se-pre-con" align="center" style="padding-top:250px;"> <img src="https://www.cse-india.com/images/Preloader_8.gif"></div>
+<style>
+	ul.sub-sub-menu.list-unstyled {
+		left: 219px;
+	}
+</style>
+
+
+<div class="header_bg">
+	<div class="container">
+		<div class="header">
+			<div class="row">
+				<div class="col-md-8 col-sm-offset-2">
+					<div align="center" class="logo">
+						<a href="https://www.cse-india.com/main"><img src="https://www.cse-india.com/image/cse-logo.png" alt="" /></a>
+					</div>
+				</div>
+				<div class="col-sm-2 text-center btnTop">
+					<a href="https://www.cse-india.com/main"><button type="button" class="btn-default btn-xs">English</button></a>
+					<a href="https://www.cse-india.com/bengali"><button type="button" class="btn-default btn-xs">Bengali</button> </a>
+				</div>
+
+
+			</div>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+
+	<div class="col-sm-12" style="background-color:#E8E8E8; padding-bottom:5px; padding-top:5px; margin-top:8px;">
+		<div class="container">
+
+			<div class="h_menu">
+				<a id="touch-menu" class="mobile-menu" href="#" style="background-color:transparent !important"><i class="fa fa-bars" style="color:#76C7C0"></i></a>
+
+
+
+
+				<!-- new menu -->
+
+				<ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/'>HOME<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/page/LRSCCL_Annual_Accounts'>LRSCCL Annual Accounts</a></li></ul><li><a href='#'>Profile<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/Pri_cont/Board_of_directors'>Board of Directors</a></li><li><a href='https://www.cse-india.com/Pri_cont/factbook'>Fact Book</a></li><li><a href='https://www.cse-india.com/Pri_cont/Committees'>Committees</a></li><li><a href='https://www.cse-india.com/Pri_cont/cse_se'>Senior Executives</a></li><li><a href='https://www.cse-india.com/page/CRO'>CRO</a></li><li><a href='https://www.cse-india.com/Pri_cont/cse_investor'>Investors in CSE</a></li><li><a href='https://www.cse-india.com/Pri_cont/career'>Careers with CSE</a></li></ul><li><a href='#'>Information Center<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/upload/upload/Non_complaint_71_companies_as_per_SEBI_SOP_Cir_2020.pdf'>Non Complaint 71 Companies as per SEBI SOP Cir.2020</a></li><li><a href='https://www.cse-india.com/page/Quarterly_Results'>Quarterly Results</a></li><li><a href='https://www.cse-india.com/page/CSE_AGM_Notice_and_Results'>CSE AGM Notice and Results</a></li><li><a href='https://www.cse-india.com/page/CSE_EGM_Notice_and_Results'>CSE EGM Notice and Results</a></li><li><a href='https://www.cse-india.com/ic/information'>Quotation Informations</a></li><li><a href='https://www.cse-india.com/Pri_cont/form_download1'>Preliminary Placement Documents</a></li><li><a href='https://www.cse-india.com/cse_notice/notice'>CSE Notices</a></li><li><a href='https://www.cse-india.com/Pri_cont/company_announcement'>Announcements</a></li><li><a href='https://www.cse-india.com/Pri_cont/cse_shareholding'>CSE Shareholding Pattern</a></li><li><a href='https://www.cse-india.com/Pri_cont/cse_unclaimed_dividend'>CSE Unclaimed Dividend</a></li><li><a href='https://www.cse-india.com/page/Master_Circular'>Master Circular</a></li><li><a href='https://www.cse-india.com/upload/upload/Guidance Note on Illegal Trading.pdf'>Guidance Note on Illegal Trading</a></li><li><a href='https://www.cse-india.com/upload/upload/Data_for_Complaint_against_Exchange_for_March_2023_-_CSE_website_-.pdf'>Complaint against Exchange</a></li><li><a href='http://www.cse-india.com/upload/upload/Corporate_Social_Responsibility_Police-CSE-2015.pdf'>CSR</a></li><li><a href='https://www.cse-india.com/upload/upload/CSEL_IEPF4_26112021.xls'>IEPF Share Transfer 2021</a></li></ul><li><a href='#'>Trading & Settlement<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/ts/settle'>Settlement Calendar</a></li><li><a href='https://www.cse-india.com/Pri_cont/set_proc'>Settlement Procedure</a></li><li><a href='https://www.cse-india.com/Pri_cont/api_mer'>Applicable Margins</a></li><li><a href='https://www.cse-india.com/Pri_cont/list_of_clearing_banks'>Clearing Banks</a></li><li><a href='https://www.cse-india.com/Pri_cont/list_of_holiday'>List of Holidays</a></li><li><a href='https://www.cse-india.com/upload/upload/CALENDER2025.pdf'>CSE Calendar</a></li></ul><li><a href='#'>Technology<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/Pri_cont/cse_tech'>CSE Technology</a></li><li><a href='https://www.cse-india.com/Pri_cont/tech_dev'>Technological Development</a></li></ul><li><a href='#'>Investor Forum<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/upload/upload/Arbitration_Panel_of_CSE.pdf'>Arbitration Panel</a></li><li><a href='https://www.cse-india.com/investor/arbitration'>Arbitration Rules & AWARDS</a></li><li><a href='https://www.cse-india.com/Pri_cont/complain'>Complaint Registration Format</a></li><li><a href='https://www.cse-india.com/Pri_cont/gu_inv'>Guide for Investors</a></li><li><a href='https://www.cse-india.com/investor/asked'>Frequently Asked Questions</a></li><li><a href='https://www.cse-india.com/Pri_cont/inv_benf'>How to Invest & Benefits</a></li><li><a href='https://www.cse-india.com/Pri_cont/publication'>Publications</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=Investor Complaint Redressal System'>Investor Services</a></li><li><a href='https://www.cse-india.com/upload/site_link/sr&iap.html'>Investor Awareness</a></li><li><a href='https://www.care-plus.cse-india.com/index.php'>Complaint Centre</a></li></ul><li><a href='#'>Statutory Documents <span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/upload/site_link/Memo&Article_CSE.pdf'>Memorandum &amp; Articles</a></li><li><a href='https://www.cse-india.com/upload/site_link/bye-laws.pdf'>Bye-Laws</a></li><li><a href='https://www.cse-india.com/Pri_cont/dem_sch'>Demutualisation Scheme</a></li><li><a href='https://www.cse-india.com/Pri_cont/annual'>CSE Annual Reports</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=Corporate_Governance'>Corporate Governance</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=Quarter_Shareholding_Pattern_Set'>Quarterly Shareholding Pattern</a></li><li><a href='https://www.cse-india.com/upload/upload/DRAFT_AOA_OF_CSE.pdf'>DRAFT AOA OF CSE</a></li><li><a href='https://www.cse-india.com/upload/upload/PROPOSED_CHANGES_IN_AOA_IN_TABLULAR_FORM.pdf'>PROPOSED CHANGES IN AOA IN TABLULAR FORM</a></li><li><a href='https://www.cse-india.com/upload/upload/NOTICE_290823_views_on_AoA.pdf'>Public Comments/Criticism Invited in the Proposed Changes in AOA of CSE</a></li><li><a href='https://www.sebi.gov.in/sebiweb/home/HomeAction.do?doListing=yes&sid=1&ssid=5&smid=0'>SEBI Guidelines</a></li><li><a href='https://www.cse-india.com/upload/upload/SEBI_Master_Circulars.pdf'>SEBI Master Circulars</a></li><li><a href='https://www.cse-india.com/upload/upload/WEbsite_Disclosure_under_Regulation_33(7)_of_SECC_2018.pdf'>Disclosure of Board Meeting U/R 33(7) of SECC-2018</a></li><li><a href='https://www.cse-india.com/upload/upload/CSE_Policies.pdf'>Policies</a></li><li><a href='https://www.cse-india.com/upload/upload/CSE_Surveillance_Policies1.pdf'>Surveillance & RMS Polices</a></li></ul><li><a href='#'>Listing <span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/main/compliance'>Compliance</a></li><li><a href='https://listingcompliance.cse-india.com/xbrl/DisplayRegulations'>Corporate Informations</a></li><li><a href='https://listingcompliance.cse-india.com/publicviewcompany'>Listing Compliance View</a></li><li><a href='https://listingcompliance.cse-india.com/publicviewcompany/delisting-revocation/index.php'>Delisting Application</a></li><li><a href='http://listingcompliance.cse-india.com/'>Revocation Application</a></li><li><a href='https://www.cse-india.com/listi/list_data'>Listing Guide</a></li><li><a href='http://www.cse-india.com/upload/upload/AMNESTY_NOTE_2020.pdf'>Listing Amnesty Scheme 2020</a></li><li><a href='https://www.cse-india.com/Pri_cont/company_announcement'>Company Announcements</a></li><li><a href='https://www.cse-india.com/upload/upload/LF-pending-2024-25_ACTIVE_COMPANIES.pdf'>FY 24-25 Listing fees dues for active companies</a></li><li><a href='https://www.cse-india.com/listi/database'>CSE Company Database</a></li><li><a href='https://www.cse-india.com/Pri_cont/list_company'>Form B Qualified Companies</a></li><li><a href='https://www.cse-india.com/upload/site_link/ts010113.txt'>Last Traded Price of Companies Ever Listed</a></li><li><a href='https://www.cse-india.com/upload/site_link/CorporateGovernanceReport.htm'>Corporate Governance</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=SEBI Listing Regulations, 2015'>SEBI Listing Regulations, 2015</a></li><li><a href='http://www.cse-india.com/upload/upload/FAQs_ON_CALCUTTA_STOCK_EXCHANGE_AMNESTY_SCHEME_20201.pdf'>FAQ on Amnesty Scheme 2020</a></li><li><a href='https://www.cse-india.com/upload/upload/Notice_to_Non-compliant_Listed_Companies1.pdf'>Notice to Non-compliant Listed Companies</a></li><li><a href='https://www.cse-india.com/upload/upload/Notice_to_Promoter_Director_of_Non-compliant_Listed_Companies.pdf'>Notice to Promoter / Director of Non-compliant Listed Companies</a></li><li><a href='https://www.cse-india.com/upload/upload/Order_for_Compulsory_Delisting.pdf'>Compulsory Delisting</a></li><li><a href='https://www.cse-india.com/upload/site_link/FAQ ON LISTING REGULATIONS 19 JANUARY 2016.pdf'>FAQ</a></li></ul><li><a href='#'>Members Here<span class='caret'></span></a><ul class='menu list-unstyled'><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=New Membership Forms'>Procedure for New Membership</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=Membership Forms'>Membership Forms</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=IT Software and Connectivity Related Forms'>IT Related Forms</a></li><li><a href='https://membercompliance.cse-india.com/member/Login'>Member Compliance</a></li><li><a href='https://www.cse-india.com/mem/member'>CSE Members' Database</a></li><li><a href='https://www.cse-india.com/mem/member1'>List of CSE Members who have/had CSTAR terminal</a></li><li><a href='https://www.cse-india.com/Pri_cont/list_of_member'>List of Members who have Taken BSE/NSE Terminal</a></li><li><a href='https://www.cse-india.com/mem/change'>CSE Members in Other Exchanges</a></li><li><a href='https://www.bseindia.com/about/datal/debent.asp'>List of Entities Debarred by SEBI</a></li><li><a href='https://www.cse-india.com/upload/site_link/DETAILS OF U-CONNECT MEMBERS.pdf'>List of U-Connect Empanelled Members</a></li><li><a href='https://www.cse-india.com/Pri_cont/pri_fetch?id=BG and FDR Formats for Securities Department'>BG & FDR Formats</a></li><li><a href='https://www.cse-india.com/upload/pdf2/Annual%20Compliance%20Calendar%20for%20Trading%20Members.pdf'>Annual Compliance Calendar for Trading Members</a></li></ul><li><a href='https://www.cse-india.com/main/contact
+'>Contact Us</a></li></ul>
+					
+								<!-- new menu -->
+
+
+
+				
+
+				<script src="https://www.cse-india.com/js/menu.js" type="text/javascript"></script>
+			</div>
+
+		</div>
+	</div>
+
+	<div class="col-sm-12 revocdel">
+		<div class="container">
+			<marquee scrollamount='6'>For Revocation / Delisting please visit <a href="http://listingcompliance.cse-india.com/">http://listingcompliance.cse-india.com</a> &emsp;&emsp;|&emsp;&emsp;CSE Care Plus portal: <a target="_blank" href="https://www.care-plus.cse-india.com/index.php">https://www.care-plus.cse-india.com/index.php</a>&emsp;&emsp;|&emsp;&emsp;Please Pledge for “Culture of Integrity for Nation's Prosperity” (VAW 2024) at (<a href="https://pledge.cvc.nic.in">https://pledge.cvc.nic.in/</a>)</marquee>
+		</div>
+	</div>
+
+</div>
+<style>
+	.tableRow1 {
+		background-color: #f3f3f3;
+		padding: 10px;
+	}
+
+	.tableRow2 {
+		background-color: #fff;
+		padding: 10px;
+	}
+
+	.para {
+		font-size: 1.5em;
+		color: #333;
+		margin-top: 30px;
+	}
+</style>
+<style>
+	.dropdown {
+		position: relative;
+		display: inline-block;
+	}
+
+	.dropdown-content {
+		display: none;
+		position: absolute;
+		background-color: #f9f9f9;
+		min-width: 160px;
+		box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+		padding: 12px 16px;
+		z-index: 1;
+	}
+
+	.dropdown:hover .dropdown-content {
+		display: block;
+	}
+
+	.revocdel {
+		background-color: #0c2883;
+		padding-top: 5px;
+		color: #fff;
+		font-size: 16px;
+	}
+
+	.revocdel a {
+		color: #fff;
+	}
+</style>
+<style>
+/* Paste this css to your style sheet file or under head tag */
+/* This only works with JavaScript, 
+if it's not present, don't show loader */
+.no-js #loader { display: none;  }
+.js #loader { display: block; position: absolute; left: 100px; top: 0; }
+.se-pre-con {
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: url(image/Preloader_8.gif) center no-repeat #fff;
+}
+</style>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
+<script>
+	//paste this code under head tag or in a seperate js file.
+	// Wait for window load
+	$(window).load(function() {
+		// Animate loader off screen
+		$(".se-pre-con").fadeOut("slow");;
+	});
+</script>
+
+<div class="se-pre-con"></div>
+
+<div class="main_bg"><!-- start main -->
+<div class="container">
+	<div class="main_grid1">
+		<h3 class="style pull-left">CSE Company Database</h3>
+		<ol class="breadcrumb pull-right">
+		  <li><a href="">Home</a></li>
+		  <li class="active">Company Database</li>
+		</ol>
+		<div class="clearfix"></div>
+	</div>
+</div>
+</div>
+
+
+<div class="container" style="margin-bottom:20px;">
+<font size="+1"><p align="center"><strong>Information</strong></p>
+<p style="text-align:justify">
+The information given hereunder is as per the latest data available with the Exchange. Errors and omissions are regretted. All companies who wish to update any of the information available hereunder may do so by sending an e-mail to chandranidatta@cse-india.com, along with supporting documents. Alternately, they may contact the Listing Department at 033-4025 3016/17 for the same.
+   </p></font>
+</div>
+<div class="container" style="margin-bottom:20px;">
+
+<div class="col-sm-9">
+   		<div class="col-sm-3 col-sm-offset-1 text-center"><form action="https://www.cse-india.com/listi/database" method="post" accept-charset="utf-8">
+        	<label style="font-size:1.7em; font-weight:normal; padding-top:10px;"></label>
+        </div>
+        <div class="col-sm-4 text-center" style="margin-top:8px;">
+        <input name="name_data" type="text" class="txtBox" placeholder="Enter Company Name" style="width:100%; height:32px; font-size:1.4em;"/>
+        </div>
+        <div class="col-sm-1 text-center" style="margin-top:8px;">
+        <input class="btn" value="SEARCH" type="SUBMIT" style="padding:6px 0px; width:59px;"></form>
+        </div>
+        
+     </div>
+<div class="col-sm-8 col-sm-offset-2" style="margin-top:50px">
+
+    <div class="table-responsive">
+    
+  <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="65%" valign="top" class="tblHead">Company Name</td>
+            <td valign="top" class="tblHead">Company Status</td>
+          </tr>
+		  </table>
+		   
+      <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal1">20TH CENTURY - ZURICH INDIA MUTUAL FUND</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal1" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">013186</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">20TH CENTURY - ZURICH INDIA MUTUAL FUND</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">721412600</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">27-05-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">   </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2"></td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal2">5 S LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal2" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">029562</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">5 S LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">4751070</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">14 INDIA EXCHANGE PLACE CALCUTTA  700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal3">A B C INDIA LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal3" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011146</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A B C INDIA LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">50022290</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">17-05-1973</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">KEDAR ROAD, GUWAHATI  781-001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-361-510035/510766</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ASSAM</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Ashok Surana, Krishan Arya, Ashok Agarwal, Ashish Agarwal, Ashoke K Dutta, Prakash Agarwal, Debasis Sengupta, Vijay Kumar Jain, Padam Chand Agarwal,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.abcindia.com</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal4">A C E STONECRAFT LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal4" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">11075</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A C E STONECRAFT LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">209136000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">27-05-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">Y. Mohapatra C/o Ace Stone Craft Ltd Hazari Lane, Post Tala Telanga Bazar Cuttack-753009 </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-674-415972</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ORISSA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal5">A E C INDIA LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal5" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011148</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A E C INDIA LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">9000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-12-1986</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">3E/7 JHANDEWALAN EXTENSION DELHI  110 055</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-11-6115991</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">DELHI</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal6">A J BROTHERS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal6" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011076</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A J BROTHERS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">39142000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">06-03-1995</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">6A RAJA SUBHODH MULLICK SQUARE CALCUTTA  700 013</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-22-2025837/2028847</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal7">A K G ACCOUSTICS   INDIA  LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal7" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011031</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A K G ACCOUSTICS   INDIA  LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">57516390</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">14-05-1992</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">95, Udyog Viharphase-1, Gurgaon-122016  </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">Haryana</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal8">A K S BEARINGS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal8" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011132</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A K S BEARINGS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">43543000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">01-06-1996</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">A-87 (B), ROAD NO. 9(C) V K I AREA JAIPUR 302 013</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-0141-2330932</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">RAJASTHAN</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Raj Kumar Agarwal, Harish Chandra Modi, Sudhir Kumar Agrawal,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal9">A K S CREDITS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal9" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011582</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A K S CREDITS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">96396940</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">28-09-1996</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">4-D LOCAL SHOPPING CENTRE A BLOCK, RING ROAD NARAINA, NEW DELHI 110028</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-11-5534653</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">DELHI</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">V P Verma, Anil Mahendru, Krishan Chawla, Devinder Kumar Sharma,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal10">A M I COMPUTERS I LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal10" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011058</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A M I COMPUTERS I LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">100244000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">30-03-1995</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">60A & B, CHOWRINGHEE ROAD, CALCUTTA 700-020</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-033-2800812/900</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal11">A P UDYOG LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal11" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011152</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A P UDYOG LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">5000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">19-04-1985</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">27,BIPLABI TRAILOKYA MAHARAJ SARANI 5TH FLOOR, ROOM NO-503 CALCUTTA 700-001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal12">A R C FINANCE LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal12" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011278</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A R C FINANCE LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">504950000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">3UG MANI TOWERS 31/41, BINOVA BHAVE ROAD KOLKATA 700 038</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-033-22257017</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.arcfinance.in</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal13">A T N INTERNATIONAL LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal13" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011047</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A T N INTERNATIONAL LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">157800000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">14-04-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">10,PRINCEEP STREET 2RD FLOOR CALCUTTA 700-072</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Tarak Nath Dutta, Hari Ram Agarwal, Shiv Kumar Lakkar, Santosh Kumar Jain,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal14">A TOSH AND SONS  I  LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal14" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011153</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">A TOSH AND SONS  I  LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">6400000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">P-32 & 33 INDIA EXCHANGE PLACE  CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal15">AACHAL ALLOYS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal15" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011277</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AACHAL ALLOYS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">58638000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">09-02-1995</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">NO 7 INDUSTRIAL ESTATE MAXI ROAD UJJAIN 456 010</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-734-552257/551276/557230/551433</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">M.P.</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Anil Ligga, Achal Ligga, Kuldeep C Jain, Ashwini K Datta,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal16">AAMCOL TOOLS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal16" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011155</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AAMCOL TOOLS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">59897400</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">L-3,MIDC INDUSTRIAL AREA P.O.CHIKALTHANA, AURANGABAD 431-210</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">AURANGABAD</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal17">AAR COMMERCIAL CO LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal17" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011145</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AAR COMMERCIAL CO LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">100140000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">10-12-1992</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">14/3 CHHATAWALA GALLY  CALCUTTA 700 012</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal18">AAR SHYAM INDIA INVESTMENT CO. LTD.</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal18" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011600</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AAR SHYAM INDIA INVESTMENT CO. LTD.</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">NA</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">30000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">02-12-2014</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">   </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2"></td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal19">ABHA PROPERTY PROJECT LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal19" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011594</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ABHA PROPERTY PROJECT LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">113998800</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">11-06-2002</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">29, GANESH CHANDRA AVENUE 4TH FLOOR, ROOMNO -407 KOLKATA 700 013</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">DELHI & HARYANA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal20">ABHYDYA TRADING LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal20" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011085</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ABHYDYA TRADING LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">9995000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">16-06-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">MILANPUR REHABARI GUWAHATI ASSAM</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ASSAM</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal21">ACCESS GLOBAL LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal21" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">029096</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ACCESS GLOBAL LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">288730000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">9, Lalbazar Street, Mercantile Building 3rd Floor,  A  Block, Kolkata-700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">West Bengal</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal22">ACKNIT INDUSTRIES LTD.</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal22" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011078</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ACKNIT INDUSTRIES LTD.</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">30000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">27-04-1995</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">817,KRISHNA , 224,AJC BOSE ROAD, CALCUTTA 700 017</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-33-22878293</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">M K Nath, B K Kedia, D K Saraf, S K Saraf, S K Ghosh,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.acknitindia.com</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal23">ACME RESOURCES LTD.</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Under Process for Revocation            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal23" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">029964</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ACME RESOURCES LTD.</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Under Process for Revocation</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">257440000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">12-09-1996</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">10 PRINCEP STREET 2ND FLOOR CALCUTTA 700-072</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-33-22437480</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Sandeep Dey, Sarad Saluja, Kuldeep Saluja, Prabhat Kumar Jain, Laxmi Narain Kesharwani, Chandra Prakash Agarwal,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal24">ADAM COMSOF LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal24" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011080</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADAM COMSOF LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">75000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">01-04-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">NARAYAN BUILDING 23 LAKHAMSHI NAPOO ROAD DADAR(EAST),MUMBAI 400 014</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-022-4131806/51459/47/450/50571</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">MAHARASHTRA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Raja Yadav, Vikash Seth, Umesh R Khariwala,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal25">ADDLIFE PHARMA LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal25" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011081</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADDLIFE PHARMA LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">52563700</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">17-11-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">305/ASHWAMEGH AVENUE MAYUR COLONY NR UNDERBRIDGE MITHAKHALI NAVRANGPURA AHMEDABAD 380 009</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">GUJARAT</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal26">ADHUNIK SYNTHETICS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal26" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011165</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADHUNIK SYNTHETICS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">45594750</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">20-02-1987</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">PLOT NO 5 MUNICIPAL IND ESTATE KANDIVLI WEST  400 067</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-22-28056257/28056887/28061512</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">MAHARASHTRA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal27">ADILAKSHMI ENTERPRISES LIMITED</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal27" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">021060</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADILAKSHMI ENTERPRISES LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">K L J PLASTICS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">3000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">01-04-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">65 IDA JEEDIMETLA HYDERABAD  500 855</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ANDHRA PRADESH</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Lata M Chakravarthy -IDBI,Ratan Singh Chowdhury,Prakash C Kundalia,Sushila Patawari,N Kondal Rao,Hemant Jain,Vinod Baid,M R Vikram,P R Jain,K L Jain,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.kljplastics.in</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal28">ADINATH BIO-LABS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal28" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">012130</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADINATH BIO-LABS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">220742560</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">09-07-1982</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">4, N.S. Road, 1st Floor, KOlkata-700 001 </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">West-Bengal</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">A K Jain, B K Thaker, M K Bothra, A A Sisodia, Jyotiraaditya Singha,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.adinathbio.com</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal29">ADINATH PROJECTS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal29" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011586</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADINATH PROJECTS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">21-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">207,MAHARSHI DEBENDRA ROAD, CALCUTTA  700-070</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal30">ADITHYA AQUACULTURE LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal30" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">11606</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITHYA AQUACULTURE LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">NA</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">105004000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">06-04-2015</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">   </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal31">ADITYA ALLOYS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal31" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011126</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITYA ALLOYS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2450000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">20-02-1986</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">114 C R AVENUE  CALCUTTA 700 078</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal32">ADITYA ISPAT LTD.</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal32" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011082</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITYA ISPAT LTD.</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">42500000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">14-04-1994</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">PLOT NO.20, PHASE V, IDA, JEEDIMETLA, HYDERABAD, ANDHARA PRADRESH-500 055  500-055</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-040-2897396/2273675/2290831</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ANDHRA PRADESH</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">H M Dugar, Swamy S B Das, Sanjay Solanki, Satya Bhagwan Chachan,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal33">ADITYA MAKUA ENGINEERS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal33" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011167</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITYA MAKUA ENGINEERS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2480000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-06-1983</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">135 CANNING STREET  CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal34">ADITYA MILLS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal34" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011168</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITYA MILLS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">12000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">MADANGANJ KISHANGARH  305 801</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">RAJASTHAN</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal35">ADITYA STEEL INDUSTRIES LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal35" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011125</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADITYA STEEL INDUSTRIES LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2450000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">16-11-1998</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">ARUNODAYA  MARKET LINK ROAD CALCUTTA - 753 012  </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ORISSA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal36">ADVANCE STEEL TUBES LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal36" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011170</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADVANCE STEEL TUBES LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">7400000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">45/3 INDUSTRIAL AREA SITE 4 SAHIHABAD  201 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">U.P.</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Lalit Agarwal, Aashish Agrawal, Daulatram Agarwal, Deokinandan Agarwal,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal37">ADVENTZ SECURITIES ENTERPRISES  LIMITED</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal37" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">026189</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ADVENTZ SECURITIES ENTERPRISES  LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">56277870</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">02-08-1996</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">HONGKONG HOUSE 31,B.B.D.BAGH(S) KOLKATA 700-001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Ramesh Maheshwati,Jyotsna Poddar,Akshay Poddar,S N Khaitan,S K Rungta,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.poddarheritage.com</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal38">AGARPARA CO LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal38" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011171</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AGARPARA CO LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">6000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">20-11-1958</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">BANERJEE BHAWAN, 15,BRABOURNE ROAD,(5TH FLOOR) CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal39">AGARWAL BOLTS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal39" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011172</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AGARWAL BOLTS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">500000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">22-06-1981</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">370 MARSHALL HOUSE 3RD FLOOR 25 STRAND ROAD CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal40">AGARWAL DUPLEX BOARD MILLS LTD.</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal40" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011609</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AGARWAL DUPLEX BOARD MILLS LTD.</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">NA</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">135000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">22-05-2015</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">   </td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2"></td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.agarwalduplex.net</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal41">AHLUWALIA CONTRACTS  INDIA  LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal41" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011134</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AHLUWALIA CONTRACTS  INDIA  LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">125525120</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">01-07-1996</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">AHLUWALIA HOUSE 4, COMMUNITY CENTRE, SAKET NEW DELHI 110 017</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-11-29561854</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">DELHI</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">SUSHIL CHANDRA,BALBIR SINGH,SURINDER KUMAR CHAWLA,ARUN KUMAR GUPTA,VINAY PAL,VIKAAS AHLUWALIA,SHOBHIT UPPAL,BIKRAMJIT AHLUWALI,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal42">AJANTA COMMERCE LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal42" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011175</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AJANTA COMMERCE LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">20-11-1979</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">5 & 6 FANCY LANE CALCUTTA  700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal43">AJANTA FINANCIAL SERVICES LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal43" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011176</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AJANTA FINANCIAL SERVICES LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2490000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">26-02-1997</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">33A JAWAHARLAL NUHRU ROAD 17TH FLOOR ROOM NO 8 CALCUTTA 700 071</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal44">AJAY PROPERTIES AND INVESTMENT LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal44" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011180</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AJAY PROPERTIES AND INVESTMENT LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">2400000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">03-06-1983</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">4 SYNAGOGUE STREET  CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal45">AKAR LAMINATORS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal45" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011183</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AKAR LAMINATORS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">171825000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">18-08-1992</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">TRADE CENTRE, 1ST FLOOR, OPP. STADIUM, NAVRANGPURA AHMEDABAD 380-009</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">GUJARAT</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal46">AKC ENGINEERING LIMITED</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal46" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011019</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AKC ENGINEERING LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">A K C STEEL INDUSTRIES LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">101344000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">18-10-1973</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">LANSDOWNE TOWERS 2/1A, SARAT BOSE ROAD 4TH FLOOR KOLKATA-700 020</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-033-30514444</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Manav Bansal, Gautam Bansal, Bhal Chand Khaitan, Ashok Kumar Bansal, Mukesh Chand Bansal, Brijesh Kumar Dalmia,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2">www.akcsteel.com</td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal47">AKSHAY FISCAL SERVICES LIMITED</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal47" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011592</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AKSHAY FISCAL SERVICES LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">105510000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">03-11-2000</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">226/1, A.J.C.Bose Road GROUND FLOOR CALCUTTA 700 019</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-033-2423584</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal48">AKSHYA VYAPAR LIMITED</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Suspended            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal48" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011185</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">AKSHYA VYAPAR LIMITED</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2">AKSHYA NIDHI LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Suspended</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">1954250</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">28-08-1982</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">36 CHOWRINGHEE ROAD  CALCUTTA 700 071</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N.F</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal49">ALFA TRANSFORMERS LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal49" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011089</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ALFA TRANSFORMERS LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">39000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">06-03-1995</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">337 MANCHESWAR INDSTRL ESTATE BHUBANESWAR  751 017</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2">91-674-2580484/2581036</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">ORISSA</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">N C Pal, S K Nanda, Debasis Das, Subhasish Das, Supratim Basu, Sambit Mohanty, L V N Muralidhar, Niranjan Mohanty, Dillip Kumar Das, Deepak Kumar Das, B Nageswar Rao Patnaik,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	   <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tr>
+		   		               <td width="65%" valign="top" class="tableRow1">
+            	<a data-toggle="modal" data-target="#myModal50">ALIPURDUAR TEA CO LTD</a>
+           </td>
+            <td width="35%" valign="top" class="tableRow1">
+            	Active            </td>
+          </tr>        </table>
+
+    
+  <div id="myModal50" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table width="100%" border="0">
+          <tr>
+            <td class="tableRow1" width="35%">CSE Scrip Code :</td>
+            <td class="tableRow2" width="65%">011187</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Name :</td>
+            <td class="tableRow2">ALIPURDUAR TEA CO LTD</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Former Name :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Company Status :</td>
+            <td class="tableRow2">Active</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Paidup Capital (Rs.) :</td>
+            <td class="tableRow2">5000000</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Date of Listing :</td>
+            <td class="tableRow2">08-12-1977</td>
+          </tr>
+
+          <tr>
+             <td class="tableRow1">Address :</td>
+            <td class="tableRow2">NILHAT HANSE 11 R N MUKHERJEE ROAD CALCUTTA 700 001</td>
+          </tr>
+          <tr>
+             <td class="tableRow1">Contact No :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          <tr>
+             <td class="tableRow1">State :</td>
+            <td class="tableRow2">WEST BENGAL</td>
+          </tr>
+          
+           <tr>
+             <td class="tableRow1">Name of The Directors :</td>
+            <td class="tableRow2">Dipanjan Bose, Minnalal Nahata, Vijay Kumar Nahata, Sampatmal Sancheti, Sekhar Roy Choudhury, Jharna Roy Choudhury,</td>
+          </tr>
+           <tr>
+             <td class="tableRow1">WWW :</td>
+            <td class="tableRow2"></td>
+          </tr>
+          
+        </table>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+	
+	
+
+  </div>
+</div>  
+ 	  
+  
+
+ 	  
+   
+  
+
+   <div align="right" id="pagination" style="margin-top: 15px;"><ul class="tsc_pagination tsc_paginationA tsc_paginationA01"><li class="current"><a href="#">1</a></li><li><a href="https://www.cse-india.com/listi/database/50" data-ci-pagination-page="2">2</a></li><li><a href="https://www.cse-india.com/listi/database/100" data-ci-pagination-page="3">3</a></li><li><a href="https://www.cse-india.com/listi/database/50" data-ci-pagination-page="2" rel="next">&gt;</a></li><li><a href="https://www.cse-india.com/listi/database/1500" data-ci-pagination-page="31">&gt;&gt;</a></li></ul></div>
+ 
+
+
+
+
+
+</div></div>
+</div>
+
+<style type="text/css">
+ul.tsc_pagination { margin:4px 0; padding:0px; height:100%; overflow:hidden; font:12px 'Tahoma'; list-style-type:none; }
+ul.tsc_pagination li { float:left; margin:0px; padding:0px; margin-left:5px; }
+
+ul.tsc_pagination li a { color:black; display:block; text-decoration:none; padding:7px 10px 7px 10px; }
+
+
+ul.tsc_paginationA li a { color:#FFFFFF; border-radius:3px; -moz-border-radius:3px; -webkit-border-radius:3px; }
+
+ul.tsc_paginationA01 li a { color:#474747; border:solid 1px #B6B6B6; padding:6px 9px 6px 9px; background:#E6E6E6; background:-moz-linear-gradient(top, #FFFFFF 1px, #F3F3F3 1px, #E6E6E6); background:-webkit-gradient(linear, 0 0, 0 100%, color-stop(0.02, #FFFFFF), color-stop(0.02, #F3F3F3), color-stop(1, #E6E6E6)); }
+ul.tsc_paginationA01 li:hover a,
+ul.tsc_paginationA01 li.current a { background:#FFFFFF; }
+
+</style>
+
+	
+			
+			
+
+
+<style>
+.tableRow1{
+	background-color:#f3f3f3;
+	padding:10px;
+}
+
+.tableRow1 a{
+	color:#333 !important;
+	cursor:pointer;
+}
+
+.tableRow1 a:hover{
+	text-decoration:none !important;
+}
+
+.tableRow2{
+	background-color:#fff;
+	padding:10px;
+}
+
+
+.para{
+	font-size:1.5em;
+	color:#333;
+	margin-top:30px;
+}
+</style>
+
+ 
+<div class="footer_bg"><!-- start footer -->
+	<div class="container">
+		<div class="footer">
+			<div class="col-sm-3 footer1_of_3">
+				<h4>Contacts</h4>
+				<p><i class="fa fa-map-marker"></i> Address: 7, Lyons Range, Dalhousie, Kolkata-700001, West Bengal</p>
+				<p><i class="fa fa-phone"></i> Phone: (033) 4025 3000</p>
+				<p><i class="fa fa-envelope"></i> Email: <a href="mailto:cseadmn@cse-india.com">cseadmn@cse-india.com</a></p>
+				<!--<p class="f_para"><br/><img src="https://www.cse-india.com/images/arrow.png" /> <a href="http://42.104.74.206/cp_web2/" target="_blank" style="color: #fff;">Investor Protection Fund</a></p>
+			<p></p>
+			<span class=""><a href="#"></a></span>-->
+			</div>
+			<div class="col-sm-3 footer1_of_3">
+				<h4>Quick Links</h4>
+				<ul class="list-unstyled f_list">
+					<li><a href="https://www.cse-india.com/listi/database">CSE Company Database</a></li>
+					<li><a href="https://www.cse-india.com/ic/information">Quotation Informations</a></li>
+					<li><a href="https://www.cse-india.com/ic/periodic_information">Periodic Price Movement</a></li>
+					<li><a href="https://www.cse-india.com/main/code_conduct">Code of Conduct</a></li>
+					<li><a href="https://www.cse-india.com/main/trade">Trade Verification</a></li>
+					<li><a href="https://www.cse-india.com/listi/list_data">Listing Guide</a></li>
+					<li><a href="https://www.cse-india.com/Pri_cont/pri_fetch?id=CCMPL%20DP%20Services">CCMPL DP Services</a></li>
+					<li><a target="_blank" href="https://www.cse-india.com/Pri_cont/pri_fetch?id=Investor Complaint Redressal System">Investor Services</a></li>
+					<li><a href="#">Investor Protection Fund</a></li>
+					<li><a href="https://www.cse-india.com/ic/cse40">CSE 40</a></li>
+					<li><a href="https://trade.connect2cse.com/">SSL VPN Solution</a></li>
+					<li><a href="https://www.cse-india.com/Pri_cont/pri_fetch?id=download">Downloads</a></li>
+					<li><a href="https://www.cse-india.com/main/image_gallery">Image Gallery</a></li>
+                                        <li><a href="https://www.cse-india.com/page/LRSCCL_Annual_Accounts">LRSCCL</a></li>
+					<!--<li><a href="https://www.cse-india.com/ePass/">COVID-19 ePass for Members</a></li>-->
+				</ul>
+			</div>
+			<div class="col-sm-2 footer1_of_3">
+				<h4>community</h4>
+				<ul class="list-unstyled f_list">
+					<li><a href="http://www.sebi.gov.in/">SEBI</a></li>
+					<li><a href="http://www.nism.ac.in/">NISM</a></li>
+					<li><a href="https://www.nseindia.com/">NSE</a></li>
+					<li><a href="http://www.bseindia.com/">BSE</a></li>
+					<li><a href="https://nsdl.co.in/">NSDL</a></li>
+					<li><a href="https://www.cdslindia.com/index.html">CDSL</a></li>
+				</ul>
+			</div>
+			<div class="col-sm-4 footer1_of_3">
+				<h4>News</h4>
+
+				<div style="height:290px; overflow-y:auto; overflow-x: hidden ">
+					<ul class="list-unstyled f_list" style="font-size:1.4em;">
+
+													<li><a target="_blank" href="https://www.cse-india.com/upload/cse_notice/KANORIA_SECURITIES_AND_FINANCIAL_SERVICES_LTD.pdf">KANORIA SECURITIES AND FINANCIAL SERVICES LTD De-listing NOTICE W.E.F. 09-03-2026<br />2026-03-06</a></li>
+													<li><a target="_blank" href="https://www.cse-india.com/upload/cse_notice/AKSHYA_VYAPAR_LIMITED_SARWAPRIY_PRODUCTS_LTD.pdf">AKSHYA VYAPAR LIMITED & SARWAPRIY PRODUCTS LTD Revocation of suspension, NOTICE W.E.F. 13-03-2026<br />2026-03-06</a></li>
+													<li><a target="_blank" href="https://www.cse-india.com/upload/cse_notice/AMRAPALI_FILMS_LIMITED_.pdf">AMRAPALI FILMS LIMITED De-listing NOTICE W.E.F. 06-03-2026<br />2026-03-05</a></li>
+													<li><a target="_blank" href="https://www.cse-india.com/upload/cse_notice/MERRYGOLD_MERCANTILES_LTD_AND_FRONTIER_SPRINGS_LTD_-_REVOCATION.pdf">MERRYGOLD MERCANTILES LTD AND FRONTIERS SPRINGS LTD - REVOCATION OF SUSPENTION w.e.f. 05-03-2026<br />2026-02-26</a></li>
+													<li><a target="_blank" href="https://www.cse-india.com/upload/cse_notice/VEERPRABHU_MARKETING_LTD_-_REVOCATION.pdf">VEERPRABHU MARKETING LTD Revocation of suspension, NOTICE W.E.F. 04-03-2026<br />2026-02-24</a></li>
+						
+					</ul>
+					</marquee>
+				</div>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+	<div class="footer1_bg"><!-- start footer1 -->
+		<div class="container">
+			<div class="footer1">
+				<div class="copy text-center">
+					<p class="link">2026 <span>&#169; All rights reserved | The Calcutta Stock Exchange</span></p>
+				</div>
+				<!--<div class="soc_icons pull-right">
+			<ul class="list-unstyled text-center">
+				<li><a href="#"><i class="fa fa-twitter"></i></a></li>
+				<li><a href="#"><i class="fa fa-facebook"></i></a></li>
+				<li><a href="#"><i class="fa fa-google-plus"></i></a></li>
+				<li><a href="#"><i class="fa fa-youtube"></i></a></li>
+				<li><a href="#"><i class="fa fa-tumblr"></i></a></li>
+				<li><a href="#"><i class="fa fa-pinterest"></i></a></li>
+			</ul>
+		</div>-->
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+	</body>
+
+	</html>
+<style>
+.h_menu  .menu li:first-child a span,
+.h_menu  .menu li:first-child ul{
+  display:none !important;
+}
+</style>
