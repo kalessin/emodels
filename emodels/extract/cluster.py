@@ -60,9 +60,18 @@ def tiles_kmeans(
                         if debug_mode:
                             print("Added", {k: m[0]}, "to new group. Index:", m[1:])
                 else:
-                    groups.append(OrderedDict({k: m}))
-                    if debug_mode:
-                        print("Added", {k: m[0]}, "to new group. Index:", m[1:])
+                    # for now the 5 is just a fixed heuristic. This can be improved further.
+                    diffm = m[1] - current_group[-1][1][2]
+                    if current_group[-1][0] == k and 0 < diffm < 5:
+                        _, m0 = current_group[-1]
+                        new_match = Match((Text(m0[0] + " " * diffm + m[0]), m0[1], m[2], Text(m0[3] + "| " + m[3])))
+                        groups[-1][k] = new_match
+                        if debug_mode:
+                            print("Merged", k, "to", new_match[0], "in current group. Index:", new_match[1:])
+                    else:
+                        groups.append(OrderedDict({k: m}))
+                        if debug_mode:
+                            print("Added", {k: m[0]}, "to new group. Index:", m[1:])
             else:
                 sorted_candidate_keywords = [kk for kk in (present_keywords + [k]) if kk not in additional_keywords]
                 sorted_keywords = [kk for kk in keywords if kk in (filled_keywords + [k])]

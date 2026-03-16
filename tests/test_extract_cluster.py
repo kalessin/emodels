@@ -923,13 +923,19 @@ class ClusterExtractTests(TestCase):
                 required_fields=(Keyword("title"),),
                 tiles_mode=True,
             )
-            self.assertEqual(len(results), 91)
+            self.assertEqual(len(results), 101)
             self.assertEqual(results[0], {
                 'telephone': '+356 22586260',
                 'title': 'ACMUS plc',
                 'website': '[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)'
             })
-            self.assertEqual(results[47], {
+            self.assertEqual(results[26], {
+                'contact': 'Dr Malcolm Falzon | Ms Martina Galea',
+                'telephone': '+356 21238989',
+                'title': 'Exalco Finance plc',
+                'website': '<https://www.camilleripreziosi.com>'
+            })
+            self.assertEqual(results[50], {
                 'contact': 'Dr. Francesca Briffa Polidano, Company Secretary',
                 'telephone': '+356 2092 6000',
                 'title': 'Lidion Bank plc',
