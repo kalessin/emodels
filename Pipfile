@@ -16,6 +16,7 @@ einops = "==0.8.0"
 torchvision = "==0.18.0"
 scikit-learn = "==1.6.1"
 k-means-constrained = "*"
+charset-normalizer = "==3.4.4"
 
 [dev-packages]
 flake8 = "*"

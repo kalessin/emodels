@@ -67,6 +67,7 @@ class HTML2Text(html.parser.HTMLParser):
         self.google_list_indent = config.GOOGLE_LIST_INDENT  # covered in cli
         self.ignore_links = config.IGNORE_ANCHORS  # covered in cli
         self.ignore_images = config.IGNORE_IMAGES  # covered in cli
+        self.ignore_inline_images = config.IGNORE_INLINE_IMAGES
         self.images_as_html = config.IMAGES_AS_HTML  # covered in cli
         self.images_to_alt = config.IMAGES_TO_ALT  # covered in cli
         self.images_with_size = config.IMAGES_WITH_SIZE  # covered in cli
@@ -501,6 +502,8 @@ class HTML2Text(html.parser.HTMLParser):
         if tag == "img" and start and not self.ignore_images:
             if "src" in attrs:
                 assert attrs["src"] is not None
+                if self.ignore_inline_images and attrs["src"].startswith("data:image"):
+                    return
                 if not self.images_to_alt:
                     attrs["href"] = attrs["src"]
                 alt = attrs.get("alt") or self.default_image_alt
