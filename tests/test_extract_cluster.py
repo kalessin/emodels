@@ -527,7 +527,7 @@ class ClusterExtractTests(TestCase):
             expected[Keyword("url")] = Text("https://www.ecseonline.com/profiles/GPCL/?type=equities")
             self.assertEqual(result[0], expected)
 
-    def test_cluster_tile_i_(self):
+    def test_cluster_tile_i(self):
         with self.open_resource("test27.html") as f:
             response = ExtractTextResponse(
                 url="https://www.ese.co.sz/issuers/securities/",
@@ -885,10 +885,6 @@ class ClusterExtractTests(TestCase):
                 tiles_mode=True,
                 debug_mode=True,
             )
-            import json
-            with open("results.json", "w") as f:
-                for r in results:
-                    print(json.dumps(r), file=f)
             self.assertEqual(len(results), 50)
             self.assertEqual(results[0], {
                 "cse scrip code": "013186",
@@ -912,4 +908,30 @@ class ClusterExtractTests(TestCase):
                 'cse scrip code': '011187',
                 'date of listing': '08-12-1977',
                 'state': 'WEST BENGAL',
+            })
+
+    def test_cluster_tile_iv(self):
+        with self.open_resource("test33.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.borzamalta.com.mt/links/issuers",
+                body=f.read(),
+                status=200,
+            )
+            results = extract_by_keywords(
+                response=response,
+                keywords=(Keyword("^##"), Keyword("contact"), Keyword("telephone"), Keyword("website")),
+                required_fields=(Keyword("title"),),
+                tiles_mode=True,
+            )
+            self.assertEqual(len(results), 91)
+            self.assertEqual(results[0], {
+                'telephone': '+356 22586260',
+                'title': 'ACMUS plc',
+                'website': '[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)'
+            })
+            self.assertEqual(results[47], {
+                'contact': 'Dr. Francesca Briffa Polidano, Company Secretary',
+                'telephone': '+356 2092 6000',
+                'title': 'Lidion Bank plc',
+                'website': '<https://www.lidionbank.com>'
             })

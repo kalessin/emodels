@@ -30,6 +30,7 @@ def tiles_kmeans(
     additional_keywords: Tuple[Keyword, ...] = (),
     debug_mode: bool = False,
 ) -> Dict[int, List[Tuple[Keyword, Match]]]:
+    keywords = tuple([Keyword("title") if k.startswith("^#") else k for k in keywords])
     keywords_matches = sorted([(k, m) for k, m in matches], key=lambda x: x[1][1])
     groups: List[Dict[Keyword, Match]] = []
     for k, m in keywords_matches:
