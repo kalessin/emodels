@@ -919,23 +919,30 @@ class ClusterExtractTests(TestCase):
             )
             results = extract_by_keywords(
                 response=response,
-                keywords=(Keyword("^##"), Keyword("contact"), Keyword("telephone"), Keyword("website")),
+                keywords=(Keyword("^##"), Keyword("address"), Keyword("contact"), Keyword("telephone"), Keyword("website")),
                 required_fields=(Keyword("title"),),
                 tiles_mode=True,
+                fill_fields=(Keyword("address"),),
             )
             self.assertEqual(len(results), 101)
             self.assertEqual(results[0], {
+                'address': 'Hyatt Centric Malta, \nTriq Santu Wistin, \nSan Ġiljan \nMalta',
                 'telephone': '+356 22586260',
                 'title': 'ACMUS plc',
                 'website': '[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)'
             })
             self.assertEqual(results[26], {
+                'address': 'Level 3 \nValletta Buildings \nSouth Stre \nValletta',
                 'contact': 'Dr Malcolm Falzon | Ms Martina Galea',
                 'telephone': '+356 21238989',
                 'title': 'Exalco Finance plc',
                 'website': '<https://www.camilleripreziosi.com>'
             })
             self.assertEqual(results[50], {
+                'address': ('Block 3 Level 0, Trident Park, Mdina Road, Zone 2 \n'
+                            'Central Business District, Birkirkara \n'
+                            'CBD2010 \n'
+                            'Malta'),
                 'contact': 'Dr. Francesca Briffa Polidano, Company Secretary',
                 'telephone': '+356 2092 6000',
                 'title': 'Lidion Bank plc',

@@ -136,6 +136,7 @@ def apply_kmeans_clustering(
     n_clusters: int = 0,
     tiles_mode: bool = False,
     additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
+    fill_fields: Tuple[Keyword, ...] = (),
     debug_mode: bool = False,
 ) -> Tuple[Dict[int, List[Tuple[Keyword, Match]]], KMeans | None]:
     # generate matches
@@ -179,9 +180,8 @@ def apply_kmeans_clustering(
     kmeans = None
     if max_groups > 0:
         if tiles_mode:
-            groups = tiles_kmeans(
-                matches, keywords, additional_keywords=tuple(additional_regexes.keys()), debug_mode=debug_mode
-            )
+            additional_keywords = tuple(additional_regexes.keys()) + fill_fields
+            groups = tiles_kmeans(matches, keywords, additional_keywords=additional_keywords, debug_mode=debug_mode)
         else:
             features: List[Tuple[int, int]] = [(m[1], m[2]) for _, m in matches]
             kmeans = KMeans(
@@ -191,6 +191,24 @@ def apply_kmeans_clustering(
             ).fit(features)
             for grp, mch in zip(kmeans.labels_, matches):
                 groups[int(grp)].append(mch)
+
+    for fk in fill_fields:
+        for group in groups.values():
+            start = end = 0
+            last_k: Keyword | None = None
+            for idx, k in enumerate([Keyword("title") if k.startswith("^#") else k for k in keywords]):
+                if k == fk and last_k is not None:
+                    start = [m[2] for kk, m in group if kk == last_k][0]
+                elif k in [kk for kk, _ in group]:
+                    if start > end:
+                        end = [m[1] for kk, m in group if kk == k][0]
+                        text = Text(response.markdown[start:end])
+                        cleaned_text = clean_text(text, group_results=group, keywords=keywords)[0]
+                        group.insert(idx - 1, (fk, Match((text, start, end, cleaned_text))))
+                        if debug_mode:
+                            print(f"Filled field '{fk}' with text between '{last_k}' and '{k}':", cleaned_text)
+                    last_k = k
+
     if debug_mode:
         print(pformat(groups))
     return groups, kmeans
@@ -206,6 +224,7 @@ def extract_by_keywords(
     tiles_mode: bool = False,
     tiles_mode_tolerance: int | float = 0.45,
     additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
+    fill_fields: Tuple[Keyword, ...] = (),
     debug_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
 ) -> List[Result]:
@@ -231,6 +250,12 @@ def extract_by_keywords(
     - tiles_mode_tolerance (optional, int | float): tolerance of missing required fields in tiles mode.
       If integer and >= 1, define tolerance in terms of number of missing fields. If float, define tolerance as
       a fraction of the total required fields. Default: 1.
+    - additional_regexes (optional): a dict field: list of regexes to specify additional regexes to be applied for
+      specific fields.
+    - fill_fields (optional): a tuple of fields without explicit keyword in target markdown, but yet can be foun
+      between text with explicit keywords. This is used to put all text between keyword extracted fields. This must be
+      a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
+      the order between the keywords extracted texts.
     - debug_mode (optional, boolean): if True, provides additional debug information in order to understand what
       the algorithm is doing
     - n_clusters (optional, int): this is a debug feature only. It should not be used in practical situation.
@@ -257,6 +282,7 @@ def extract_by_keywords(
         n_clusters=n_clusters,
         tiles_mode=tiles_mode,
         additional_regexes=additional_regexes,
+        fill_fields=fill_fields,
         debug_mode=debug_mode,
     )
 

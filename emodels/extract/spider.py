@@ -62,6 +62,12 @@ class ExtractionSpider(Spider):
     # default regex) and the second regex the value of parameter tid (see emodels ExtractResponse.text_re docstring)
     additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None = None
 
+    # a tuple of fields without explicit keyword in target markdown, but yet can be found between text with explicit
+    # keywords. This is used to put all text between keyword extracted fields. This must be
+    # a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
+    # the order between the keywords extracted texts.
+    fill_fields: Tuple[Keyword, ...] = ()
+
     # A map field->pattern that field value must fit. Otherwise the field is removed.
     # pattern is either a regex or a type keyword. Actually supported keywords: date_type, url_type
     # Don't change constraints directly unless you know what you are doing. Just use constraints_overrides
@@ -230,6 +236,7 @@ class ExtractionSpider(Spider):
             constraints=self.constraints,
             tiles_mode=self.extract_mode == "tiles",
             additional_regexes=self.additional_regexes,
+            fill_fields=self.fill_fields,
             debug_mode=self.debug_mode,
         )
         for result in results:
