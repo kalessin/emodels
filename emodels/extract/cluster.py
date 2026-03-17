@@ -264,12 +264,13 @@ def extract_by_keywords(
 
     assert keywords, "At least one keyword should be provided. The more keywords, the better the algorithm works."
 
-    def _best_values_dict(extracted_data: Dict[Keyword, List[Tuple[Text, int]]]) -> Dict[Keyword, Text]:
+    def _best_values_dict(extracted_data: Dict[Keyword, List[Tuple[Text, int, Match]]]) -> Dict[Keyword, Text]:
         result = {}
         for k, vv_scores in extracted_data.items():
-            max_score = -1
+            max_score = -100
             best_value = Text("")
-            for vv, score in vv_scores:
+            for vv, score, m in vv_scores:
+                score -= m[2] - m[1] - len(m[3]) - len(k)  # prefer more compact matches that are closer to the keyword
                 if score > max_score:
                     max_score = score
                     best_value = vv
@@ -300,7 +301,7 @@ def extract_by_keywords(
     max_score_group_idx = -1
     # list of tuple index, result, score
     tiles_groups: List[Tuple[int, Result, int]] = []
-
+    results: List[Tuple[Keyword, Match]]
     for idx, results in groups.items():
         results = [
             (k, m)
@@ -309,11 +310,11 @@ def extract_by_keywords(
                 [re.search(vv, clean_group(m, results)[0], flags=re.I) for vv in (value_filters or {}).get(k, [])]
             )
         ]
-        extracted_data: Dict[Keyword, List[Tuple[Text, int]]] = defaultdict(list)
+        extracted_data: Dict[Keyword, List[Tuple[Text, int, Match]]] = defaultdict(list)
         for k, m in results:
-            extracted_data[k].append(
-                clean_group(m, [(k, m) for k, m in results if k not in (additional_regexes or {})])
-            )
+            txt, scr = clean_group(m, [(k, m) for k, m in results if k not in (additional_regexes or {})])
+            extracted_data[k].append((txt, scr, m))
+
         extracted_dict: Dict[Keyword, Text] = _best_values_dict(extracted_data)
         if constraints is not None:
             apply_constraints(extracted_dict, constraints)

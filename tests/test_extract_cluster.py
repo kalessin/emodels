@@ -547,7 +547,6 @@ class ClusterExtractTests(TestCase):
                     Keyword("address"),
                     Keyword("website"),
                 ),
-                debug_mode=True,
             )
             self.assertEqual(
                 result[0],
@@ -556,7 +555,7 @@ class ClusterExtractTests(TestCase):
                     "address": "P O BOX 36 POSTAL CODE 327 SOHAR SULTANATE OF OMAN",
                     "commercial id": "1/05292/6",
                     "established in": "Jun 15, 1977",
-                    "isin": "Listing Date",
+                    "isin": "OM0000001368",
                     "listed date": "Jan 21, 2002",
                     "representative": "Talal Naser Oqlah",
                     "subsector": "Constructions Materials Support",
