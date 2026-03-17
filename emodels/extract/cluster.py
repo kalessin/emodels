@@ -267,10 +267,10 @@ def extract_by_keywords(
     def _best_values_dict(extracted_data: Dict[Keyword, List[Tuple[Text, int]]]) -> Dict[Keyword, Text]:
         result = {}
         for k, vv_scores in extracted_data.items():
-            max_score = 0
+            max_score = -1
             best_value = Text("")
             for vv, score in vv_scores:
-                if score >= max_score:
+                if score > max_score:
                     max_score = score
                     best_value = vv
             result[k] = best_value

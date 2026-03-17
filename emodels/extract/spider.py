@@ -62,7 +62,7 @@ class ExtractionSpider(Spider):
     # default regex) and the second regex the value of parameter tid (see emodels ExtractResponse.text_re docstring)
     additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None = None
 
-    # in tiles/items mode, a tuple of fields without explicit keyword in target markdown, but yet can be found between
+    # in tiles/item mode, a tuple of fields without explicit keyword in target markdown, but yet can be found between
     # text with explicit keywords. This is used to put all text between keyword extracted fields. This must be
     # a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
     # the order between the keywords extracted texts.

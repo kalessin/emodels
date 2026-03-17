@@ -180,7 +180,7 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result[0],
                 {
-                    "name": "POWSZECHNY ZAKŁAD UBEZPIECZEŃ SPÓŁKA AKCYJNA",
+                    "name": "PZU",
                     "abbreviation": "PZU",
                     "address": "RONDO IGNACEGO DASZYŃSKIEGO 4 00-843 WARSZAWA",
                     "company address": "RONDO IGNACEGO DASZYŃSKIEGO 4 00-843 WARSZAWA",
@@ -401,7 +401,6 @@ class ClusterExtractTests(TestCase):
                     Keyword("^####"),
                 ),
                 additional_regexes={Keyword("ticker"): ("^## ([A-Z]+)",)},
-                debug_mode=True,
             )
             self.assertEqual(
                 result[0],
@@ -526,6 +525,49 @@ class ClusterExtractTests(TestCase):
             expected = value_presets.copy()
             expected[Keyword("url")] = Text("https://www.ecseonline.com/profiles/GPCL/?type=equities")
             self.assertEqual(result[0], expected)
+
+    def test_cluster_xviii(self):
+        with self.open_resource("test34.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.msx.om/snapshot.aspx?s=CMII",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("^#####"),
+                    Keyword("activity"),
+                    Keyword("commercial id"),
+                    Keyword("isin"),
+                    Keyword("established in"),
+                    Keyword("listed date"),
+                    Keyword("subsector"),
+                    Keyword("representative"),
+                    Keyword("address"),
+                    Keyword("website"),
+                ),
+                debug_mode=True,
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    "activity": "MINING OF LIMESTONE AND MANUFACTURING LIMESTONE",
+                    "address": "P O BOX 36 POSTAL CODE 327 SOHAR SULTANATE OF OMAN",
+                    "commercial id": "1/05292/6",
+                    "established in": "Jun 15, 1977",
+                    "isin": "Listing Date",
+                    "listed date": "Jan 21, 2002",
+                    "representative": "Talal Naser Oqlah",
+                    "subsector": "Constructions Materials Support",
+                    "title": (
+                        "CONSTRUCTION MATERIAL INDUSTRIES (CMII) "
+                        "![](https://www.msx.om/MSMDocs/Images/Companies/Logo-136-18102023.JPG)"
+                    ),
+                    "url": "https://www.msx.om/snapshot.aspx?s=CMII",
+                    "website": "<http://cmioman.com>",
+                },
+            )
 
     def test_cluster_tile_i(self):
         with self.open_resource("test27.html") as f:
