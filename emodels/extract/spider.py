@@ -99,6 +99,7 @@ class ExtractionSpider(Spider):
             "required_fields",
             "value_filters",
             "additional_regexes",
+            "fill_fields",
             "drop_fields",
             "drop_items",
             "constraints_overrides",
@@ -107,6 +108,8 @@ class ExtractionSpider(Spider):
                 setattr(self, attr, json.loads(getattr(self, attr)))
         if isinstance(self.max_tables, str):
             self.max_tables = int(self.max_tables)
+        if isinstance(self.fill_fields, list):
+            self.fill_fields = tuple(self.fill_fields)
         self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
         self.dedupe_keywords = self.dedupe_keywords or self.fields
         self.markdown_count = 0

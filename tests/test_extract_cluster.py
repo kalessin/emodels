@@ -880,35 +880,44 @@ class ClusterExtractTests(TestCase):
                     Keyword("cse scrip code"),
                     Keyword("company name"),
                     Keyword("company status"),
-                    Keyword("date of listing")
+                    Keyword("date of listing"),
                 ),
                 tiles_mode=True,
                 debug_mode=True,
             )
             self.assertEqual(len(results), 50)
-            self.assertEqual(results[0], {
-                "cse scrip code": "013186",
-                "company name": "20TH CENTURY - ZURICH INDIA MUTUAL FUND",
-                "company status": "Suspended",
-                "date of listing": "27-05-1994",
-            })
-            self.assertEqual(results[26], {
-                "address": "65 IDA JEEDIMETLA HYDERABAD 500 855",
-                "cse scrip code": "021060",
-                "company name": "ADILAKSHMI ENTERPRISES LIMITED",
-                "company status": "Active",
-                "date of listing": "01-04-1994",
-                "state": "ANDHRA PRADESH",
-                "www": "www.kljplastics.in"
-            })
-            self.assertEqual(results[-1], {
-                'address': 'NILHAT HANSE 11 R N MUKHERJEE ROAD CALCUTTA 700 001',
-                'company name': 'ALIPURDUAR TEA CO LTD',
-                'company status': 'Active',
-                'cse scrip code': '011187',
-                'date of listing': '08-12-1977',
-                'state': 'WEST BENGAL',
-            })
+            self.assertEqual(
+                results[0],
+                {
+                    "cse scrip code": "013186",
+                    "company name": "20TH CENTURY - ZURICH INDIA MUTUAL FUND",
+                    "company status": "Suspended",
+                    "date of listing": "27-05-1994",
+                },
+            )
+            self.assertEqual(
+                results[26],
+                {
+                    "address": "65 IDA JEEDIMETLA HYDERABAD 500 855",
+                    "cse scrip code": "021060",
+                    "company name": "ADILAKSHMI ENTERPRISES LIMITED",
+                    "company status": "Active",
+                    "date of listing": "01-04-1994",
+                    "state": "ANDHRA PRADESH",
+                    "www": "www.kljplastics.in",
+                },
+            )
+            self.assertEqual(
+                results[-1],
+                {
+                    "address": "NILHAT HANSE 11 R N MUKHERJEE ROAD CALCUTTA 700 001",
+                    "company name": "ALIPURDUAR TEA CO LTD",
+                    "company status": "Active",
+                    "cse scrip code": "011187",
+                    "date of listing": "08-12-1977",
+                    "state": "WEST BENGAL",
+                },
+            )
 
     def test_cluster_tile_iv(self):
         with self.open_resource("test33.html") as f:
@@ -919,37 +928,57 @@ class ClusterExtractTests(TestCase):
             )
             results = extract_by_keywords(
                 response=response,
-                keywords=(Keyword("^##"), Keyword("address"), Keyword("contact"), Keyword("telephone"), Keyword("website")),
+                keywords=(
+                    Keyword("^##"),
+                    Keyword("address"),
+                    Keyword("contact"),
+                    Keyword("telephone"),
+                    Keyword("website"),
+                ),
                 required_fields=(Keyword("title"),),
                 tiles_mode=True,
                 fill_fields=(Keyword("address"),),
             )
             self.assertEqual(len(results), 102)
-            self.assertEqual(results[0], {
-                'address': 'Hyatt Centric Malta, \nTriq Santu Wistin, \nSan Ġiljan \nMalta',
-                'telephone': '+356 22586260',
-                'title': 'ACMUS plc',
-                'website': '[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)'
-            })
-            self.assertEqual(results[25], {
-                'address': "Eden Place \nSt. George's Bay St. Julians \nSTJ 3310 \nMalta",
-                'contact': 'Dr David Zahra, Company Secretary',
-                'title': 'Eden Finance plc'
-            })
-            self.assertEqual(results[27], {
-                'address': 'Level 3 \nValletta Buildings \nSouth Stre \nValletta',
-                'contact': 'Dr Malcolm Falzon | Ms Martina Galea',
-                'telephone': '+356 21238989',
-                'title': 'Exalco Finance plc',
-                'website': '<https://www.camilleripreziosi.com>'
-            })
-            self.assertEqual(results[51], {
-                'address': ('Block 3 Level 0, Trident Park, Mdina Road, Zone 2 \n'
-                            'Central Business District, Birkirkara \n'
-                            'CBD2010 \n'
-                            'Malta'),
-                'contact': 'Dr. Francesca Briffa Polidano, Company Secretary',
-                'telephone': '+356 2092 6000',
-                'title': 'Lidion Bank plc',
-                'website': '<https://www.lidionbank.com>'
-            })
+            self.assertEqual(
+                results[0],
+                {
+                    "address": "Hyatt Centric Malta, \nTriq Santu Wistin, \nSan Ġiljan \nMalta",
+                    "telephone": "+356 22586260",
+                    "title": "ACMUS plc",
+                    "website": "[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)",
+                },
+            )
+            self.assertEqual(
+                results[25],
+                {
+                    "address": "Eden Place \nSt. George's Bay St. Julians \nSTJ 3310 \nMalta",
+                    "contact": "Dr David Zahra, Company Secretary",
+                    "title": "Eden Finance plc",
+                },
+            )
+            self.assertEqual(
+                results[27],
+                {
+                    "address": "Level 3 \nValletta Buildings \nSouth Stre \nValletta",
+                    "contact": "Dr Malcolm Falzon | Ms Martina Galea",
+                    "telephone": "+356 21238989",
+                    "title": "Exalco Finance plc",
+                    "website": "<https://www.camilleripreziosi.com>",
+                },
+            )
+            self.assertEqual(
+                results[51],
+                {
+                    "address": (
+                        "Block 3 Level 0, Trident Park, Mdina Road, Zone 2 \n"
+                        "Central Business District, Birkirkara \n"
+                        "CBD2010 \n"
+                        "Malta"
+                    ),
+                    "contact": "Dr. Francesca Briffa Polidano, Company Secretary",
+                    "telephone": "+356 2092 6000",
+                    "title": "Lidion Bank plc",
+                    "website": "<https://www.lidionbank.com>",
+                },
+            )
