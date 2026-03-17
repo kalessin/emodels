@@ -924,21 +924,26 @@ class ClusterExtractTests(TestCase):
                 tiles_mode=True,
                 fill_fields=(Keyword("address"),),
             )
-            self.assertEqual(len(results), 101)
+            self.assertEqual(len(results), 102)
             self.assertEqual(results[0], {
                 'address': 'Hyatt Centric Malta, \nTriq Santu Wistin, \nSan Ġiljan \nMalta',
                 'telephone': '+356 22586260',
                 'title': 'ACMUS plc',
                 'website': '[www.acmus.mt](https://www.borzamalta.com.mt/links/www.acmus.mt)'
             })
-            self.assertEqual(results[26], {
+            self.assertEqual(results[25], {
+                'address': "Eden Place \nSt. George's Bay St. Julians \nSTJ 3310 \nMalta",
+                'contact': 'Dr David Zahra, Company Secretary',
+                'title': 'Eden Finance plc'
+            })
+            self.assertEqual(results[27], {
                 'address': 'Level 3 \nValletta Buildings \nSouth Stre \nValletta',
                 'contact': 'Dr Malcolm Falzon | Ms Martina Galea',
                 'telephone': '+356 21238989',
                 'title': 'Exalco Finance plc',
                 'website': '<https://www.camilleripreziosi.com>'
             })
-            self.assertEqual(results[50], {
+            self.assertEqual(results[51], {
                 'address': ('Block 3 Level 0, Trident Park, Mdina Road, Zone 2 \n'
                             'Central Business District, Birkirkara \n'
                             'CBD2010 \n'

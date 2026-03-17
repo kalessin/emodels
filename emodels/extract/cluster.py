@@ -86,7 +86,7 @@ def tiles_kmeans(
                     groups.append(OrderedDict({k: m}))
                     if debug_mode:
                         print("Added", {k: m[0]}, "to new group. Index:", m[1:])
-    groups = [g for g in groups if len(g) > 2]
+    groups = [g for g in groups if len(g) > 2 - len(additional_keywords)]
     groups.insert(0, {})
     return {i - 1: list(g.items()) for i, g in enumerate(groups)}
 
