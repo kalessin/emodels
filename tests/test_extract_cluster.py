@@ -169,20 +169,19 @@ class ClusterExtractTests(TestCase):
                 keywords=(
                     Keyword("name"),
                     Keyword("abbreviation"),
-                    Keyword("address"),
                     Keyword("date of first listing"),
                     Keyword("sector"),
                     Keyword("www"),
                     Keyword("full name"),
                     Keyword("company address"),
                 ),
+                debug_mode=True,
             )
             self.assertEqual(
                 result[0],
                 {
                     "name": "PZU",
                     "abbreviation": "PZU",
-                    "address": "RONDO IGNACEGO DASZYŃSKIEGO 4 00-843 WARSZAWA",
                     "company address": "RONDO IGNACEGO DASZYŃSKIEGO 4 00-843 WARSZAWA",
                     "date of first listing": "05.2010",
                     "full name": "POWSZECHNY ZAKŁAD UBEZPIECZEŃ SPÓŁKA AKCYJNA",
@@ -490,6 +489,7 @@ class ClusterExtractTests(TestCase):
                     Keyword("web address"),
                     Keyword("sector"),
                 ),
+                debug_mode=True,
             )
             self.assertEqual(
                 result[0],
@@ -565,6 +565,46 @@ class ClusterExtractTests(TestCase):
                     ),
                     "url": "https://www.msx.om/snapshot.aspx?s=CMII",
                     "website": "<http://cmioman.com>",
+                },
+            )
+
+    def test_cluster_xix(self):
+        with self.open_resource("test35.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.msx.om/snapshot.aspx?s=OGWF",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("^#####"),
+                    Keyword("activity"),
+                    Keyword("commercial id"),
+                    Keyword("isin"),
+                    Keyword("established in"),
+                    Keyword("listed date"),
+                    Keyword("subsector"),
+                    Keyword("representative"),
+                    Keyword("address"),
+                    Keyword("website"),
+                ),
+                debug_mode=True,
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    "activity": "",
+                    "address": "Telephone :",
+                    "commercial id": "",
+                    "established in": "Mar 02, 2026",
+                    "isin": "OM0000010823",
+                    "listed date": "-",
+                    "representative": "",
+                    "subsector": "",
+                    "title": "OMAN GATEWAY FUND (OGWF)",
+                    "url": "https://www.msx.om/snapshot.aspx?s=OGWF",
+                    "website": "#### Dividends More __",
                 },
             )
 
