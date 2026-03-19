@@ -301,7 +301,6 @@ def extract_by_keywords(
     tiles_groups: List[Tuple[int, Result, int]] = []
     group_matches: List[Tuple[Keyword, Match]]
     for idx, group_matches in groups.items():
-
         for iidx, (k, m) in enumerate(group_matches):
             for kk, mm in list(group_matches):
                 if k == kk:
@@ -389,14 +388,15 @@ def extract_by_keywords(
             better_extra_candidate = None
             better_extra_candidate_distance = float("inf")
             for idx, group_matches in groups.items():
-
-                group_matches = [
-                    (k, m)
-                    for k, m in group_matches
-                    if not any([re.search(vv, clean_group(m), flags=re.I) for vv in (value_filters or {}).get(k, [])])
-                ]
-
                 if idx != max_score_group_idx:
+                    group_matches = [
+                        (k, m)
+                        for k, m in group_matches
+                        if not any(
+                            [re.search(vv, clean_group(m), flags=re.I) for vv in (value_filters or {}).get(k, [])]
+                        )
+                    ]
+
                     for k, m in group_matches:
                         if (
                             k == field
@@ -404,6 +404,11 @@ def extract_by_keywords(
                         ):
                             better_extra_candidate_distance = float(distance)
                             better_extra_candidate = m
+                            if debug_mode:
+                                print(
+                                    f"Found better candidate for missing field '{field}' in group {idx}:",
+                                    better_extra_candidate[3],
+                                )
             if better_extra_candidate is not None:
                 max_score_group[field] = clean_group(better_extra_candidate)
         if constraints is not None:

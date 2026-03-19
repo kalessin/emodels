@@ -236,14 +236,11 @@ class ExtractionSpider(Spider):
     def parse_items_from_response(self, response: TextResponse, **kwargs) -> Iterable[Result]:
         response = response.replace(cls=ExtractTextResponse)
 
-        value_filters = (self.value_filters or {}).copy()
-        for field in self.drop_fields:
-            value_filters[field] = (".",)
         results = extract_by_keywords(
             response,
             keywords=self.fields,
             required_fields=self.required_fields,
-            value_filters=value_filters or None,
+            value_filters=self.value_filters,
             value_presets=cast(Dict[Keyword, Text], kwargs),
             constraints=self.constraints,
             tiles_mode=self.extract_mode == "tiles",
