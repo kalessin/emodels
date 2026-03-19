@@ -152,6 +152,26 @@ def apply_kmeans_clustering(
                 print(f"Matches III for keyword '{keyword}':", len(nmlist))
             if not tiles_mode or len(nmlist) > len(mlist):
                 mlist = nmlist
+        if not mlist and (sub_keyword := re.sub(r"\s+", r"[:|\\s\\n*]+", keyword)) != keyword:
+            mlist = [
+                re_match_to_match(m) for m in re.finditer(rf"\|\s*{sub_keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I)
+            ]
+            if mlist and debug_mode:
+                print(f"Matches IV for keyword '{keyword}':", len(mlist))
+            if not mlist:
+                mlist = [
+                    re_match_to_match(m)
+                    for m in re.finditer(rf"\|[ \t]*{sub_keyword}[ \t]*\|[ \t]*(?:\|[ \t]*)?((?s:.)+?)\|", markdown, flags=re.I)
+                ]
+                if mlist and debug_mode:
+                    print(f"Matches V for keyword '{keyword}':", len(mlist))
+            if not mlist:
+                mlist = [
+                    re_match_to_match(m) for m in re.finditer(rf"{sub_keyword}\s*([:|\s\n*]+)(.+)", markdown, flags=re.M | re.I)
+                ]
+                if mlist and debug_mode:
+                    print(f"Matches VI for keyword '{keyword}':", len(mlist))
+
         matches.extend((Keyword("title") if "#" in keyword else keyword, m) for m in mlist)
         max_groups = max(max_groups, len(mlist))
 

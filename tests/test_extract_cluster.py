@@ -587,10 +587,13 @@ class ClusterExtractTests(TestCase):
                     Keyword("website"),
                 ),
                 value_filters={Keyword("address"): ("telephone", "registration profile")},
-                constraints=Constraints({
-                    Keyword("website"):
-                    re.compile(r'^(https?://.+?)|(<https?://.+?>)|(\\[.+\\]\\(https?://.+\\))|(www\\..+\\..+)')
-                }),
+                constraints=Constraints(
+                    {
+                        Keyword("website"): re.compile(
+                            r"^(https?://.+?)|(<https?://.+?>)|(\\[.+\\]\\(https?://.+\\))|(www\\..+\\..+)"
+                        )
+                    }
+                ),
             )
             self.assertEqual(
                 result[0],
@@ -600,6 +603,56 @@ class ClusterExtractTests(TestCase):
                     "listed date": "-",
                     "title": "OMAN GATEWAY FUND (OGWF)",
                     "url": "https://www.msx.om/snapshot.aspx?s=OGWF",
+                },
+            )
+
+    def test_cluster_xx(self):
+        with self.open_resource("test36.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.msx.om/snapshot.aspx?s=AMII",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("^#####"),
+                    Keyword("activity"),
+                    Keyword("commercial id"),
+                    Keyword("isin"),
+                    Keyword("established in"),
+                    Keyword("listed date"),
+                    Keyword("subsector"),
+                    Keyword("representative"),
+                    Keyword("company contact address"),
+                    Keyword("website"),
+                ),
+                # value_filters={Keyword("address"): ("telephone", "registration profile")},
+                constraints=Constraints(
+                    {
+                        Keyword("website"): re.compile(
+                            r"^(https?://.+?)|(<https?://.+?>)|(\\[.+\\]\\(https?://.+\\))|(www\\..+\\..+)"
+                        )
+                    }
+                ),
+                debug_mode=True,
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    "activity": "activities for holding companies",
+                    "commercial id": "1010000",
+                    "company contact address": "Al Madina Investment Holding Co. (SAOG), Tilal "
+                    "Offices, Block 6,4th floor, Muscat Grand Mall P.O "
+                    "B",
+                    "established in": "Mar 10, 1996",
+                    "isin": "OM0000001962",
+                    "listed date": "Nov 12, 2002",
+                    "representative": "Mansoor Nasser Al Hatmi",
+                    "subsector": "Investment",
+                    "title": "AL MADINA INVESTMENT HOLDING (AMII) "
+                    "![](https://www.msx.om/MSMDocs/Images/Companies/Logo-196-08112022.JPG)",
+                    "url": "https://www.msx.om/snapshot.aspx?s=AMII",
                 },
             )
 
