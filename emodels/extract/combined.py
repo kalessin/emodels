@@ -12,7 +12,7 @@ def parse_combined_from_response(
     validate_result: Callable[[Result, Tuple[Keyword, ...]], bool] = default_validate_result,
     dedupe_keywords: Tuple[Keyword, ...] = (),
     constraints: Optional[Constraints] = None,
-    value_filters: Optional[Dict[Keyword, Tuple[Text, ...]]] = None,
+    value_filters: Optional[Dict[Keyword, Tuple[str, ...]]] = None,
     value_presets: Optional[Dict[Keyword, Text]] = None,
     debug_mode: bool = False,
 ) -> Result:

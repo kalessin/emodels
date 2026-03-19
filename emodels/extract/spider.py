@@ -57,11 +57,11 @@ class ExtractionSpider(Spider):
     # considered the same
     dedupe_keywords: Tuple[Keyword, ...] = ()
 
-    # A dict (field -> list of values)
-    # filter out given fields with values with any of the given list of values.
+    # A dict (field -> list of value regexes)
+    # filter out given fields with value regexes with any of the given list of values.
     # Applies during items pre processing, so it affects extraction process by reducing the score of candidates
     # with values matching the values.
-    value_filters: Dict[Keyword, Tuple[Text, ...]] | None = None
+    value_filters: Dict[Keyword, Tuple[str, ...]] | None = None
 
     # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode.
     # regexes is a list. Each element in regexes is used in the response.text_re() function provided by
@@ -238,7 +238,7 @@ class ExtractionSpider(Spider):
 
         value_filters = (self.value_filters or {}).copy()
         for field in self.drop_fields:
-            value_filters[field] = (Text("."),)
+            value_filters[field] = (".",)
         results = extract_by_keywords(
             response,
             keywords=self.fields,

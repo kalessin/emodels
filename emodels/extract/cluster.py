@@ -205,7 +205,7 @@ def extract_by_keywords(
     response: ExtractTextResponse,
     keywords: Tuple[Keyword, ...],
     required_fields: Tuple[Keyword, ...] = (),
-    value_filters: Optional[Dict[Keyword, Tuple[Text, ...]]] = None,
+    value_filters: Optional[Dict[Keyword, Tuple[str, ...]]] = None,
     value_presets: Optional[Dict[Keyword, Text]] = None,
     constraints: Optional[Constraints] = None,
     tiles_mode: bool = False,
@@ -227,7 +227,7 @@ def extract_by_keywords(
 
     - required_fields (optional). If not empty, it will reduce score of results that don't have any of the required
       fields. By default, all fields provided in keywords argument are required.
-    - value_filters (optional): filter out provided list of values per field
+    - value_filters (optional): filter out provided list of value regexes per field.
     - value_presets (optional): A map from field to a value. If field was not extracted, it is added to the final
       result. If it is extracted and has the given value, the group score is increased.
     - constraints (optional): a dict field: pattern to specify regex patterns that must be fulfilled by specific
