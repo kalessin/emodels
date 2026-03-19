@@ -39,8 +39,8 @@ class ExtractionSpider(Spider):
     # - in hybrid mode, first listing extraction is applied. If the items has an item url, or item_url_template
     #   attribute is set, it is followed and the data is completed with the data extracted from the item page.
     # - In combined mode, extraction is tried both with listing and item mode, but in this case from the same page
-    #   (not additional request) and then combined. This mode also supports combining extraction from more than one
-    #   listing table into same result (by default, only the best scored listing table is used to extract the results,
+    #   (not additional request) and then combined. This mode is intended to combine extraction from more than one
+    #   table into the same result (by default, only the best scored listing table is used to extract the results,
     #   see max_tables parameter)
     # - in tiles mode, the target page consists of items with repeated fields, organized in tiles.
     extract_mode: Literal["listing", "item", "any", "hybrid", "combined", "tiles"] = "listing"
