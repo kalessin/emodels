@@ -389,6 +389,13 @@ def extract_by_keywords(
             better_extra_candidate = None
             better_extra_candidate_distance = float("inf")
             for idx, group_matches in groups.items():
+
+                group_matches = [
+                    (k, m)
+                    for k, m in group_matches
+                    if not any([re.search(vv, clean_group(m), flags=re.I) for vv in (value_filters or {}).get(k, [])])
+                ]
+
                 if idx != max_score_group_idx:
                     for k, m in group_matches:
                         if (
@@ -401,6 +408,7 @@ def extract_by_keywords(
                 max_score_group[field] = clean_group(better_extra_candidate)
         if constraints is not None:
             apply_constraints(max_score_group, constraints)
+
     if tiles_mode:
         max_score_groups = [t[1] for t in sorted(tiles_groups, key=itemgetter(0))]
     else:
@@ -419,6 +427,9 @@ def extract_by_keywords(
                     vvvv = vvv.strip("*| :")
                     if vvvv != vvv and vvvv in v:
                         max_score_group[k] = Text(vvvv)
+        for k, v in list(max_score_group.items()):
+            if not v:
+                max_score_group.pop(k)
         if not tiles_mode and Keyword("url") not in max_score_group:
             max_score_group[Keyword("url")] = Text(response.url)
 

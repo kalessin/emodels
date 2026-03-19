@@ -297,7 +297,6 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result[0],
                 {
-                    "Business activity": "",
                     "contact": "HU-1095 Budapest, Máriássy utca 7.\n"
                     "\n"
                     "Phone: +36-1-451-4760\n"
@@ -306,7 +305,6 @@ class ClusterExtractTests(TestCase):
                     "\n"
                     "Web: [www.wing.hu](http://www.wing.hu)",
                     "full name": "WINGHOLDING Ingatlanfejlesztő és Beruházó Zártkörűen Működő " "Részvénytársaság",
-                    "sector": "",
                     "short name": "WINGHOLDING Zrt.",
                     "url": "https://www.bse.hu/pages/company_profile/$issuer/3439",
                 },
@@ -467,7 +465,6 @@ class ClusterExtractTests(TestCase):
                     "scrip code": "12012",
                     "sector": "TEXTILES & CLOTHING",
                     "trading code": "AIL",
-                    "type of instrument": "",
                     "url": "https://www.cse.com.bd/company/companydetails/AIL",
                 },
             )
@@ -589,6 +586,7 @@ class ClusterExtractTests(TestCase):
                     Keyword("address"),
                     Keyword("website"),
                 ),
+                value_filters={Keyword("address"): ("telephone", "registration profile")},
                 constraints=Constraints({
                     Keyword("website"):
                     re.compile(r'^(https?://.+?)|(<https?://.+?>)|(\\[.+\\]\\(https?://.+\\))|(www\\..+\\..+)')
@@ -597,14 +595,9 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result[0],
                 {
-                    "activity": "",
-                    "address": "Telephone :",
-                    "commercial id": "",
                     "established in": "Mar 02, 2026",
                     "isin": "OM0000010823",
                     "listed date": "-",
-                    "representative": "",
-                    "subsector": "",
                     "title": "OMAN GATEWAY FUND (OGWF)",
                     "url": "https://www.msx.om/snapshot.aspx?s=OGWF",
                 },
