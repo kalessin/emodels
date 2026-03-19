@@ -589,7 +589,10 @@ class ClusterExtractTests(TestCase):
                     Keyword("address"),
                     Keyword("website"),
                 ),
-                debug_mode=True,
+                constraints=Constraints({
+                    Keyword("website"):
+                    re.compile(r'^(https?://.+?)|(<https?://.+?>)|(\\[.+\\]\\(https?://.+\\))|(www\\..+\\..+)')
+                }),
             )
             self.assertEqual(
                 result[0],
@@ -604,7 +607,6 @@ class ClusterExtractTests(TestCase):
                     "subsector": "",
                     "title": "OMAN GATEWAY FUND (OGWF)",
                     "url": "https://www.msx.om/snapshot.aspx?s=OGWF",
-                    "website": "#### Dividends More __",
                 },
             )
 

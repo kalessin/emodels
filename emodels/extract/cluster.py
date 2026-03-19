@@ -342,7 +342,7 @@ def extract_by_keywords(
             apply_constraints(extracted_dict, constraints)
         score = len(extracted_dict)
         if debug_mode:
-            print("Candidate extraction:", pformat(dict(extracted_data)), "score:", score)
+            print("Candidate extraction:", pformat(extracted_dict), "score:", score)
 
         for k, v in (value_presets or {}).items():
             if extracted_dict.get(k) == v:
@@ -388,9 +388,9 @@ def extract_by_keywords(
                 field = Keyword("title")
             better_extra_candidate = None
             better_extra_candidate_distance = float("inf")
-            for idx, results in groups.items():
+            for idx, group_matches in groups.items():
                 if idx != max_score_group_idx:
-                    for k, m in results:
+                    for k, m in group_matches:
                         if (
                             k == field
                             and (distance := np.linalg.norm(center - (m[1], m[2]))) < better_extra_candidate_distance
@@ -399,7 +399,8 @@ def extract_by_keywords(
                             better_extra_candidate = m
             if better_extra_candidate is not None:
                 max_score_group[field] = clean_group(better_extra_candidate)
-
+        if constraints is not None:
+            apply_constraints(max_score_group, constraints)
     if tiles_mode:
         max_score_groups = [t[1] for t in sorted(tiles_groups, key=itemgetter(0))]
     else:
