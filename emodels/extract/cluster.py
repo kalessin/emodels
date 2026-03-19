@@ -225,7 +225,8 @@ def extract_by_keywords(
     Some additional filtering options can be provided in order to reduce noise, discard results and provide
     preset default values (for example, provided by another extraction approach):
 
-    - required_fields (optional). If not empty, it will only accept the results that has the given fields.
+    - required_fields (optional). If not empty, it will reduce score of results that don't have any of the required
+      fields. By default, all fields provided in keywords argument are required.
     - value_filters (optional): filter out provided list of values per field
     - value_presets (optional): A map from field to a value. If field was not extracted, it is added to the final
       result. If it is extracted and has the given value, the group score is increased.
@@ -237,8 +238,12 @@ def extract_by_keywords(
     - tiles_mode_tolerance (optional, int | float): tolerance of missing required fields in tiles mode.
       If integer and >= 1, define tolerance in terms of number of missing fields. If float, define tolerance as
       a fraction of the total required fields. Default: 1.
-    - additional_regexes (optional): a dict field: list of regexes to specify additional regexes to be applied for
-      specific fields.
+    - additional_regexes (optional): A mapping (field -> regexes) for additional extraction capabilities.
+      regexes is a list. Each element in regexes is used in the response.text_re() function provided by
+      ExtractTextResponse. For each field, you can provide a list of alternatives. The first one extracting something
+      will be the value used. Remaining ones will be discarded.
+      Each element in regexes can be either a regex string, or a tuple where first element is a regex or None (for
+      default regex) and the second regex the value of parameter tid (see emodels ExtractResponse.text_re docstring)
     - fill_fields (optional): a tuple of fields without explicit keyword in target markdown, but yet can be foun
       between text with explicit keywords. This is used to put all text between keyword extracted fields. This must be
       a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
@@ -296,7 +301,6 @@ def extract_by_keywords(
     tiles_groups: List[Tuple[int, Result, int]] = []
     group_matches: List[Tuple[Keyword, Match]]
     for idx, group_matches in groups.items():
-
 
         for iidx, (k, m) in enumerate(group_matches):
             for kk, mm in list(group_matches):

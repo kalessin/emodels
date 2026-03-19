@@ -20,13 +20,18 @@ MARKDOWN_URL_RE = re.compile(r"\[.*\]\((.+)\)")
 class ExtractionSpider(Spider):
     name: str
 
+    # target fields to extract
+    fields: Tuple[Keyword, ...] = ()
+
     # a list of fields to drop from the final result. Applies on item post processing. that is, from final items
     # that are valid. The difference with value_filters is that value_filters affects extraction process itself,
     # by reducing the score of candidates with values matching the patterns, while drop_fields just removes the
     # field from the final result.
     drop_fields: Tuple[Keyword, ...] = ()
+
     # a dict of field -> tuple of regexes to define patterns that makes any matching item to be completely dropped out.
     drop_items: Dict[Keyword, Tuple[str]] = {}
+
     # - in listing mode, it will try to extract data from a listing table from each visited page.
     # - in item mode, it will try to extract item-like data from each visited page (that is, a single item per page)
     # - in any mode, it will first try to assume each page is a listing, and if nothing is extracted, it will try to
@@ -39,22 +44,26 @@ class ExtractionSpider(Spider):
     #   see max_tables parameter)
     # - in tiles mode, the target page consists of items with repeated fields, organized in tiles.
     extract_mode: Literal["listing", "item", "any", "hybrid", "combined", "tiles"] = "listing"
+
     # in hybrid mode, build item url by using a python format template that will
     # receive each result as parameters dict.
     item_url_template: str = ""
 
-    fields: Tuple[Keyword, ...] = ()
-    # the specified fields must be present in order for a candidate to be accepted
+    # If not empty, it will reduce score of results that don't have any of the required
+    # fields. By default, all fields provided in keywords argument are required.
     required_fields: Tuple[Keyword, ...] = ()
+
     # which fields are use to deduplicate results (results with all same values in the same fields are
     # considered the same
     dedupe_keywords: Tuple[Keyword, ...] = ()
+
     # A dict (field -> list of values)
     # filter out given fields with values with any of the given list of values.
     # Applies during items pre processing, so it affects extraction process by reducing the score of candidates
     # with values matching the values.
     value_filters: Dict[Keyword, Tuple[Text, ...]] | None = None
-    # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode
+
+    # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode.
     # regexes is a list. Each element in regexes is used in the response.text_re() function provided by
     # ExtractTextResponse. For each field, you can provide a list of alternatives. The first one extracting something
     # will be the value used. Remaining ones will be discarded.
