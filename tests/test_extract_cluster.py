@@ -627,7 +627,6 @@ class ClusterExtractTests(TestCase):
                     Keyword("company contact address"),
                     Keyword("website"),
                 ),
-                # value_filters={Keyword("address"): ("telephone", "registration profile")},
                 constraints=Constraints(
                     {
                         Keyword("website"): re.compile(
@@ -654,6 +653,43 @@ class ClusterExtractTests(TestCase):
                     "![](https://www.msx.om/MSMDocs/Images/Companies/Logo-196-08112022.JPG)",
                     "url": "https://www.msx.om/snapshot.aspx?s=AMII",
                 },
+            )
+
+    def test_cluster_xxi(self):
+        with self.open_resource("test37.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.nsx.com.au/marketdata/company-directory/details/218/",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("^#"),
+                    Keyword("acn/arbn"),
+                    Keyword("abn"),
+                    Keyword("nsx code"),
+                    Keyword("nsx listed securities"),
+                    Keyword("listing date"),
+                    Keyword("principal activities"),
+                    Keyword("industry class"),
+                    Keyword("street address"),
+                    Keyword("company base"),
+                    Keyword("web"),
+                    Keyword("isin"),
+                    Keyword("figi"),
+                    Keyword("bloomberg ticker"),
+                    Keyword("security description"),
+                    Keyword("security type"),
+                    Keyword("certificated"),
+                    Keyword("settlement"),
+                    Keyword("security status"),
+                ),
+                debug_mode=True,
+            )
+            self.assertEqual(
+                result[0],
+                {},
             )
 
     def test_cluster_tile_i(self):
