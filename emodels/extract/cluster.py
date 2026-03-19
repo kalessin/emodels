@@ -64,7 +64,9 @@ def tiles_kmeans(
                     diffm = m[1] - current_group[-1][1][2]
                     if current_group[-1][0] == k and 0 < diffm < 5:
                         _, m0 = current_group[-1]
-                        new_match = Match((Text(m0[0] + " " * diffm + m[0]), m0[1], m[2], Text(m0[3] + "| " + m[3])))
+                        new_match = Match(
+                            (Text(m0[0] + " " * diffm + m[0]), m0[1], m[2], Text(m0[3].strip() + " | " + m[3]))
+                        )
                         groups[-1][k] = new_match
                         if debug_mode:
                             print("Merged", k, "to", new_match[0], "in current group. Index:", new_match[1:])
@@ -124,6 +126,7 @@ def apply_kmeans_clustering(
     tiles_mode: bool = False,
     additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
     fill_fields: Tuple[Keyword, ...] = (),
+    multiline_fields: Optional[Dict[Keyword, int]] = None,
     debug_mode: bool = False,
 ) -> Tuple[Dict[int, List[Tuple[Keyword, Match]]], KMeans | None]:
     # generate matches
@@ -131,6 +134,7 @@ def apply_kmeans_clustering(
     matches: List[Tuple[Keyword, Match]] = []
     max_groups = 0
     markdown = response.markdown
+    multiline_fields = multiline_fields or {}
     for keyword in keywords:
         mlist: List[Match] = [
             re_match_to_match(m) for m in re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I)
@@ -145,8 +149,10 @@ def apply_kmeans_clustering(
             if mlist and debug_mode:
                 print(f"Matches II for keyword '{keyword}':", len(mlist))
         if not mlist or tiles_mode:
+            reps = multiline_fields.get(keyword, 1)
             nmlist = [
-                re_match_to_match(m) for m in re.finditer(rf"{keyword}\s*([:|\s\n*]+)(.+)", markdown, flags=re.M | re.I)
+                re_match_to_match(m)
+                for m in re.finditer(rf"{keyword}\s*([:|\s\n*]+)((?:.+\n?){{1,{reps}}})", markdown, flags=re.M | re.I)
             ]
             if nmlist and debug_mode:
                 print(f"Matches III for keyword '{keyword}':", len(nmlist))
@@ -236,6 +242,7 @@ def extract_by_keywords(
     tiles_mode_tolerance: int | float = 0.45,
     additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = None,
     fill_fields: Tuple[Keyword, ...] = (),
+    multiline_fields: Optional[Dict[Keyword, int]] = None,
     debug_mode: bool = False,
     n_clusters: int = 0,  # this is a debug feature only
 ) -> List[Result]:
@@ -314,6 +321,7 @@ def extract_by_keywords(
         tiles_mode=tiles_mode,
         additional_regexes=additional_regexes,
         fill_fields=fill_fields,
+        multiline_fields=multiline_fields,
         debug_mode=debug_mode,
     )
 

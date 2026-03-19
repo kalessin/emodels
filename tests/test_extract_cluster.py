@@ -685,11 +685,34 @@ class ClusterExtractTests(TestCase):
                     Keyword("settlement"),
                     Keyword("security status"),
                 ),
-                debug_mode=True,
+                multiline_fields={Keyword("street address"): 4},
             )
             self.assertEqual(
-                result[0],
-                {},
+                result[0], {
+                    'abn': '42 635 120 517',
+                    'acn/arbn': '635 120 517',
+                    'bloomberg ticker': '218 AO',
+                    'certificated': '0 - Uncertificated',
+                    'company base': 'Australia',
+                    'figi': 'BBG00WZ8Y0P8',
+                    'industry class': 'Consumer Discretionary',
+                    'isin': 'AU0000101248',
+                    'listing date': 'Monday, August 31, 2020',
+                    'nsx code': '218',
+                    'nsx listed securities': '[218](https://www.nsx.com.au/marketdata/company-directory/218/>) '
+                                            '\\- Rofina Group Limited - FPO',
+                    'principal activities': 'Travel Goods and Apparel',
+                    'security description': 'Rofina Group Limited - FPO',
+                    'security status': 'Active',
+                    'security type': '01 - Ordinary',
+                    'settlement': 'Chess T+2',
+                    'street address': 'C/- Boardroom Pty Limited Level 8 \n'
+                                      '210 George Street \n'
+                                      'Sydney - NSW Australia 2000',
+                    'title': 'Rofina Group Limited - FPO',
+                    'url': 'https://www.nsx.com.au/marketdata/company-directory/details/218/',
+                    'web': '<https://www.rofinagroup.com/>'
+                },
             )
 
     def test_cluster_tile_i(self):
