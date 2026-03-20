@@ -257,10 +257,17 @@ class ExtractionSpider(Spider):
         )
         for result in results:
             self._adapt_result(result, response)
+            drop_item = False
             for field, regexes in self.drop_items.items():
                 for regex in regexes:
                     if re.search(regex, result.get(field, "")):
-                        continue
+                        drop_item = True
+                        self.logger.warning(
+                            f"Dropping item because field '{field}' with value '{result.get(field, '')}' "
+                            f"matches drop pattern '{regex}'")
+                        break
+            if drop_item:
+                continue
             uid = unique_id(result, self.dedupe_keywords)[0]
             if uid in self.seen_results:
                 self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
