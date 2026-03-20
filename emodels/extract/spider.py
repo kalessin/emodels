@@ -77,6 +77,12 @@ class ExtractionSpider(Spider):
     # the order between the keywords extracted texts.
     fill_fields: Tuple[Keyword, ...] = ()
 
+    # In tiles/item mode, by default, and in order to avoid to extract noise, the algorithm only extracts text in the
+    # same line as the keyword. This is ok for 99% of cases. With this option, you can specify a max number of lines
+    # to extract for specific fields. For example, if you specify {"address": 4}, the algorithm will extract up to 4
+    # lines of text for the "address" field.
+    multiline_fields: Optional[Dict[Keyword, int]] = None
+
     # A map field->pattern that field value must fit. Otherwise the field is removed.
     # pattern is either a regex or a type keyword. Actually supported keywords: date_type, url_type
     # Don't change constraints directly unless you know what you are doing. Just use constraints_overrides
@@ -246,6 +252,7 @@ class ExtractionSpider(Spider):
             tiles_mode=self.extract_mode == "tiles",
             additional_regexes=self.additional_regexes,
             fill_fields=self.fill_fields,
+            multiline_fields=self.multiline_fields,
             debug_mode=self.debug_mode,
         )
         for result in results:

@@ -279,6 +279,10 @@ def extract_by_keywords(
       between text with explicit keywords. This is used to put all text between keyword extracted fields. This must be
       a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
       the order between the keywords extracted texts.
+    - multiline_fields. By default, and in order to avoid to extract noise, the algorithm only extracts text in the
+      same line as the keyword. This is ok for 99% of cases. With this option, you can specify a max number of lines
+      to extract for specific fields. For example, if you specify {"address": 4}, the algorithm will extract up to 4
+      lines of text for the "address" field.
     - debug_mode (optional, boolean): if True, provides additional debug information in order to understand what
       the algorithm is doing
     - n_clusters (optional, int): this is a debug feature only. It should not be used in practical situation.
