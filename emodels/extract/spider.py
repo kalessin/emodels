@@ -189,6 +189,7 @@ class ExtractionSpider(Spider):
                 debug_mode=self.debug_mode,
             )
             if result:
+                self._adapt_result(result, response)
                 uid = unique_id(result, self.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
