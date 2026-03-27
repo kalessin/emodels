@@ -186,6 +186,7 @@ class ExtractionSpider(Spider):
                 dedupe_keywords=self.dedupe_keywords,
                 constraints=self.constraints,
                 value_filters=self.value_filters,
+                max_tables=max(2, self.max_tables),  # in combined mode, max_tables=1 doesn't have sense.
                 debug_mode=self.debug_mode,
             )
             if result:

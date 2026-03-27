@@ -14,12 +14,13 @@ def parse_combined_from_response(
     constraints: Optional[Constraints] = None,
     value_filters: Optional[Dict[Keyword, Tuple[str, ...]]] = None,
     value_presets: Optional[Dict[Keyword, Text]] = None,
+    max_tables: int = 2,
     debug_mode: bool = False,
 ) -> Result:
     results_to_combine: List[Result] = []
     seen_columns: Set[str] = set()
     for result in parse_tables_from_response(
-        response, columns, validate_result, dedupe_keywords, constraints, max_tables=2
+        response, columns, validate_result, dedupe_keywords, constraints, max_tables=max_tables
     ):
         results_to_combine.append(result)
         seen_columns.update(result.keys())
