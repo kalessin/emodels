@@ -10,20 +10,20 @@ from emodels.extract.utils import Constraints, Keyword, Result
 
 NUMBER_RE = re.compile(r"\d+$")
 DEDUPE_KEYWORDS = (
-        Keyword("code"),
-        Keyword("company"),
-        Keyword("company name"),
-        Keyword("isin"),
-        Keyword("isin code"),
-        Keyword("issuer code"),
-        Keyword("issuer name"),
-        Keyword("lei"),
-        Keyword("name"),
-        Keyword("name isin"),
-        Keyword("phone"),
-        Keyword("share code"),
-        Keyword("symbol"),
-        Keyword("ticker"),
+    Keyword("code"),
+    Keyword("company"),
+    Keyword("company name"),
+    Keyword("isin"),
+    Keyword("isin code"),
+    Keyword("issuer code"),
+    Keyword("issuer name"),
+    Keyword("lei"),
+    Keyword("name"),
+    Keyword("name isin"),
+    Keyword("phone"),
+    Keyword("share code"),
+    Keyword("symbol"),
+    Keyword("ticker"),
 )
 
 
@@ -57,16 +57,16 @@ class CombinedExtractionTests(TestCase):
                 url="https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/", status=200, body=f.read()
             )
             columns = (
-                    Keyword("industry"),
-                    Keyword("sector"),
-                    Keyword("super-sector"),
-                    Keyword("sub-sector"),
-                    Keyword("code"),
-                    Keyword("isin"),
-                    Keyword("listing date"),
-                    Keyword("security name"),
-                    Keyword("address"),
-                    Keyword("web-site"),
+                Keyword("industry"),
+                Keyword("sector"),
+                Keyword("super-sector"),
+                Keyword("sub-sector"),
+                Keyword("code"),
+                Keyword("isin"),
+                Keyword("listing date"),
+                Keyword("security name"),
+                Keyword("address"),
+                Keyword("web-site"),
             )
             result = parse_combined_from_response(
                 response,
@@ -92,7 +92,55 @@ class CombinedExtractionTests(TestCase):
                     "sector": "Travel and Leisure",
                     "sub-sector": "Hotels and Motels",
                     "super-sector": "Travel and Leisure",
-                    'url': 'https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/',
+                    "url": "https://www.cse.com.cy/en-GB/regulated-market/listing/listed-companies/",
                     "web-site": "www.tsokkos.com",
+                },
+            )
+
+    def test_combined_ii(self):
+        with self.open_resource("test38.html") as f:
+            response = ExtractTextResponse(
+                url="https://www2.jpx.co.jp/tseHpFront/JJK020010Action.do", status=200, body=f.read()
+            )
+            columns = (
+                Keyword("^###"),
+                Keyword("code"),
+                Keyword("market segment"),
+                Keyword("industry"),
+                Keyword("isin code"),
+                Keyword("date of incorporation"),
+                Keyword("date of listing"),
+                Keyword("address of main office"),
+                Keyword("listed exchange"),
+                Keyword("name of representative"),
+            )
+            result = parse_combined_from_response(
+                response,
+                columns=columns,
+                validate_result=validate_result,
+                dedupe_keywords=DEDUPE_KEYWORDS,
+                constraints=Constraints({Keyword("isin code"): re.compile(r"^[a-z0-9]{12}$", re.I)}),
+                max_tables=3,
+                debug_mode=True,
+            )
+            self.assertEqual(
+                result,
+                {
+                    "address of main office": "Tokyo",
+                    "code": "13010",
+                    "date of general shareholders meeting (scheduled)": "-",
+                    "date of incorporation": "1937/09/03",
+                    "date of listing": "1949/05/16",
+                    "fiscal year-end": "March,31",
+                    "industry": "Fishery, Agriculture & Forestry",
+                    "investment unit as of the end of last month": "544,000",
+                    "isin code": "JP3257200000",
+                    "listed exchange": "Tokyo",
+                    "market segment": "Prime",
+                    "name of representative": "井上\u3000誠",
+                    "title": "KYOKUYO CO.,LTD.",
+                    "title of representative": "代表取締役社長",
+                    "trading unit": "100",
+                    "url": "https://www2.jpx.co.jp/tseHpFront/JJK020010Action.do",
                 },
             )

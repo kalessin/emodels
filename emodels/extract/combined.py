@@ -19,15 +19,17 @@ def parse_combined_from_response(
 ) -> Result:
     results_to_combine: List[Result] = []
     seen_columns: Set[str] = set()
-    for result in parse_tables_from_response(
-        response, columns, validate_result, dedupe_keywords, constraints, max_tables=max_tables
-    ):
+    for count, result in enumerate(parse_tables_from_response(
+        response, columns, validate_result, dedupe_keywords, constraints, max_tables=max_tables, debug_mode=debug_mode
+    ), start=1):
+        if debug_mode:
+            print(f"Extracted table {count}:", result)
         results_to_combine.append(result)
         seen_columns.update(result.keys())
     required_fields = tuple(c for c in columns if c not in seen_columns)
     if required_fields:
         results = extract_by_keywords(
-            response, columns, required_fields, value_filters, value_presets, constraints, debug_mode
+            response, columns, required_fields, value_filters, value_presets, constraints, debug_mode=debug_mode
         )
         if results:
             results_to_combine.append(results[0])

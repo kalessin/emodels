@@ -42,27 +42,29 @@ def find_table_headers(table: Selector, candidate_fields: Tuple[Keyword, ...]) -
         for kw in candidate_fields:
             if kw in lower_rowtexts:
                 row_score += 1
-        if len(list(filter(None, rowtexts))) <= MAX_HEADER_COLUMNS:
+        if len(list(filter(None, rowtexts))) <= MAX_HEADER_COLUMNS and row_score > 0:
             score_rows.append(([Keyword(t) for t in rowtexts], row_score))
     return [i[0] for i in sorted(score_rows, key=itemgetter(1), reverse=True)]
 
 
-def find_tables(tables: SelectorList, candidate_fields: Tuple[Keyword, ...]) -> List[Tuple[Selector, List[Keyword]]]:
+def find_tables(
+    tables: SelectorList, candidate_fields: Tuple[Keyword, ...], max_tables: int
+) -> List[Tuple[Selector, List[Keyword]]]:
     # list of tuples (table selector, header, score1 score2)
     scored_tables: List[Tuple[Selector, List[Keyword], int, int]] = []
     for table in tables[::-1]:
-        headers = find_table_headers(table, candidate_fields)[0]
-        score1 = len(
-            list(
-                filter(
-                    None,
-                    set(candidate_fields).intersection([f.lower() for f in headers]),
+        for headers in find_table_headers(table, candidate_fields):
+            score1 = len(
+                list(
+                    filter(
+                        None,
+                        set(candidate_fields).intersection([f.lower() for f in headers]),
+                    )
                 )
             )
-        )
-        score2 = len(list(filter(None, headers)))
-        if score1 <= MAX_HEADER_COLUMNS:
-            scored_tables.append((table, headers, score1, score2))
+            score2 = len(list(filter(None, headers)))
+            if score1 <= MAX_HEADER_COLUMNS:
+                scored_tables.append((table, headers, score1, score2))
     return [(c[0], c[1]) for c in sorted(scored_tables, key=itemgetter(2, 3), reverse=True)]
 
 
@@ -158,6 +160,7 @@ def parse_tables_from_response(
     constraints: Optional[Constraints] = None,
     required_fields: Tuple[Keyword, ...] = (),
     max_tables: int = 1,
+    debug_mode: bool = False,
 ) -> List[Result]:
     """
     Identifies and extracts data from an html table, based on the column names provided.
@@ -177,7 +180,9 @@ def parse_tables_from_response(
     table_count = 0
     if all_tables:
         parsed = urlparse(response.url)
-        for _, headers in find_tables(all_tables, columns):
+        for _, headers in find_tables(all_tables, columns, max_tables):
+            if debug_mode:
+                print("Trying table with headers:", headers)
             all_table_results: List[Result] = []
             fields: Set[Keyword] = set()
             for parse_method in parse_table, parse_table_ii:
@@ -194,6 +199,8 @@ def parse_tables_from_response(
                                 apply_constraints(result, constraints)
                             if set(required_fields).difference([k for k, v in result.items() if v]):
                                 continue
+                            if debug_mode:
+                                print(f"Parsed table result with method {parse_method.__name__}:", result)
                             all_table_results_method.append(result)
                             fields.update(result.keys())
                 if score_results(all_table_results_method) > score_results(all_table_results):
