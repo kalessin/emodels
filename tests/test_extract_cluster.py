@@ -718,6 +718,68 @@ class ClusterExtractTests(TestCase):
                 },
             )
 
+    def test_cluster_xxii(self):
+        with self.open_resource("test39.html") as f:
+            response = ExtractTextResponse(
+                url="https://nasdaqbaltic.com/statistics/en/instrument/LT0000128092/company",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("isin"),
+                    Keyword("core business"),
+                    Keyword("date of registration"),
+                    Keyword("date of listing"),
+                    Keyword("market"),
+                    Keyword("auditor"),
+                    Keyword("management board"),
+                    Keyword("supervisory board"),
+                    Keyword("address"),
+                    Keyword("internet webpage"),
+                    Keyword("telephone"),
+                    Keyword("contact details"),
+                    Keyword("background information"),
+                ),
+                multiline_fields={Keyword("background information"): 3},
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    "address": "Subačiaus St. 5, Vilnius, Lithuania",
+                    "auditor": "UAB ERNST & YOUNG BALTIC",
+                    "background information": "AB Akola Group is the agribusiness and food group "
+                    "holder. It has 69 subsidiaries and two associates "
+                    "in Lithuania, Latvia, Estonia, Ukraine, Poland, "
+                    "Belarus, the Netherlands, and United Kingdom, the "
+                    "total headcount is close to 5,000 people. The "
+                    "financial year of the companies starts on the 1st "
+                    "of July.\n"
+                    "\n"
+                    "The company itself performs the management "
+                    "function and is not involved in trading or "
+                    "production activities. The subsidiaries controlled "
+                    "by the company are engaged in agricultural inputs "
+                    "supplies, farming and processing of farm products, "
+                    "poultry, flour, instant foods, compound feed, and "
+                    "pet food production, agricultural commodities "
+                    "trading, and veterinary pharmacy supplies.",
+                    "core business": "agribusiness and food production",
+                    "date of listing": "February 17, 2010",
+                    "date of registration": "November 27th, 1995",
+                    "internet webpage": "<http://www.akolagroup.lt>",
+                    "isin": "LT0000128092",
+                    "management board": "Darius Zubas (Chairman), Arūnas Zubas, Andrius "
+                    "Pranckevičius, Jonas Bak&scaronys, Mažvydas "
+                    "&Scaronileika",
+                    "market": "Nasdaq Vilnius",
+                    "supervisory board": "Tomas Tumėnas (Chairman), Arūnas Bartusevičius, Carsten " "Hoejland",
+                    "telephone": "+370 663 83888",
+                    "url": "https://nasdaqbaltic.com/statistics/en/instrument/LT0000128092/company",
+                },
+            )
+
     def test_cluster_tile_i(self):
         with self.open_resource("test27.html") as f:
             response = ExtractTextResponse(

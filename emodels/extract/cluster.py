@@ -152,7 +152,9 @@ def apply_kmeans_clustering(
             reps = multiline_fields.get(keyword, 1)
             nmlist = [
                 re_match_to_match(m)
-                for m in re.finditer(rf"{keyword}\s*([:|\s\n*]+)((?:.+\n?){{1,{reps}}})", markdown, flags=re.M | re.I)
+                for m in re.finditer(
+                    rf"{keyword}\s*([:|\s\n*]+)((?:\n*.+\n?){{1,{reps}}})", markdown, flags=re.M | re.I
+                )
             ]
             if nmlist and debug_mode:
                 print(f"Matches III for keyword '{keyword}':", len(nmlist))
@@ -332,6 +334,7 @@ def extract_by_keywords(
     # score groups
     max_score = -len(required_fields)
     max_score_group: Result = Result({})
+    max_score_match: Tuple[Keyword, Match] | None = None
     max_score_group_idx = -1
     # list of tuple index, result, score
     tiles_groups: List[Tuple[int, Result, int]] = []
@@ -398,6 +401,7 @@ def extract_by_keywords(
         if score > max_score:
             max_score = score
             max_score_group = Result(extracted_dict)
+            max_score_match = sorted(group_matches, key=lambda x: x[1][1])[0] if group_matches else None
             max_score_group_idx = idx
             if tiles_mode:
                 tiles_groups.append((idx, Result(extracted_dict), score))
@@ -423,7 +427,7 @@ def extract_by_keywords(
         for field in missing_required_fields:
             if field.startswith("^#"):
                 field = Keyword("title")
-            better_extra_candidate = None
+            better_extra_candidate: Match | None = None
             better_extra_candidate_distance = float("inf")
             for idx, group_matches in groups.items():
                 if idx != max_score_group_idx:
@@ -448,7 +452,10 @@ def extract_by_keywords(
                                     better_extra_candidate[3],
                                 )
             if better_extra_candidate is not None:
-                max_score_group[field] = clean_group(better_extra_candidate)
+                overlapped_keyword: Tuple[Keyword, ...] = ()
+                if max_score_match is not None and max_score_match[1][1] < better_extra_candidate[2]:
+                    overlapped_keyword = (max_score_match[0],)
+                max_score_group[field] = clean_group(better_extra_candidate, overlapped_keyword)
         if constraints is not None:
             apply_constraints(max_score_group, constraints)
 
