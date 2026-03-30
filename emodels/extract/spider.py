@@ -219,7 +219,7 @@ class ExtractionSpider(Spider):
         for field in self.drop_fields:
             result.pop(field, None)
 
-    def extract_listing(self, response: TextResponse, **kwargs) -> Iterable[Result]:
+    def extract_listing(self, response: TextResponse, do_dedupe=True, **kwargs) -> Iterable[Result]:
         response = response.replace(cls=ExtractTextResponse)
         for result in parse_tables_from_response(
             response,
@@ -233,7 +233,7 @@ class ExtractionSpider(Spider):
             result.update(cast(Dict[Keyword, Text], kwargs))
             apply_additional_regexes(self.additional_regexes, result, response)
             self._adapt_result(result, response)
-            if self.extract_mode != "hybrid":
+            if do_dedupe and self.extract_mode != "hybrid":
                 uid = unique_id(result, self.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
