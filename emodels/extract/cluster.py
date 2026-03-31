@@ -228,6 +228,7 @@ def apply_kmeans_clustering(
                             print(f"Filled field '{fk}' with text between '{last_k}' and '{k}':", cleaned_text)
                     last_k = k
 
+    groups = {k: sorted(v, key=lambda x: x[1][1]) for k, v in groups.items()}
     if debug_mode:
         print(pformat(groups))
     return groups, kmeans
@@ -334,12 +335,13 @@ def extract_by_keywords(
     # score groups
     max_score = -len(required_fields)
     max_score_group: Result = Result({})
-    max_score_match: Tuple[Keyword, Match] | None = None
+    max_score_matches: List[Tuple[Keyword, Match]] = []
     max_score_group_idx = -1
     # list of tuple index, result, score
     tiles_groups: List[Tuple[int, Result, int]] = []
     group_matches: List[Tuple[Keyword, Match]]
     for idx, group_matches in groups.items():
+
         for iidx, (k, m) in enumerate(group_matches):
             for kk, mm in list(group_matches):
                 if k == kk:
@@ -401,7 +403,7 @@ def extract_by_keywords(
         if score > max_score:
             max_score = score
             max_score_group = Result(extracted_dict)
-            max_score_match = sorted(group_matches, key=lambda x: x[1][1])[0] if group_matches else None
+            max_score_matches = group_matches
             max_score_group_idx = idx
             if tiles_mode:
                 tiles_groups.append((idx, Result(extracted_dict), score))
@@ -453,9 +455,10 @@ def extract_by_keywords(
                                 )
             if better_extra_candidate is not None:
                 overlapped_keyword: Tuple[Keyword, ...] = ()
-                if max_score_match is not None and max_score_match[1][1] < better_extra_candidate[2]:
-                    overlapped_keyword = (max_score_match[0],)
+                if max_score_matches and max_score_matches[0][1][1] < better_extra_candidate[2]:
+                    overlapped_keyword = (max_score_matches[0][0],)
                 max_score_group[field] = clean_group(better_extra_candidate, overlapped_keyword)
+                max_score_matches.append((field, better_extra_candidate))
         if constraints is not None:
             apply_constraints(max_score_group, constraints)
 
@@ -463,20 +466,8 @@ def extract_by_keywords(
         max_score_groups = [t[1] for t in sorted(tiles_groups, key=itemgetter(0))]
     else:
         max_score_groups = [max_score_group]
-    # clean results
+    # some final cleanup
     for max_score_group in max_score_groups:
-        for k, v in list(max_score_group.items()):
-            for j, w in max_score_group.items():
-                if k != j and w and w in v:
-                    vv = re.sub(w, "", v, flags=re.I)
-                    if v == vv:
-                        continue
-                    vvv = re.sub(j, "", vv, flags=re.I)
-                    if vv == vvv:
-                        continue
-                    vvvv = vvv.strip("*| :")
-                    if vvvv != vvv and vvvv in v:
-                        max_score_group[k] = Text(vvvv)
         for k, v in list(max_score_group.items()):
             if not v:
                 max_score_group.pop(k)
