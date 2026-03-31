@@ -23,6 +23,12 @@ class ExtractionSpider(Spider):
     # target fields to extract
     fields: Tuple[Keyword, ...] = ()
 
+    # fields to extract in table listing extraction. If empty, listing extraction will use the fields attribute.
+    # In some cases with hybrid extract mode, item extraction is less noisy if used separated set of
+    # fields for listing and item. In that case, those fields can be specified in this listing_fields attribute,
+    # and item extraction will use the fields attribute as usual.
+    listing_fields: Tuple[Keyword, ...] = ()
+
     # a list of fields to drop from the final result. Applies on item post processing. that is, from final items
     # that are valid. The difference with value_filters is that value_filters affects extraction process itself,
     # by reducing the score of candidates with values matching the patterns, while drop_fields just removes the
@@ -111,6 +117,7 @@ class ExtractionSpider(Spider):
         self.visited_pages: Set = set()
         for attr in (
             "fields",
+            "listing_fields",
             "required_fields",
             "value_filters",
             "additional_regexes",
@@ -223,7 +230,7 @@ class ExtractionSpider(Spider):
         response = response.replace(cls=ExtractTextResponse)
         for result in parse_tables_from_response(
             response,
-            columns=self.fields,
+            columns=self.listing_fields or self.fields,
             validate_result=self.validate_result,
             dedupe_keywords=self.dedupe_keywords,
             constraints=self.constraints,
