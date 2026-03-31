@@ -250,9 +250,6 @@ def _best_values_selection(group_matches: List[Tuple[Keyword, Match]], debug_mod
 
 def _overlap_clean(k: Keyword, m: Match, kk: Keyword, mm: Match, debug_mode: bool) -> None | Match:
     klongest, kshortest = (k, kk) if len(k) >= len(kk) else (kk, k)
-    if k == "background information":
-        print("HIHI", k, m)
-        print("HOHO", kk, mm)
     if m[1] < mm[1] < m[2] and (m[2] != mm[2] or not klongest.endswith(kshortest)):
         shift = mm[1] - m[1]
         newm = Match((Text(m[0][:shift]), m[1], mm[1], Text(m[3][: shift - m[0].find(m[3])])))
