@@ -93,11 +93,11 @@ def tiles_kmeans(
     return {i - 1: list(g.items()) for i, g in enumerate(groups)}
 
 
-def clean_group(m: Match, keywords: Tuple[Keyword, ...] = ()) -> Text:
-    return clean_text(m[3], keywords=keywords)
+def clean_group(m: Match) -> Text:
+    return clean_text(m[3])
 
 
-def clean_text(text: Text, keywords: Tuple[Keyword, ...] = ()) -> Text:
+def clean_text(text: Text) -> Text:
     if text.startswith("| |"):
         return Text("")
     changed = True
@@ -112,10 +112,6 @@ def clean_text(text: Text, keywords: Tuple[Keyword, ...] = ()) -> Text:
         if (new_text := text.strip().strip("| \n")) != text:
             text = Text(new_text)
             changed = True
-        for kw in keywords:
-            if (new_text := re.sub(rf"\s*{re.escape(kw)}\s*", "", text, flags=re.I)) != text:
-                text = Text(new_text)
-                changed = True
     return text
 
 
@@ -141,7 +137,7 @@ def apply_kmeans_clustering(
         ]
         if mlist and debug_mode:
             print(f"Matches I for keyword '{keyword}':", len(mlist))
-        if not all([clean_group(m, keywords=keywords) for m in mlist]):
+        if not all([clean_group(m) for m in mlist]):
             mlist = [
                 re_match_to_match(m)
                 for m in re.finditer(rf"\|[ \t]*{keyword}[ \t]*\|[ \t]*(?:\|[ \t]*)?((?s:.)+?)\|", markdown, flags=re.I)
@@ -222,7 +218,7 @@ def apply_kmeans_clustering(
                     if start > end:
                         end = [m[1] for kk, m in group if kk == k][0]
                         text = Text(response.markdown[start:end])
-                        cleaned_text = clean_text(text, keywords=keywords)
+                        cleaned_text = clean_text(text)
                         group.insert(idx - 1, (fk, Match((text, start, end, cleaned_text))))
                         if debug_mode:
                             print(f"Filled field '{fk}' with text between '{last_k}' and '{k}':", cleaned_text)
@@ -232,6 +228,47 @@ def apply_kmeans_clustering(
     if debug_mode:
         print(pformat(groups))
     return groups, kmeans
+
+
+def _best_values_selection(group_matches: List[Tuple[Keyword, Match]], debug_mode: bool) -> List[Tuple[Keyword, Match]]:
+    data = defaultdict(list)
+    for k, m in group_matches:
+        data[k].append(m)
+    result = {}
+    for k, matches in data.items():
+        max_score = -100
+        for m in matches:
+            score = -(m[2] - m[1] - len(m[3]) - len(k))  # prefer more compact matches that are closer to the keyword
+            if score > max_score:
+                max_score = score
+                best_value = (k, m)
+                if debug_mode:
+                    print(f"New best value for keyword '{k}':", repr(m[0]), "with score:", score)
+        result[k] = [best_value]
+    return [(k, v[0][1]) for k, v in result.items()]
+
+
+def _overlap_clean(k: Keyword, m: Match, kk: Keyword, mm: Match, debug_mode: bool) -> None | Match:
+    klongest, kshortest = (k, kk) if len(k) >= len(kk) else (kk, k)
+    if k == "background information":
+        print("HIHI", k, m)
+        print("HOHO", kk, mm)
+    if m[1] < mm[1] < m[2] and (m[2] != mm[2] or not klongest.endswith(kshortest)):
+        shift = mm[1] - m[1]
+        newm = Match((Text(m[0][:shift]), m[1], mm[1], Text(m[3][: shift - m[0].find(m[3])])))
+        if debug_mode:
+            print(
+                f"Adjusted match for keyword '{k}' to avoid overlap with '{kk}':\n",
+                m[0],
+                "->",
+                newm[0],
+                "\n",
+                m[3],
+                "->",
+                newm[3],
+            )
+        return newm
+    return None
 
 
 def extract_by_keywords(
@@ -294,25 +331,6 @@ def extract_by_keywords(
 
     assert keywords, "At least one keyword should be provided. The more keywords, the better the algorithm works."
 
-    def _best_values_selection(group_matches: List[Tuple[Keyword, Match]]) -> List[Tuple[Keyword, Match]]:
-        data = defaultdict(list)
-        for k, m in group_matches:
-            data[k].append(m)
-        result = {}
-        for k, matches in data.items():
-            max_score = -100
-            for m in matches:
-                score = -(
-                    m[2] - m[1] - len(m[3]) - len(k)
-                )  # prefer more compact matches that are closer to the keyword
-                if score > max_score:
-                    max_score = score
-                    best_value = (k, m)
-                    if debug_mode:
-                        print(f"New best value for keyword '{k}':", repr(m[0]), "with score:", score)
-            result[k] = [best_value]
-        return [(k, v[0][1]) for k, v in result.items()]
-
     if not required_fields:
         all_keywords = set(keywords).union(set(additional_regexes.keys() if additional_regexes else set()))
         required_fields = tuple([Keyword("title") if k.startswith("^#") else k for k in all_keywords])
@@ -341,30 +359,15 @@ def extract_by_keywords(
     tiles_groups: List[Tuple[int, Result, int]] = []
     group_matches: List[Tuple[Keyword, Match]]
     for idx, group_matches in groups.items():
-
         for iidx, (k, m) in enumerate(group_matches):
             for kk, mm in list(group_matches):
                 if k == kk:
                     continue
-                klongest, kshortest = (k, kk) if len(k) >= len(kk) else (kk, k)
-                if m[1] < mm[1] < m[2] and (m[2] != mm[2] or not klongest.endswith(kshortest)):
-                    shift = mm[1] - m[1]
-                    newm = Match((Text(m[0][:shift]), m[1], mm[1], Text(m[3][: shift - m[0].find(m[3])])))
+                if (newm := _overlap_clean(k, m, kk, mm, debug_mode)) is not None:
                     group_matches[iidx] = (k, newm)
-                    if debug_mode:
-                        print(
-                            f"Adjusted match for keyword '{k}' to avoid overlap with '{kk}':\n",
-                            m[0],
-                            "->",
-                            newm[0],
-                            "\n",
-                            m[3],
-                            "->",
-                            newm[3],
-                        )
                     break
 
-        group_matches = _best_values_selection(group_matches)
+        group_matches = _best_values_selection(group_matches, debug_mode)
 
         if debug_mode:
             print(f"Group {idx} matches after best values selection:", pformat(group_matches))
@@ -454,11 +457,22 @@ def extract_by_keywords(
                                     better_extra_candidate[3],
                                 )
             if better_extra_candidate is not None:
-                overlapped_keyword: Tuple[Keyword, ...] = ()
-                if max_score_matches and max_score_matches[0][1][1] < better_extra_candidate[2]:
-                    overlapped_keyword = (max_score_matches[0][0],)
-                max_score_group[field] = clean_group(better_extra_candidate, overlapped_keyword)
+                for k, m in max_score_matches:
+                    if (newm := _overlap_clean(field, better_extra_candidate, k, m, debug_mode)) is not None:
+                        better_extra_candidate = newm
+                        max_score_group[field] = clean_group(better_extra_candidate)
+                        break
+                max_score_group[field] = clean_group(better_extra_candidate)
+                better_extra_candidate = Match(
+                    (
+                        better_extra_candidate[0],
+                        better_extra_candidate[1],
+                        better_extra_candidate[2],
+                        max_score_group[field],
+                    )
+                )
                 max_score_matches.append((field, better_extra_candidate))
+                max_score_matches = sorted(max_score_matches, key=lambda x: x[1][1])
         if constraints is not None:
             apply_constraints(max_score_group, constraints)
 

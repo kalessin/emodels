@@ -742,7 +742,7 @@ class ClusterExtractTests(TestCase):
                     Keyword("contact details"),
                     Keyword("background information"),
                 ),
-                multiline_fields={Keyword("background information"): 3},
+                multiline_fields={Keyword("background information"): 10},
             )
             self.assertEqual(
                 result[0],
