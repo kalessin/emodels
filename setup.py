@@ -14,7 +14,7 @@ setup(
     url          = 'https://github.com/kalessin/emodels',
     packages     = find_packages(),
     install_requires=(
-        "scikit-learn",
+        "scikit-learn>=1.6.1",
         "scrapy",
         "sentencepiece",
         "shub-workflow>=1.14.0.2",
