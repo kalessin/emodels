@@ -20,6 +20,7 @@ from emodels.extract.utils import (
     Match,
     parse_additional_regexes,
     re_match_to_match,
+    safe_keyword_escape,
 )
 from emodels.scrapyutils.response import ExtractTextResponse
 
@@ -132,15 +133,18 @@ def apply_kmeans_clustering(
     markdown = response.markdown
     multiline_fields = multiline_fields or {}
     for keyword in keywords:
+        keywordp = safe_keyword_escape(keyword)
         mlist: List[Match] = [
-            re_match_to_match(m) for m in re.finditer(rf"\|\s*{keyword}\s*\|((?s:.)+?)\|", markdown, flags=re.I)
+            re_match_to_match(m) for m in re.finditer(rf"\|\s*{keywordp}\s*\|((?s:.)+?)\|", markdown, flags=re.I)
         ]
         if mlist and debug_mode:
             print(f"Matches I for keyword '{keyword}':", len(mlist))
         if not all([clean_group(m) for m in mlist]):
             mlist = [
                 re_match_to_match(m)
-                for m in re.finditer(rf"\|[ \t]*{keyword}[ \t]*\|[ \t]*(?:\|[ \t]*)?((?s:.)+?)\|", markdown, flags=re.I)
+                for m in re.finditer(
+                    rf"\|[ \t]*{keywordp}[ \t]*\|[ \t]*(?:\|[ \t]*)?((?s:.)+?)\|", markdown, flags=re.I
+                )
             ]
             if mlist and debug_mode:
                 print(f"Matches II for keyword '{keyword}':", len(mlist))
@@ -149,7 +153,7 @@ def apply_kmeans_clustering(
             nmlist = [
                 re_match_to_match(m)
                 for m in re.finditer(
-                    rf"{keyword}\s*([:|\s\n*]+)((?:\n*.+\n?){{1,{reps}}})", markdown, flags=re.M | re.I
+                    rf"{keywordp}\s*([:|\s\n*]+)((?:\n*.+\n?){{1,{reps}}})", markdown, flags=re.M | re.I
                 )
             ]
             if nmlist and debug_mode:
@@ -201,11 +205,23 @@ def apply_kmeans_clustering(
             features: List[Tuple[int, int]] = [(m[1], m[2]) for _, m in matches]
             kmeans = KMeans(
                 n_clusters=n_clusters or max_groups,
+                init="k-means++",
+                n_init=10,
+                max_iter=300,
+                tol=1e-4,
                 random_state=0,
-                n_init="auto",
+                algorithm="lloyd",
             ).fit(features)
+            temp_groups: Dict[int, List[Tuple[Keyword, Match]]] = defaultdict(list)
             for grp, mch in zip(kmeans.labels_, matches):
-                groups[int(grp)].append(mch)
+                temp_groups[int(grp)].append(mch)
+            # reorder groups by position of first match in group
+            for matches in sorted(temp_groups.values(), key=lambda x: x[0][1][1]):
+                if groups[-1] and groups[-1][-1][1][2] == matches[0][1][1]:
+                    groups[-1].extend(matches)
+                else:
+                    idx = len(groups) - 1
+                    groups[idx] = matches
 
     for fk in fill_fields:
         for group in groups.values():
@@ -352,6 +368,8 @@ def extract_by_keywords(
     max_score_group: Result = Result({})
     max_score_matches: List[Tuple[Keyword, Match]] = []
     max_score_group_idx = -1
+    # a dict from group index to score
+    groups_scores: Dict[int, int] = {}
     # list of tuple index, result, score
     tiles_groups: List[Tuple[int, Result, int]] = []
     group_matches: List[Tuple[Keyword, Match]]
@@ -383,8 +401,6 @@ def extract_by_keywords(
         if constraints is not None:
             apply_constraints(extracted_dict, constraints)
         score = len(extracted_dict)
-        if debug_mode:
-            print("Candidate extraction:", pformat(extracted_dict), "score:", score)
 
         for k, v in (value_presets or {}).items():
             if extracted_dict.get(k) == v:
@@ -400,6 +416,11 @@ def extract_by_keywords(
 
         missing_required_fields = set(required_fields).difference(set(extracted_dict.keys()))
         score -= len(missing_required_fields)
+
+        if debug_mode:
+            print("Candidate extraction:", pformat(extracted_dict), "score:", score)
+
+        groups_scores[idx] = score
         if score > max_score:
             max_score = score
             max_score_group = Result(extracted_dict)
@@ -431,7 +452,8 @@ def extract_by_keywords(
                 field = Keyword("title")
             better_extra_candidate: Match | None = None
             better_extra_candidate_distance = float("inf")
-            for idx, group_matches in groups.items():
+            better_extra_candidate_score = -float("inf")
+            for idx, group_matches in sorted(groups.items(), key=lambda x: groups_scores[x[0]], reverse=True):
                 if idx != max_score_group_idx:
                     group_matches = [
                         (k, m)
@@ -445,9 +467,11 @@ def extract_by_keywords(
                         if (
                             k == field
                             and (distance := np.linalg.norm(center - (m[1], m[2]))) < better_extra_candidate_distance
+                            and groups_scores[idx] >= better_extra_candidate_score
                         ):
                             better_extra_candidate_distance = float(distance)
                             better_extra_candidate = m
+                            better_extra_candidate_score = groups_scores[idx]
                             if debug_mode:
                                 print(
                                     f"Found better candidate for missing field '{field}' in group {idx}:",
@@ -459,6 +483,10 @@ def extract_by_keywords(
                         better_extra_candidate = newm
                         max_score_group[field] = clean_group(better_extra_candidate)
                         break
+                for k, m in list(max_score_matches):
+                    if (newm := _overlap_clean(k, m, field, better_extra_candidate, debug_mode)) is not None:
+                        max_score_matches = [(kk, newm) if kk == k else (kk, mm) for kk, mm in max_score_matches]
+                        max_score_group[k] = clean_group(newm)
                 max_score_group[field] = clean_group(better_extra_candidate)
                 better_extra_candidate = Match(
                     (

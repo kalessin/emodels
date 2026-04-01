@@ -230,14 +230,14 @@ class ClusterExtractTests(TestCase):
                     Keyword("^##"),
                     Keyword("listing type"),
                     Keyword("listing status"),
-                    Keyword("\\*\\*listed"),
+                    Keyword("**listed"),
                     Keyword("available to"),
                 ),
             )
             self.assertEqual(
                 result[0],
                 {
-                    "\\*\\*listed": "21 Jun 2022",
+                    "**listed": "21 Jun 2022",
                     "available to": "Qualified Investors",
                     "listing status": "Listed",
                     "listing type": "International Debt",
@@ -549,7 +549,7 @@ class ClusterExtractTests(TestCase):
                 result[0],
                 {
                     "activity": "MINING OF LIMESTONE AND MANUFACTURING LIMESTONE",
-                    "address": "P O BOX 36 POSTAL CODE 327 SOHAR SULTANATE OF OMAN",
+                    "address": "P. O. BOX-1791, POSTAL CODE-112, RUWI, SULTANATE OF OMAN.",
                     "commercial id": "1/05292/6",
                     "established in": "Jun 15, 1977",
                     "isin": "OM0000001368",
@@ -743,6 +743,7 @@ class ClusterExtractTests(TestCase):
                     Keyword("background information"),
                 ),
                 multiline_fields={Keyword("background information"): 10},
+                debug_mode=True,
             )
             self.assertEqual(
                 result[0],
@@ -777,6 +778,74 @@ class ClusterExtractTests(TestCase):
                     "supervisory board": "Tomas Tumėnas (Chairman), Arūnas Bartusevičius, Carsten " "Hoejland",
                     "telephone": "+370 663 83888",
                     "url": "https://nasdaqbaltic.com/statistics/en/instrument/LT0000128092/company",
+                },
+            )
+
+    def test_cluster_xxiii(self):
+        with self.open_resource("test40.html") as f:
+            response = ExtractTextResponse(
+                url="https://nasdaqbaltic.com/statistics/en/instrument/LT0000111650/company",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("isin"),
+                    Keyword("core business"),
+                    Keyword("date of registration"),
+                    Keyword("date of listing"),
+                    Keyword("date of equity listing (main list)"),
+                    Keyword("date of equity listing (secondary list)"),
+                    Keyword("market"),
+                    Keyword("auditor"),
+                    Keyword("management board"),
+                    Keyword("supervisory board"),
+                    Keyword("address"),
+                    Keyword("adress"),  # this one is added to handle typo in some quote pages.
+                    Keyword("internet webpage"),
+                    Keyword("homepage"),
+                    Keyword("telephone"),
+                    Keyword("phone"),
+                    Keyword("background information"),
+                    # These last two are dumb annotations in order to avoid the string "contact details" and "contacts"
+                    # being extracted on "background information". They are not real fields in source, but a subtitle
+                    # under which contact fields (website, phone, address) appear.
+                    Keyword("contact details"),
+                    Keyword("contacts"),
+                ),
+                multiline_fields={Keyword("background information"): 10},
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    'address': 'Buriu str. 19, 91003 Klaipeda, Lithuania',
+                    'auditor': 'PricewaterhouseCoopers, UAB',
+                    'background information': 'KN Energies is an international energy terminal '
+                    'operator that ensures safe and reliable flows of '
+                    'liquid energy products and liquefied natural gas '
+                    '(LNG) for users in the Baltic Sea region. The '
+                    'company helps clients worldwide develop '
+                    'sustainable energy infrastructure projects with '
+                    'its knowledge and skills. KN Energies currently '
+                    'operates three liquid energy product terminals in '
+                    'Lithuania and operates LNG terminals in Lithuania, '
+                    'Germany, and Brazil. Additionally, it provides '
+                    'commercial operation services for four floating '
+                    'LNG terminals in Germany.',
+                    'date of equity listing (main list)': '4 April 2016',
+                    'date of equity listing (secondary list)': '16 January 1996',
+                    'date of registration': '27 September 1994',
+                    'internet webpage': 'www.knenergies.com',
+                    'isin': 'LT0000111650',
+                    'management board': 'Jūratė Lingienė (Chairperson), Guy Mason, Alfonso '
+                    'Morriello, Karolis &Scaronvaikauskas, Gediminas Almantas',
+                    'market': 'Nasdaq Vilnius',
+                    'phone': '+370 46 391772',
+                    'supervisory board': 'Robertas Vy&scaronniauskas (Chairman), Mantas '
+                    '&Scaronukevičius, Aurimas Salapėta',
+                    'telephone': '+370 46 391772',
+                    'url': 'https://nasdaqbaltic.com/statistics/en/instrument/LT0000111650/company'
                 },
             )
 

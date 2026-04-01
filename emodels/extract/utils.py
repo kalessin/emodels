@@ -94,3 +94,11 @@ def apply_additional_regexes(
 
     if Keyword("url") not in result:
         result[Keyword("url")] = Text(response.url)
+
+
+def safe_keyword_escape(kw: Keyword) -> Keyword:
+    """
+    Escape a keyword for use in regex patterns, but only if it doesn't start with ^# which indicates a special
+    keyword that should not be escaped.
+    """
+    return Keyword(re.escape(kw).replace(r"\ ", " ")) if not kw.startswith("^#") else kw
