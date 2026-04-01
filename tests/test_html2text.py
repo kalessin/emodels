@@ -173,6 +173,10 @@ this is a line with id
         response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
         self.assertEqual("There are spaces\n", response.markdown)
 
+        html = b"""<div>&ldquo;I am between quotes&rdquo;</div>"""
+        response = ExtractTextResponse(url="http://example.com/example2.html", status=200, body=html)
+        self.assertEqual("“I am between quotes”\n", response.markdown)
+
     def test_ids_delayed(self):
         html = b"""
 <div id="did">

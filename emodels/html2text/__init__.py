@@ -2,7 +2,6 @@
 
 import html.entities
 import html.parser
-from html import unescape as html_unescape
 import re
 import urllib.parse as urlparse
 from textwrap import wrap
@@ -189,9 +188,18 @@ class HTML2Text(html.parser.HTMLParser):
         self.handle_data(self.charref(c), True)
 
     def handle_entityref(self, c: str) -> None:
-        result = unormalize("NFKC", html_unescape("&" + c))
+        result = html.entities.html5.get(c + ";") or html.entities.html5.get(c, "")
+        print(repr(c), "->", repr(result))
+        try_len = 2
+        while not result and try_len <= len(c):
+            cc = c[:try_len]
+            result = html.entities.html5.get(cc + ";") or html.entities.html5.get(cc, "")
+            if result:
+                result = result + c[try_len:]
+                break
+            try_len += 1
         if result:
-            return self.handle_data(result, True)
+            return self.handle_data(unormalize("NFKC", result), True)
 
     def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
         attrid = (dict(attrs).get("itemprop") or "").strip()

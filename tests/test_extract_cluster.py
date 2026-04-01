@@ -772,8 +772,8 @@ class ClusterExtractTests(TestCase):
                     "internet webpage": "<http://www.akolagroup.lt>",
                     "isin": "LT0000128092",
                     "management board": "Darius Zubas (Chairman), Arūnas Zubas, Andrius "
-                    "Pranckevičius, Jonas Bak&scaronys, Mažvydas "
-                    "&Scaronileika",
+                    "Pranckevičius, Jonas Bakšys, Mažvydas "
+                    "Šileika",
                     "market": "Nasdaq Vilnius",
                     "supervisory board": "Tomas Tumėnas (Chairman), Arūnas Bartusevičius, Carsten " "Hoejland",
                     "telephone": "+370 663 83888",
@@ -839,11 +839,11 @@ class ClusterExtractTests(TestCase):
                     'internet webpage': 'www.knenergies.com',
                     'isin': 'LT0000111650',
                     'management board': 'Jūratė Lingienė (Chairperson), Guy Mason, Alfonso '
-                    'Morriello, Karolis &Scaronvaikauskas, Gediminas Almantas',
+                    'Morriello, Karolis Švaikauskas, Gediminas Almantas',
                     'market': 'Nasdaq Vilnius',
                     'phone': '+370 46 391772',
-                    'supervisory board': 'Robertas Vy&scaronniauskas (Chairman), Mantas '
-                    '&Scaronukevičius, Aurimas Salapėta',
+                    'supervisory board': 'Robertas Vyšniauskas (Chairman), Mantas '
+                    'Šukevičius, Aurimas Salapėta',
                     'telephone': '+370 46 391772',
                     'url': 'https://nasdaqbaltic.com/statistics/en/instrument/LT0000111650/company'
                 },
