@@ -3,10 +3,11 @@ tools for huggingface compatibility
 """
 import re
 import sys
+from dataclasses import replace
 from random import random
 from functools import partial
 from collections import defaultdict
-from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Iterator, Optional
+from typing import Generator, TypedDict, List, Tuple, Callable, Dict, Iterator, Optional, cast
 
 import torch
 from datasets import Dataset as HuggingFaceDataset, DatasetDict as HuggingFaceDatasetDict
@@ -142,10 +143,13 @@ def prepare_datasetdict(
 
 
 def compute_f1_metrics(pred: EvalPrediction) -> Dict[str, float]:
-    start_labels = pred.label_ids[0]
-    start_preds = pred.predictions[0].argmax(-1)
-    end_labels = pred.label_ids[1]
-    end_preds = pred.predictions[1].argmax(-1)
+    import numpy as np
+    label_ids = cast(Tuple[np.ndarray, np.ndarray], pred.label_ids)
+    predictions = cast(Tuple[np.ndarray, np.ndarray], pred.predictions)
+    start_labels = label_ids[0]
+    start_preds = predictions[0].argmax(-1)
+    end_labels = label_ids[1]
+    end_preds = predictions[1].argmax(-1)
 
     f1_start = f1_score(start_labels, start_preds, average="macro")
     f1_end = f1_score(end_labels, end_preds, average="macro")
@@ -177,20 +181,20 @@ def get_qatransformer_trainer(
     else:
         processed_validation_data = processed_test_data
 
-    trargs = dict(
-        output_dir=output_dir,  # output directory
-        overwrite_output_dir=True,
-        num_train_epochs=3,  # total number of training epochs
-        per_device_train_batch_size=8,  # batch size per device during training
-        per_device_eval_batch_size=8,  # batch size for evaluation
-        warmup_steps=20,  # number of warmup steps for learning rate scheduler
-        weight_decay=0.01,  # strength of weight decay
-        logging_dir=None,  # directory for storing logs
-        logging_steps=50,
+    training_args = replace(
+        TrainingArguments(
+            output_dir=output_dir,  # output directory
+            overwrite_output_dir=True,
+            num_train_epochs=3,  # total number of training epochs
+            per_device_train_batch_size=8,  # batch size per device during training
+            per_device_eval_batch_size=8,  # batch size for evaluation
+            warmup_steps=20,  # number of warmup steps for learning rate scheduler
+            weight_decay=0.01,  # strength of weight decay
+            logging_dir=None,  # directory for storing logs
+            logging_steps=50,
+        ),
+        **training_args_kw,
     )
-    trargs.update(**training_args_kw)
-
-    training_args = TrainingArguments(**trargs)
 
     model = AutoModelForQuestionAnswering.from_pretrained(hg_model_name)
 
