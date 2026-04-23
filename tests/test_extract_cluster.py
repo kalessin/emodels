@@ -819,33 +819,59 @@ class ClusterExtractTests(TestCase):
             self.assertEqual(
                 result[0],
                 {
-                    'address': 'Buriu str. 19, 91003 Klaipeda, Lithuania',
-                    'auditor': 'PricewaterhouseCoopers, UAB',
-                    'background information': 'KN Energies is an international energy terminal '
-                    'operator that ensures safe and reliable flows of '
-                    'liquid energy products and liquefied natural gas '
-                    '(LNG) for users in the Baltic Sea region. The '
-                    'company helps clients worldwide develop '
-                    'sustainable energy infrastructure projects with '
-                    'its knowledge and skills. KN Energies currently '
-                    'operates three liquid energy product terminals in '
-                    'Lithuania and operates LNG terminals in Lithuania, '
-                    'Germany, and Brazil. Additionally, it provides '
-                    'commercial operation services for four floating '
-                    'LNG terminals in Germany.',
-                    'date of equity listing (main list)': '4 April 2016',
-                    'date of equity listing (secondary list)': '16 January 1996',
-                    'date of registration': '27 September 1994',
-                    'internet webpage': 'www.knenergies.com',
-                    'isin': 'LT0000111650',
-                    'management board': 'Jūratė Lingienė (Chairperson), Guy Mason, Alfonso '
-                    'Morriello, Karolis Švaikauskas, Gediminas Almantas',
-                    'market': 'Nasdaq Vilnius',
-                    'phone': '+370 46 391772',
-                    'supervisory board': 'Robertas Vyšniauskas (Chairman), Mantas '
-                    'Šukevičius, Aurimas Salapėta',
-                    'telephone': '+370 46 391772',
-                    'url': 'https://nasdaqbaltic.com/statistics/en/instrument/LT0000111650/company'
+                    "address": "Buriu str. 19, 91003 Klaipeda, Lithuania",
+                    "auditor": "PricewaterhouseCoopers, UAB",
+                    "background information": "KN Energies is an international energy terminal "
+                    "operator that ensures safe and reliable flows of "
+                    "liquid energy products and liquefied natural gas "
+                    "(LNG) for users in the Baltic Sea region. The "
+                    "company helps clients worldwide develop "
+                    "sustainable energy infrastructure projects with "
+                    "its knowledge and skills. KN Energies currently "
+                    "operates three liquid energy product terminals in "
+                    "Lithuania and operates LNG terminals in Lithuania, "
+                    "Germany, and Brazil. Additionally, it provides "
+                    "commercial operation services for four floating "
+                    "LNG terminals in Germany.",
+                    "date of equity listing (main list)": "4 April 2016",
+                    "date of equity listing (secondary list)": "16 January 1996",
+                    "date of registration": "27 September 1994",
+                    "internet webpage": "www.knenergies.com",
+                    "isin": "LT0000111650",
+                    "management board": "Jūratė Lingienė (Chairperson), Guy Mason, Alfonso "
+                    "Morriello, Karolis Švaikauskas, Gediminas Almantas",
+                    "market": "Nasdaq Vilnius",
+                    "phone": "+370 46 391772",
+                    "supervisory board": "Robertas Vyšniauskas (Chairman), Mantas " "Šukevičius, Aurimas Salapėta",
+                    "telephone": "+370 46 391772",
+                    "url": "https://nasdaqbaltic.com/statistics/en/instrument/LT0000111650/company",
+                },
+            )
+
+    def test_cluster_xxiv(self):
+        with self.open_resource("test41.html") as f:
+            response = ExtractTextResponse(
+                url="https://www.asx.com.au/markets/etp/ASK",
+                status=200,
+                body=f.read(),
+            )
+            result = extract_by_keywords(
+                response,
+                keywords=(
+                    Keyword("industry group"),
+                    Keyword("isin"),
+                    Keyword("^#"),
+                    Keyword("listed on"),
+                ),
+                additional_regexes={Keyword("symbol"): ("# (.+) announcements",)},
+            )
+            self.assertEqual(
+                result[0],
+                {
+                    "isin": "AU0000286213",
+                    "symbol": "ASK",
+                    "title": "ABACUS STORAGE KING ASK",
+                    "url": "https://www.asx.com.au/markets/etp/ASK",
                 },
             )
 

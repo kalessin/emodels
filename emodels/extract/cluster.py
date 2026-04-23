@@ -397,7 +397,7 @@ def extract_by_keywords(
         for k, m in group_matches:
             extracted_data[k].append((clean_group(m), m))
 
-        extracted_dict: Dict[Keyword, Text] = {k: v[0][0] for k, v in extracted_data.items()}
+        extracted_dict: Dict[Keyword, Text] = {k: v[0][0] for k, v in extracted_data.items() if v[0][0]}
         if constraints is not None:
             apply_constraints(extracted_dict, constraints)
         score = len(extracted_dict)
