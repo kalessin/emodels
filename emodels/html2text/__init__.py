@@ -189,7 +189,6 @@ class HTML2Text(html.parser.HTMLParser):
 
     def handle_entityref(self, c: str) -> None:
         result = html.entities.html5.get(c + ";") or html.entities.html5.get(c, "")
-        print(repr(c), "->", repr(result))
         try_len = 2
         while not result and try_len <= len(c):
             cc = c[:try_len]
