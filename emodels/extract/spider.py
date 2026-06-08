@@ -1,8 +1,9 @@
 import re
 import json
-from typing import Dict, Set, Tuple, Optional, Literal, Iterable, cast
+from typing import Any, Dict, Set, Tuple, Optional, Literal, Iterable, cast
 from abc import abstractmethod
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from scrapy.http import TextResponse
 from scrapy import Request, Spider
 
@@ -17,26 +18,73 @@ MULTIS_RE = re.compile(r"\s+")
 MARKDOWN_URL_RE = re.compile(r"\[.*\]\((.+)\)")
 
 
-class ExtractionSpider(Spider):
-    name: str
+def default_constraints() -> Constraints:
+    return Constraints(
+        {
+            Keyword("isin"): re.compile(r"^[a-z0-9]{12}$", re.I),
+            Keyword("website"): "url_type",
+        }
+    )
+
+
+def override_constraints(constraints: Constraints, overrides: Optional[Dict[Keyword, str]]) -> Constraints:
+    constraints = Constraints(constraints.copy())
+    for k, v in (overrides or {}).items():
+        if v in ("date_type", "url_type"):
+            constraints[k] = cast(Literal["date_type", "url_type"], v)
+        else:
+            constraints[k] = re.compile(v)
+    return constraints
+
+
+class ExtractionSpiderParams(BaseModel):
+    """
+    Spider arguments for ExtractionSpider, validated and coerced via pydantic.
+
+    These are read at runtime through ``self.args.<name>``. Each value can be configured either
+    as a class attribute on a concrete subclass (e.g. ``fields = (Keyword("price"),)``) or passed
+    on the command line with ``-a`` (container values as JSON, e.g. ``-a fields='["price"]'``).
+    """
+
+    # ``extra="ignore"`` (not ``forbid``): this is a base/library spider, so subclasses in other
+    # projects may pass arguments this model does not declare; they must not be rejected here.
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="ignore")
 
     # target fields to extract
-    fields: Tuple[Keyword, ...] = ()
+    fields: Tuple[Keyword, ...] = Field(default=(), description="Target fields to extract.")
 
     # fields to extract in table listing extraction. If empty, listing extraction will use the fields attribute.
     # In some cases with hybrid extract mode, item extraction is less noisy if used separated set of
     # fields for listing and item. In that case, those fields can be specified in this listing_fields attribute,
     # and item extraction will use the fields attribute as usual.
-    listing_fields: Tuple[Keyword, ...] = ()
+    listing_fields: Tuple[Keyword, ...] = Field(
+        default=(),
+        description=(
+            "Fields to extract in table listing extraction. If empty, listing extraction uses the "
+            "fields attribute. Useful in hybrid mode to keep item extraction less noisy."
+        ),
+    )
 
     # a list of fields to drop from the final result. Applies on item post processing. that is, from final items
     # that are valid. The difference with value_filters is that value_filters affects extraction process itself,
     # by reducing the score of candidates with values matching the patterns, while drop_fields just removes the
     # field from the final result.
-    drop_fields: Tuple[Keyword, ...] = ()
+    drop_fields: Tuple[Keyword, ...] = Field(
+        default=(),
+        description=(
+            "Fields to drop from the final result during item post processing. Unlike value_filters "
+            "(which affects extraction scoring), drop_fields just removes the field from valid results."
+        ),
+    )
 
     # a dict of field -> tuple of regexes to define patterns that makes any matching item to be completely dropped out.
-    drop_items: Dict[Keyword, Tuple[str]] = {}
+    drop_items: Dict[Keyword, Tuple[str, ...]] = Field(
+        default_factory=dict,
+        description=(
+            "Mapping field -> tuple of regexes. Any item whose field value matches one of the regexes "
+            "is completely dropped from the results."
+        ),
+    )
 
     # - in listing mode, it will try to extract data from a listing table from each visited page.
     # - in item mode, it will try to extract item-like data from each visited page (that is, a single item per page)
@@ -49,25 +97,53 @@ class ExtractionSpider(Spider):
     #   table into the same result (by default, only the best scored listing table is used to extract the results,
     #   see max_tables parameter)
     # - in tiles mode, the target page consists of items with repeated fields, organized in tiles.
-    extract_mode: Literal["listing", "item", "any", "hybrid", "combined", "tiles"] = "listing"
+    extract_mode: Literal["listing", "item", "any", "hybrid", "combined", "tiles"] = Field(
+        default="listing",
+        description=(
+            "Extraction strategy: 'listing' (table per page), 'item' (single item per page), 'any' "
+            "(listing then item fallback), 'hybrid' (listing then follow item urls), 'combined' "
+            "(listing+item on the same page, merged) or 'tiles' (repeated-field tiles)."
+        ),
+    )
 
     # in hybrid mode, build item url by using a python format template that will
     # receive each result as parameters dict.
-    item_url_template: str = ""
+    item_url_template: str = Field(
+        default="",
+        description="In hybrid mode, a python format template (fed each result dict) used to build the item url.",
+    )
 
     # If not empty, it will reduce score of results that don't have any of the required
     # fields. By default, all fields provided in keywords argument are required.
-    required_fields: Tuple[Keyword, ...] = ()
+    required_fields: Tuple[Keyword, ...] = Field(
+        default=(),
+        description=(
+            "If not empty, reduces the score of results that have none of these fields. "
+            "Defaults to all the fields provided in the fields argument."
+        ),
+    )
 
     # which fields are use to deduplicate results (results with all same values in the same fields are
     # considered the same
-    dedupe_keywords: Tuple[Keyword, ...] = ()
+    dedupe_keywords: Tuple[Keyword, ...] = Field(
+        default=(),
+        description=(
+            "Fields used to deduplicate results (results with the same values in these fields are "
+            "considered the same). Defaults to the fields argument."
+        ),
+    )
 
     # A dict (field -> list of value regexes)
     # filter out given fields with value regexes with any of the given list of values.
     # Applies during items pre processing, so it affects extraction process by reducing the score of candidates
     # with values matching the values.
-    value_filters: Dict[Keyword, Tuple[str, ...]] | None = None
+    value_filters: Optional[Dict[Keyword, Tuple[str, ...]]] = Field(
+        default=None,
+        description=(
+            "Mapping field -> tuple of value regexes. Applied during item pre processing: reduces the "
+            "score of candidates whose value matches any of the regexes."
+        ),
+    )
 
     # A mapping (field -> regexes) for additional extraction capabilities in item extraction mode.
     # regexes is a list. Each element in regexes is used in the response.text_re() function provided by
@@ -75,65 +151,136 @@ class ExtractionSpider(Spider):
     # will be the value used. Remaining ones will be discarded.
     # Each element in regexes can be either a regex string, or a tuple where first element is a regex or None (for
     # default regex) and the second regex the value of parameter tid (see emodels ExtractResponse.text_re docstring)
-    additional_regexes: Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]] | None = None
+    additional_regexes: Optional[Dict[Keyword, Tuple[str | Tuple[str | None, str], ...]]] = Field(
+        default=None,
+        description=(
+            "Mapping field -> tuple of regex alternatives for additional extraction in item mode. Each "
+            "element is a regex string or a (regex|None, tid) tuple; the first matching alternative wins."
+        ),
+    )
 
     # in tiles/item mode, a tuple of fields without explicit keyword in target markdown, but yet can be found between
     # text with explicit keywords. This is used to put all text between keyword extracted fields. This must be
     # a keyword present in the keywords tuple, despite is not strictly a keyword, but yet is necesary to understand
     # the order between the keywords extracted texts.
-    fill_fields: Tuple[Keyword, ...] = ()
+    fill_fields: Tuple[Keyword, ...] = Field(
+        default=(),
+        description=(
+            "In tiles/item mode, fields without an explicit keyword in the markdown but found between "
+            "keyword-extracted texts. Must be present in the fields tuple to keep extraction order."
+        ),
+    )
 
     # In tiles/item mode, by default, and in order to avoid to extract noise, the algorithm only extracts text in the
     # same line as the keyword. This is ok for 99% of cases. With this option, you can specify a max number of lines
     # to extract for specific fields. For example, if you specify {"address": 4}, the algorithm will extract up to 4
     # lines of text for the "address" field.
-    multiline_fields: Optional[Dict[Keyword, int]] = None
+    multiline_fields: Optional[Dict[Keyword, int]] = Field(
+        default=None,
+        description=(
+            "In tiles/item mode, mapping field -> max number of lines to extract for that field "
+            "(default is a single line). E.g. {'address': 4}."
+        ),
+    )
 
     # A map field->pattern that field value must fit. Otherwise the field is removed.
     # pattern is either a regex or a type keyword. Actually supported keywords: date_type, url_type
     # Don't change constraints directly unless you know what you are doing. Just use constraints_overrides
     #       for adding new constraints.
-    constraints: Constraints = Constraints(
-        {
-            Keyword("isin"): re.compile(r"^[a-z0-9]{12}$", re.I),
-            Keyword("website"): "url_type",
-        }
+    constraints: Any = Field(
+        default_factory=default_constraints,
+        description=(
+            "Mapping field -> pattern (compiled regex or one of 'date_type'/'url_type') the value must "
+            "match, or the field is removed. Prefer constraints_overrides over changing this directly."
+        ),
     )
-    constraints_overrides: Optional[Dict[Keyword, str]] = None
+    constraints_overrides: Optional[Dict[Keyword, str]] = Field(
+        default=None,
+        description=(
+            "Mapping field -> pattern ('date_type', 'url_type' or a regex) merged on top of constraints. "
+            "The preferred way to add/extend constraints."
+        ),
+    )
+
     # for listing table extraction, increase if target data are on more than one table with different headers in the
     # same page. The limit avoids to generate noisy data, so only the table with biggest score is considered, but in
     # some cases more than one table requires to be consireded for getting all the relevant data, more typically
     # in "combined" extract mode
-    max_tables: int = 1
+    max_tables: int = Field(
+        default=1,
+        description=(
+            "For listing table extraction, max number of tables to consider in a page. Increase when "
+            "target data spans several tables with different headers (typical in 'combined' mode)."
+        ),
+    )
 
     # if True, it will generate a markdown file for each visited page with the markdown text extracted by
     # ExtractTextResponse. This is specially useful for debugging extraction results and writing additional
     # regexes. It will also activate debug mode on extract_by_keywords, in order to debug the item extraction process.
-    debug_mode: bool = False
+    debug_mode: bool = Field(
+        default=False,
+        description=(
+            "If True, dump a markdown file per visited page and enable debug mode in the item extraction "
+            "process. Useful for debugging extraction and writing additional regexes."
+        ),
+    )
+
+    # JSON-decode container arguments when they arrive as -a strings. Already-typed values (class
+    # attributes / programmatic use) pass through. `constraints` is intentionally excluded: it holds
+    # compiled regex objects and is not JSON-encodable.
+    @field_validator(
+        "fields",
+        "listing_fields",
+        "drop_fields",
+        "drop_items",
+        "required_fields",
+        "dedupe_keywords",
+        "value_filters",
+        "additional_regexes",
+        "fill_fields",
+        "multiline_fields",
+        "constraints_overrides",
+        mode="before",
+    )
+    @classmethod
+    def _decode_json(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+    @model_validator(mode="after")
+    def _finalize(self) -> "ExtractionSpiderParams":
+        self.constraints = override_constraints(self.constraints, self.constraints_overrides)
+        if not self.dedupe_keywords:
+            self.dedupe_keywords = self.fields
+        return self
+
+    @classmethod
+    def from_spider(cls, spider_cls: type, cli_kwargs: Dict[str, Any]) -> "ExtractionSpiderParams":
+        """
+        Build the params model from a spider class. For each declared field, a value passed on the
+        command line (``-a``) takes precedence, then a class attribute set on the (sub)class, and
+        finally the field default. This keeps the existing class-attribute configuration of
+        subclasses working while validating and coercing the values through pydantic.
+        """
+        data: Dict[str, Any] = {}
+        for name in cls.model_fields:
+            if name in cli_kwargs:
+                data[name] = cli_kwargs[name]
+            elif hasattr(spider_cls, name):
+                data[name] = getattr(spider_cls, name)
+        return cls(**data)
+
+
+class ExtractionSpider(Spider):
+    name: str
+    args: ExtractionSpiderParams
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.args = ExtractionSpiderParams.from_spider(type(self), kwargs)
         self.seen_results: Set[Uid] = set()
         self.visited_pages: Set = set()
-        for attr in (
-            "fields",
-            "listing_fields",
-            "required_fields",
-            "value_filters",
-            "additional_regexes",
-            "fill_fields",
-            "drop_fields",
-            "drop_items",
-            "constraints_overrides",
-        ):
-            if isinstance(getattr(self, attr), str):
-                setattr(self, attr, json.loads(getattr(self, attr)))
-        if isinstance(self.max_tables, str):
-            self.max_tables = int(self.max_tables)
-        if isinstance(self.fill_fields, list):
-            self.fill_fields = tuple(self.fill_fields)
-        self.constraints = self.override_constraints(self.constraints, self.constraints_overrides)
-        self.dedupe_keywords = self.dedupe_keywords or self.fields
         self.markdown_count = 0
 
     def make_request(self, url, callback, cb_kwargs=None, **kwargs) -> Request:
@@ -141,13 +288,7 @@ class ExtractionSpider(Spider):
 
     @staticmethod
     def override_constraints(constraints, overrides) -> Constraints:
-        constraints = Constraints(constraints.copy())
-        for k, v in (overrides or {}).items():
-            if v in ("date_type", "url_type"):
-                constraints[k] = v
-            else:
-                constraints[k] = re.compile(v)
-        return constraints
+        return override_constraints(constraints, overrides)
 
     @abstractmethod
     def validate_result(self, result: Result, columns: Tuple[Keyword, ...]) -> bool:
@@ -161,22 +302,22 @@ class ExtractionSpider(Spider):
         Extract items from a page by selecting the chosen algorithm according to extract_mode parameter.
         """
         response = response.replace(cls=ExtractTextResponse)
-        if self.debug_mode:
+        if self.args.debug_mode:
             open(f"markdown{self.markdown_count}.md", "w").write(response.markdown)
             self.markdown_count += 1
         has_results = False
-        if self.extract_mode in ("any", "listing"):
+        if self.args.extract_mode in ("any", "listing"):
             for result in self.extract_listing(response):
                 yield result
                 has_results = True
-        if self.extract_mode in ("any", "item", "tiles") and not has_results:
+        if self.args.extract_mode in ("any", "item", "tiles") and not has_results:
             for result in self.parse_items_from_response(response):
                 yield result
-        if self.extract_mode == "hybrid":
+        if self.args.extract_mode == "hybrid":
             for result in self.extract_listing(response):
-                if self.item_url_template:
+                if self.args.item_url_template:
                     try:
-                        url = self.item_url_template.format(**{str(k): v for k, v in result.items()})
+                        url = self.args.item_url_template.format(**{str(k): v for k, v in result.items()})
                         if url:
                             result[Keyword("url")] = Text(url)
                     except Exception as e:
@@ -185,20 +326,20 @@ class ExtractionSpider(Spider):
                     yield self.make_request(
                         url=result[Keyword("url")], callback=self.parse_items_from_response, cb_kwargs=result
                     )
-        if self.extract_mode == "combined":
+        if self.args.extract_mode == "combined":
             result = parse_combined_from_response(
                 response=response,
-                columns=self.fields,
+                columns=self.args.fields,
                 validate_result=self.validate_result,
-                dedupe_keywords=self.dedupe_keywords,
-                constraints=self.constraints,
-                value_filters=self.value_filters,
-                max_tables=max(2, self.max_tables),  # in combined mode, max_tables=1 doesn't have sense.
-                debug_mode=self.debug_mode,
+                dedupe_keywords=self.args.dedupe_keywords,
+                constraints=self.args.constraints,
+                value_filters=self.args.value_filters,
+                max_tables=max(2, self.args.max_tables),  # in combined mode, max_tables=1 doesn't have sense.
+                debug_mode=self.args.debug_mode,
             )
             if result:
                 self._adapt_result(result, response)
-                uid = unique_id(result, self.dedupe_keywords)[0]
+                uid = unique_id(result, self.args.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     return
@@ -223,25 +364,25 @@ class ExtractionSpider(Spider):
                 result[Keyword(k.strip("*| \\"))] = Text(MULTIS_RE.sub(" ", result.pop(k)))
         if "url" in result:
             result[Keyword("url")] = Text(response.urljoin(result[Keyword("url")]))
-        for field in self.drop_fields:
+        for field in self.args.drop_fields:
             result.pop(field, None)
 
     def extract_listing(self, response: TextResponse, do_dedupe=True, **kwargs) -> Iterable[Result]:
         response = response.replace(cls=ExtractTextResponse)
         for result in parse_tables_from_response(
             response,
-            columns=self.listing_fields or self.fields,
+            columns=self.args.listing_fields or self.args.fields,
             validate_result=self.validate_result,
-            dedupe_keywords=self.dedupe_keywords,
-            constraints=self.constraints,
-            required_fields=self.required_fields,
-            max_tables=self.max_tables
+            dedupe_keywords=self.args.dedupe_keywords,
+            constraints=self.args.constraints,
+            required_fields=self.args.required_fields,
+            max_tables=self.args.max_tables
         ):
             result.update(cast(Dict[Keyword, Text], kwargs))
-            apply_additional_regexes(self.additional_regexes, result, response)
+            apply_additional_regexes(self.args.additional_regexes, result, response)
             self._adapt_result(result, response)
-            if do_dedupe and self.extract_mode != "hybrid":
-                uid = unique_id(result, self.dedupe_keywords)[0]
+            if do_dedupe and self.args.extract_mode != "hybrid":
+                uid = unique_id(result, self.args.dedupe_keywords)[0]
                 if uid in self.seen_results:
                     self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                     continue
@@ -253,21 +394,21 @@ class ExtractionSpider(Spider):
 
         results = extract_by_keywords(
             response,
-            keywords=self.fields,
-            required_fields=self.required_fields,
-            value_filters=self.value_filters,
+            keywords=self.args.fields,
+            required_fields=self.args.required_fields,
+            value_filters=self.args.value_filters,
             value_presets=cast(Dict[Keyword, Text], kwargs),
-            constraints=self.constraints,
-            tiles_mode=self.extract_mode == "tiles",
-            additional_regexes=self.additional_regexes,
-            fill_fields=self.fill_fields,
-            multiline_fields=self.multiline_fields,
-            debug_mode=self.debug_mode,
+            constraints=self.args.constraints,
+            tiles_mode=self.args.extract_mode == "tiles",
+            additional_regexes=self.args.additional_regexes,
+            fill_fields=self.args.fill_fields,
+            multiline_fields=self.args.multiline_fields,
+            debug_mode=self.args.debug_mode,
         )
         for result in results:
             self._adapt_result(result, response)
             drop_item = False
-            for field, regexes in self.drop_items.items():
+            for field, regexes in self.args.drop_items.items():
                 for regex in regexes:
                     if re.search(regex, result.get(field, "")):
                         drop_item = True
@@ -277,7 +418,7 @@ class ExtractionSpider(Spider):
                         break
             if drop_item:
                 continue
-            uid = unique_id(result, self.dedupe_keywords)[0]
+            uid = unique_id(result, self.args.dedupe_keywords)[0]
             if uid in self.seen_results:
                 self.logger.warning(f"Duplicate result found with uid {uid}, skipping: {result}")
                 continue

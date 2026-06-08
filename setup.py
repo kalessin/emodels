@@ -14,6 +14,7 @@ setup(
     url          = 'https://github.com/kalessin/emodels',
     packages     = find_packages(),
     install_requires=(
+        "pydantic>=2",
         "scikit-learn>=1.6.1",
         "scrapy",
         "sentencepiece",
